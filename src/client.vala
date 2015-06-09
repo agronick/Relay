@@ -42,8 +42,7 @@ public class Client : Object
 
 		string? line = "";
 		do{
-			line = input_stream.read_line().strip()  + "\n";
-			stderr.printf ("line " + line);   
+			line = input_stream.read_line().strip().substring (1);
 			new_data(tab, line); 
 		}while(line != null);
 		 

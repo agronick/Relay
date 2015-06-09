@@ -81,9 +81,9 @@ public class Main : Object
 	public void add_tab(string url)
 	{ 
 		Gtk.Label title = new Gtk.Label (url);   
-		Gtk.ScrolledWindow scrolled = new Gtk.ScrolledWindow (null, null); 
+		ScrolledWindow scrolled = new Gtk.ScrolledWindow (null, null);
 		TextView output = new TextView();
-		output.set_wrap_mode (Gtk.WrapMode.WORD);
+		output.set_wrap_mode (Gtk.WrapMode.WORD); 
 		scrolled.add(output);
 
 		int index = tabs.append_page(scrolled, title); 
@@ -101,9 +101,19 @@ public class Main : Object
 
 	public void add_text(int index, string data)
 	{
-		TextView tv = outputs[index];
+		TextView tv = outputs[index]; 
+		ScrolledWindow sw = (ScrolledWindow)tv.get_parent();
 		Idle.add( () => {   
-			tv.buffer.text += data; 
+			tv.buffer.text += data + "\n"; 
+			Adjustment adj = sw.get_vadjustment();
+			if(true || adj.value == 0 || adj.value > adj.upper - 500)
+			{ 
+				adj.set_value(adj.get_upper() - adj.get_page_size());
+				sw.set_vadjustment(adj);
+				stderr.printf ("max " + adj.get_upper().to_string() + " val " + adj.get_value().to_string() + "\n"); 
+			}  
+		
+		 
 			return false;
 		});
 	}
@@ -112,6 +122,7 @@ public class Main : Object
 	{
 		int page = tabs.get_current_page();
 		clients[page].send_output(text);
+		add_text(page, clients[page].username + ": " + text);
 	}
   
 	[CCode (instance_pos = -1)]
