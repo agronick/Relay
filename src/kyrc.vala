@@ -52,8 +52,8 @@ public class Main : Object
 			builder.add_from_file (UI_FILE);
 			builder.connect_signals (this);
 
-			var toolbar = new Gtk.HeaderBar ();
-
+			var toolbar = new Gtk.HeaderBar (); 
+			
 			window = builder.get_object ("window") as Window;
 			tabs = builder.get_object("tabs") as Notebook;
 			input = builder.get_object("input") as Entry;
@@ -66,8 +66,7 @@ public class Main : Object
             toolbar.show_close_button = true;
 			window.set_titlebar(toolbar);
 			/* ANJUTA: Widgets initialization for kyrc.ui - DO NOT REMOVE */
-			window.show_all ();
-			
+			window.show_all ();  
 
 			add_tab("irc.freenode.net");
  
@@ -83,14 +82,25 @@ public class Main : Object
 		Gtk.Label title = new Gtk.Label (url);   
 		ScrolledWindow scrolled = new Gtk.ScrolledWindow (null, null);
 		TextView output = new TextView();
+		var close_btn = new Gtk.Image.from_icon_name("window-close", Gtk.IconSize.MENU);
+		var eb = new EventBox();
+	 
+		eb.add(close_btn);
+		eb.show(); 
+		close_btn.show();
+		Gtk.Box box = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 0); 
+		title.show(); 
+		box.pack_start(title, false, false, 15);
+		box.pack_start(eb, true, true, 0);
 		output.set_editable(false); 
 		output.set_wrap_mode (Gtk.WrapMode.WORD); 
 		scrolled.add(output);
 
-		int index = tabs.append_page(scrolled, title); 
+		int index = tabs.append_page(scrolled, box); 
+		 
 		outputs.set(index, output);
 		
-		window.show_all();
+		tabs.show_all();
 		
 		var client = new Client();  
 		client.username = "kyle123456";
@@ -98,6 +108,17 @@ public class Main : Object
 		
 		client.new_data.connect(add_text);
 		client.connect_to_server("irc.freenode.net", index);
+ 
+		eb.button_press_event.connect( (event) => { 
+			stderr.printf("clicked");
+			remove_tab(index);
+			return false;
+		});
+		eb.enter_notify_event.connect((event) => { 
+			eb.get_window().set_cursor(new Gdk.Cursor.for_display(Gdk.Display.get_default(), Gdk.CursorType.HAND1));
+			stderr.printf("hover");
+			return false;
+		});
 	}
 
 	public void add_text(int index, string data)
@@ -131,6 +152,14 @@ public class Main : Object
 		int page = tabs.get_current_page();
 		clients[page].send_output(text);
 		add_text(page, clients[page].username + ": " + text);
+	}
+
+	private void remove_tab(int index)
+	{
+		tabs.remove_page(index);
+		clients[index].stop(); 
+		clients.unset(index);
+		outputs.unset(index);
 	}
   
 	[CCode (instance_pos = -1)]

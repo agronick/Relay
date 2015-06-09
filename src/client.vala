@@ -9,6 +9,7 @@ public class Client : Object
 	private string url = ""; 
 	public int tab;
 	public string username = "";
+	public bool exit = false;
 
 	public signal void new_data(int index, string data);
  
@@ -44,9 +45,24 @@ public class Client : Object
 		do{
 			line = input_stream.read_line().strip().substring (1);
 			new_data(tab, line); 
-		}while(line != null);
+		}while(line != null && !exit);
+ 
 		 
 		return 1;
+	}
+
+	public void stop()
+	{
+		exit = true; 
+		input_stream.clear_pending();
+		try{
+			input_stream.close();
+		} catch (GLib.IOError e){} 
+		output_stream.clear_pending();
+		output_stream.flush();
+		try{
+			output_stream.close(); 
+		} catch (GLib.IOError e){} 
 	}
 
 	public void send_output(string output)
