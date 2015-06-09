@@ -83,6 +83,7 @@ public class Main : Object
 		Gtk.Label title = new Gtk.Label (url);   
 		ScrolledWindow scrolled = new Gtk.ScrolledWindow (null, null);
 		TextView output = new TextView();
+		output.set_editable(false); 
 		output.set_wrap_mode (Gtk.WrapMode.WORD); 
 		scrolled.add(output);
 
@@ -104,18 +105,21 @@ public class Main : Object
 		TextView tv = outputs[index]; 
 		ScrolledWindow sw = (ScrolledWindow)tv.get_parent();
 		Idle.add( () => {   
-			tv.buffer.text += data + "\n"; 
-			Adjustment adj = sw.get_vadjustment();
-			if(true || adj.value == 0 || adj.value > adj.upper - 500)
-			{ 
-				adj.set_value(adj.get_upper() - adj.get_page_size());
-				sw.set_vadjustment(adj);
-				stderr.printf ("max " + adj.get_upper().to_string() + " val " + adj.get_value().to_string() + "\n"); 
-			}  
-		
-		 
+			tv.buffer.text += data + "\n";  
+			Adjustment adj = sw.get_vadjustment(); 
+			adj.set_value(adj.get_upper() - adj.get_page_size());
 			return false;
 		});
+
+		Thread.usleep(50000);
+		Idle.add( () => { 
+			Adjustment adj = sw.get_vadjustment(); 
+			adj.set_value(adj.get_upper() - adj.get_page_size());  
+			sw.set_vadjustment(adj); 
+			stderr.printf ("max " + (adj.get_upper() - adj.get_page_size()).to_string() + " val " + adj.get_value().to_string() + "\n"); 
+			return false;
+		});
+	 
 	}
 
 	public void send_text_out(string text)
