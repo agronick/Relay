@@ -103,20 +103,24 @@ public class Main : Object
 	public void add_text(int index, string data)
 	{
 		TextView tv = outputs[index]; 
+		TextIter outiter;
+		tv.buffer.get_end_iter(out outiter); 
 		ScrolledWindow sw = (ScrolledWindow)tv.get_parent();
 		Idle.add( () => {   
-			tv.buffer.text += data + "\n";  
+			string text = data + "\n";  
+			tv.buffer.insert(ref outiter, text, text.length);
 			Adjustment adj = sw.get_vadjustment(); 
 			adj.set_value(adj.get_upper() - adj.get_page_size());
 			return false;
 		});
 
-		Thread.usleep(50000);
+		//Sleep for a little bit so the adjustment is updated
+		Thread.usleep(5000);
+		
 		Idle.add( () => { 
 			Adjustment adj = sw.get_vadjustment(); 
 			adj.set_value(adj.get_upper() - adj.get_page_size());  
-			sw.set_vadjustment(adj); 
-			stderr.printf ("max " + (adj.get_upper() - adj.get_page_size()).to_string() + " val " + adj.get_value().to_string() + "\n"); 
+			sw.set_vadjustment(adj);  
 			return false;
 		});
 	 
