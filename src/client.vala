@@ -9,7 +9,7 @@ public class Client : Object
 	private string url = ""; 
 	public int tab;
 	public string username = "";
-	public bool exit = false;
+	public bool exit = false; 
 
 	public signal void new_data(int index, string data);
  

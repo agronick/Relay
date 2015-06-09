@@ -30,12 +30,14 @@ public class Main : Object
 	 */
 	//const string UI_FILE = Config.PACKAGE_DATA_DIR + "/ui/" + "kyrc.ui";
 	const string UI_FILE = "src/kyrc.ui";
+	const string UI_FILE_SERVERS = "src/server_window.ui";
 
 	/* ANJUTA: Widgets declaration for kyrc.ui - DO NOT REMOVE */
  
 	Notebook tabs;
 	Window window;
 	Entry input;
+	SqlClient sqlclient = new SqlClient();
 	
 	Gee.HashMap<int, TextView> outputs = new Gee.HashMap<int, TextView> ();
 	Gee.HashMap<int, Client> clients = new Gee.HashMap<int, Client> ();
@@ -62,6 +64,11 @@ public class Main : Object
 				send_text_out(input.get_text ());
 				input.set_text("");
 			});
+
+			set_up_add_sever(toolbar);
+
+			toolbar.set_title("Kyrc"); 
+			toolbar.show_all();
 			
             toolbar.show_close_button = true;
 			window.set_titlebar(toolbar);
@@ -69,6 +76,7 @@ public class Main : Object
 			window.show_all ();  
 
 			add_tab("irc.freenode.net");
+			
  
 		} 
 		catch (Error e) {
@@ -109,7 +117,7 @@ public class Main : Object
 		client.new_data.connect(add_text);
 		client.connect_to_server("irc.freenode.net", index);
  
-		eb.button_press_event.connect( (event) => { 
+		eb.button_release_event.connect( (event) => { 
 			stderr.printf("clicked");
 			remove_tab(index);
 			return false;
@@ -152,6 +160,59 @@ public class Main : Object
 		int page = tabs.get_current_page();
 		clients[page].send_output(text);
 		add_text(page, clients[page].username + ": " + text);
+	}
+
+	public void set_up_add_sever(Gtk.HeaderBar toolbar)
+	{ 
+		var add_server_button = new Gtk.Button.from_icon_name("list-add-symbolic", Gtk.IconSize.LARGE_TOOLBAR);
+		add_server_button.button_release_event.connect( (event) => { 
+			var builder = new Builder();
+			builder.add_from_file(UI_FILE_SERVERS);
+			var window = builder.get_object ("window") as Window;
+			var box = builder.get_object ("port_wrap") as Box;
+			var ok = builder.get_object ("ok") as Button;
+			var cancel = builder.get_object ("cancel") as Button;
+			var add_channel = builder.get_object ("add_channel") as Button;
+			var remove_channel = builder.get_object ("remove_channel") as Button;
+			var new_channel = builder.get_object ("channel_name") as Entry;
+			var channels = builder.get_object ("channel") as ListBox;
+			var server_btns = builder.get_object ("server_buttons") as Box;
+
+            var add_server = new Gtk.Button.from_icon_name("list-add-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
+            var remove_server = new Gtk.Button.from_icon_name("list-remove-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
+			server_btns.pack_end(add_server, false, false, 0);
+			server_btns.pack_end(remove_server, false, false, 0);
+			
+			channels.set_size_request (100,100);
+			var chn_adj = new Adjustment(1, 1, 500, 1, 2, 100); 			
+			
+
+			cancel.button_release_event.connect( (event) => {  
+				window.close(); 
+				stderr.printf("event type: " + event.type.to_string());
+				return false;
+			});
+ 
+			add_channel.button_release_event.connect( (event) => { 
+				string chan_name = new_channel.get_text().strip();
+				if(chan_name.length == 0)
+					return false;
+				var lbr = new ListBoxRow();
+				lbr.add(new Label(chan_name));
+				channels.add(lbr);  
+				channels.set_adjustment(chn_adj);
+				channels.show_all();
+				return false;
+			});
+			
+			Gtk.SpinButton port = new Gtk.SpinButton.with_range (0, 65535, 1);
+			port.set_value(6667);
+			box.pack_start(port, false, false, 0); 
+			window.show_all ();   
+			return false;
+		});
+        add_server_button.tooltip_text = "Add new server";  
+		toolbar.pack_start(add_server_button); 
 	}
 
 	private void remove_tab(int index)
