@@ -20,6 +20,7 @@
 using GLib;
 using Gtk;
 using Gee;
+using Granite;
 
 public class Main : Object 
 {
@@ -34,13 +35,14 @@ public class Main : Object
 
 	/* ANJUTA: Widgets declaration for kyrc.ui - DO NOT REMOVE */
  
-	Notebook tabs;
+	Granite.Widgets.DynamicNotebook tabs;
 	Window window;
 	Entry input;
-	SqlClient sqlclient = new SqlClient();
+	SqlClient sqlclient = SqlClient.get_instance();
 	
 	Gee.HashMap<int, TextView> outputs = new Gee.HashMap<int, TextView> ();
 	Gee.HashMap<int, Client> clients = new Gee.HashMap<int, Client> ();
+	ListBox servers = new ListBox();
 	
 
 	public Main ()
@@ -55,15 +57,25 @@ public class Main : Object
 			builder.connect_signals (this);
 
 			var toolbar = new Gtk.HeaderBar (); 
+			tabs = new Granite.Widgets.DynamicNotebook(); 
+			tabs.allow_drag = true; 
 			
 			window = builder.get_object ("window") as Window;
-			tabs = builder.get_object("tabs") as Notebook;
+			var nb_wrapper = builder.get_object("notebook_wrapper") as Box;
+			nb_wrapper.pack_start(tabs, true, true, 1);
+			
+			
+			var server_list_container = builder.get_object("server_list_container") as Box;
+			server_list_container.pack_start(servers, true, true, 0);
+			
 			input = builder.get_object("input") as Entry;
 
 			input.activate.connect (() => {
 				send_text_out(input.get_text ());
 				input.set_text("");
 			});
+
+			refresh_server_list();
 
 			set_up_add_sever(toolbar);
 
@@ -77,7 +89,32 @@ public class Main : Object
 
 			add_tab("irc.freenode.net");
 			
- 
+			tabs.new_tab_requested.connect(() => {
+				var dialog = new Dialog.with_buttons("New Connection", window, 
+				                                     DialogFlags.DESTROY_WITH_PARENT,
+				                                     "Connect", Gtk.ResponseType.ACCEPT,
+				                                     "Cancel", Gtk.ResponseType.CANCEL);
+				Gtk.Box content = dialog.get_content_area() as Gtk.Box;
+				content.pack_start(new Label("Server address"), false, false, 5);
+				var server_name = new Entry();
+				content.pack_start(server_name, false, false, 5); 
+				dialog.show_all();
+				dialog.response.connect((id) => {
+					switch (id){
+						case Gtk.ResponseType.ACCEPT:
+							string name = server_name.get_text().strip();
+							if(name.length > 2)
+							{
+								add_tab(name);
+								dialog.close();
+							}
+							break;
+						case Gtk.ResponseType.CANCEL:
+							dialog.close();
+							break;
+					}
+				});
+			});
 		} 
 		catch (Error e) {
 			stderr.printf ("Could not load UI: %s\n", e.message);
@@ -85,26 +122,23 @@ public class Main : Object
 
 	}
 
+
 	public void add_tab(string url)
 	{ 
-		Gtk.Label title = new Gtk.Label (url);   
-		ScrolledWindow scrolled = new Gtk.ScrolledWindow (null, null);
-		TextView output = new TextView();
-		var close_btn = new Gtk.Image.from_icon_name("window-close", Gtk.IconSize.MENU);
-		var eb = new EventBox();
-	 
-		eb.add(close_btn);
-		eb.show(); 
-		close_btn.show();
-		Gtk.Box box = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 0); 
-		title.show(); 
-		box.pack_start(title, false, false, 15);
-		box.pack_start(eb, true, true, 0);
+		Gtk.Label title = new Gtk.Label (url);    
+		TextView output = new TextView();  
+		ScrolledWindow scrolled = new Gtk.ScrolledWindow (null, null); 
+		scrolled.add(output); 
 		output.set_editable(false); 
 		output.set_wrap_mode (Gtk.WrapMode.WORD); 
-		scrolled.add(output);
 
-		int index = tabs.append_page(scrolled, box); 
+		var tab = new Granite.Widgets.Tab(); 
+		tab.label = url;
+		
+		tab.page = scrolled;
+		tabs.insert_tab(tab, 0);
+		
+		int index = 0;
 		 
 		outputs.set(index, output);
 		
@@ -115,18 +149,8 @@ public class Main : Object
 		clients.set(index, client);
 		
 		client.new_data.connect(add_text);
-		client.connect_to_server("irc.freenode.net", index);
- 
-		eb.button_release_event.connect( (event) => { 
-			stderr.printf("clicked");
-			remove_tab(index);
-			return false;
-		});
-		eb.enter_notify_event.connect((event) => { 
-			eb.get_window().set_cursor(new Gdk.Cursor.for_display(Gdk.Display.get_default(), Gdk.CursorType.HAND1));
-			stderr.printf("hover");
-			return false;
-		});
+		client.connect_to_server(url, index);
+  
 	}
 
 	public void add_text(int index, string data)
@@ -157,9 +181,23 @@ public class Main : Object
 
 	public void send_text_out(string text)
 	{
-		int page = tabs.get_current_page();
+		int page = 0;
 		clients[page].send_output(text);
 		add_text(page, clients[page].username + ": " + text);
+	}
+
+	public void refresh_server_list()
+	{
+		stderr.printf(sqlclient.servers.size.to_string());
+		foreach(SqlClient.Server server in sqlclient.servers)
+		{
+			var lbr = new ListBoxRow();
+			var lbl = new Label(server.host); 
+			lbr.set_halign(Align.FILL);
+			lbl.set_halign(Align.START);
+			lbr.add(lbl);
+			servers.insert(lbr, -1);
+		}
 	}
 
 	public void set_up_add_sever(Gtk.HeaderBar toolbar)
@@ -178,7 +216,7 @@ public class Main : Object
 
 	private void remove_tab(int index)
 	{
-		tabs.remove_page(index);
+		tabs.remove_tab(tabs.get_tab_by_index(index));
 		clients[index].stop(); 
 		clients.unset(index);
 		outputs.unset(index);

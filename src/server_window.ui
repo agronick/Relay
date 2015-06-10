@@ -18,10 +18,12 @@
               <object class="GtkListBox" id="servers">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="is_focus">True</property>
               </object>
               <packing>
-                <property name="expand">False</property>
+                <property name="expand">True</property>
                 <property name="fill">True</property>
+                <property name="pack_type">end</property>
                 <property name="position">0</property>
               </packing>
             </child>
@@ -29,6 +31,7 @@
               <object class="GtkBox" id="server_buttons">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
+                <property name="is_focus">True</property>
                 <child>
                   <placeholder/>
                 </child>

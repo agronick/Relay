@@ -5,11 +5,25 @@ using Gee;
 
 public class SqlClient : Object
 {
+	static SqlClient self = null;
 	Sqlite.Database db;
-	ArrayList<Server> servers = new ArrayList<Server>();
+	public ArrayList<Server> servers = new ArrayList<Server>();
 	
-	public SqlClient()
+	private SqlClient()
 	{ 
+		init();
+	}
+
+	public static SqlClient get_instance()
+	{
+		if(self == null)
+			self = new SqlClient();
+
+		return self;
+	}
+
+	private void init()
+	{
 		string confbase = GLib.Environment.get_user_config_dir() + "/kyrc";
 		File dir = File.new_for_path(confbase);
 		if(!dir.query_exists())
@@ -32,7 +46,12 @@ public class SqlClient : Object
 		db.exec("SELECT * from servers", refresh_callback);
 	}
 
-	private static int refresh_callback(int n_columns, string[] values, string[] column_names) {
+	public Server get_server(string name)
+	{
+
+	}
+
+	private int refresh_callback(int n_columns, string[] values, string[] column_names) {
 		var server = new Server();
 		for (int i = 0; i < n_columns; i++) { 
 			switch(column_names[i])
@@ -66,10 +85,7 @@ public class SqlClient : Object
 					break;
 				case "autoconnect":
 					server.validate_server = to_bool(values[i]);
-					break;
-				case "encryption":
-					server.validate_server = to_bool(values[i]);
-					break;
+					break; 
 			}
 		}
 		servers.add(server);
