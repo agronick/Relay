@@ -72,9 +72,9 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="entry1">
+              <object class="GtkEntry" id="host">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can_focus">True</property>
                 <property name="margin_bottom">10</property>
               </object>
               <packing>
@@ -138,7 +138,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="entry2">
+              <object class="GtkEntry" id="nick">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="margin_bottom">10</property>
@@ -149,7 +149,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="entry3">
+              <object class="GtkEntry" id="real">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="margin_bottom">10</property>
@@ -160,7 +160,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="entry4">
+              <object class="GtkEntry" id="user">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="margin_bottom">10</property>
@@ -171,7 +171,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="entry5">
+              <object class="GtkEntry" id="pass">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="margin_bottom">10</property>
@@ -183,7 +183,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkCheckButton" id="checkbutton1">
+              <object class="GtkCheckButton" id="encrypt">
                 <property name="label" translatable="yes"> </property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>

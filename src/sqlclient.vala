@@ -44,11 +44,27 @@ public class SqlClient : Object
 	{
 		servers.clear();
 		db.exec("SELECT * from servers", refresh_callback);
+		db.exec("SELECT * from channels", refresh_callback_channel);
 	}
 
 	public Server get_server(string name)
 	{
+		foreach(Server svr in servers)
+		{
+			if(svr.host == name)
+				return svr;
+		}
+		return null;
+	}
 
+	public Server get_server_id(int id)
+	{
+		foreach(Server svr in servers)
+		{
+			if(svr.id == id)
+				return svr;
+		}
+		return null;
 	}
 
 	private int refresh_callback(int n_columns, string[] values, string[] column_names) {
@@ -83,12 +99,42 @@ public class SqlClient : Object
 				case "encryption":
 					server.encryption = to_bool(values[i]);
 					break;
-				case "autoconnect":
+				case "validate_server":
 					server.validate_server = to_bool(values[i]);
 					break; 
+				case "autoconnect":
+					server.autoconnect = to_bool(values[i]);
+					break; 
+			}
+		} 
+		servers.add(server);
+		return 0;
+	}
+
+	private int refresh_callback_channel(int n_columns, string[] values, string[] column_names) {
+		Server svr = null;
+		for (int i = 0; i < n_columns; i++) { 
+			if(column_names[i] == "server_id")
+			{
+				svr = get_server_id(values[i].to_int());
 			}
 		}
-		servers.add(server);
+		Channel chn = new Channel();
+		for (int i = 0; i < n_columns; i++) { 
+			switch(column_names[i])
+			{
+				case "id":
+					chn.id = values[i].to_int();
+					break;
+				case "server_id":
+					chn.server_id = values[i].to_int();
+					break;
+				case "channel":
+					chn.channel = values[i];
+					break;
+			}
+		}
+		svr.channels.add(chn);
 		return 0;
 	}
 
@@ -98,18 +144,18 @@ public class SqlClient : Object
 	}
 
 	public class Server{
-		public int id;
-		public string host;
-		public int port;
-		public string nickname;
-		public string realname;
-		public string username;
-		public string password;
-		public string on_connect;
-		public bool encryption;
-		public bool autoconnect;
-		public bool validate_server;
-		public ArrayList<Channel> channels;
+		public int id = 0;
+		public string host = "";
+		public int port = 6667;
+		public string nickname = "";
+		public string realname = "";
+		public string username = "";
+		public string password = "";
+		public string on_connect = "";
+		public bool encryption = false;
+		public bool autoconnect = false;
+		public bool validate_server = false;
+		public ArrayList<Channel> channels = new ArrayList<Channel>();
 	}
 
 	public class Channel{
