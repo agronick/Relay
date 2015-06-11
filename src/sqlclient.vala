@@ -67,9 +67,83 @@ public class SqlClient : Object
 		return null;
 	}
 
+	public int update(Server svr)
+	{
+		stderr.printf("RUNNING SQL\n");
+		
+		Sqlite.Statement stmt;
+		int ok;
+		string sql = "SELECT id FROM servers WHERE id = " + svr.id.to_string();
+		bool exists = false;
+		db.exec(sql, (n_columns, values, column_names) => { 
+			exists = true;
+			return 0;
+		}); 
+ 
+		
+		string keys = "";
+		foreach(string i in Server.keys)
+		{
+			//Skip over ID
+			if(keys == "")
+			{
+				keys = " ";
+				
+			}
+			keys += i + "=$" + i + ", ";
+		}
+
+		keys = keys[0:-2];
+ 
+
+		if(exists)
+		{
+			sql = "UPDATE servers SET " + keys + " WHERE id = " + svr.id.to_string();
+		
+			ok = db.prepare_v2(sql, sql.length, out stmt);
+			if (ok != Sqlite.OK) { 
+				critical (db.errmsg ());
+				return -1;
+	  		}
+	 
+			stmt.bind_text(1, svr.host);
+			stmt.bind_int(2, svr.port);
+			stmt.bind_text(3, svr.nickname);
+			stmt.bind_text(4, svr.realname);
+			stmt.bind_text(5, svr.username);
+			stmt.bind_text(6, svr.password);
+			stmt.bind_text(7, svr.on_connect); 
+			stmt.bind_int(8, bool_to(svr.encryption));  
+			stmt.bind_int(9, bool_to(svr.validate_server)); 
+			stmt.bind_int(10, bool_to(svr.autoconnect));
+
+			if(stmt.step() == Sqlite.DONE)
+			{
+				sql = "DELETE FROM channels WHERE server_id=" + svr.id.to_string();
+				string errmsg;
+				ok = db.exec(sql, null, out errmsg);  
+				
+				sql = "INSERT INTO channels (server_id, channel) VALUES(" + svr.id.to_string() + ", $CHANNEL)";
+
+				ok = db.prepare_v2(sql, sql.length, out stmt);
+				if (ok == Sqlite.ERROR) { 
+					critical (db.errmsg ());
+					return -1;
+				}
+				
+				foreach(Channel chn in svr.channels)
+				{ 
+					stmt.bind_text(1, chn.channel);
+					stmt.step(); 
+				}
+			}
+		}
+		return 0;
+	}
+
 	private int refresh_callback(int n_columns, string[] values, string[] column_names) {
 		var server = new Server();
-		for (int i = 0; i < n_columns; i++) { 
+		for (int i = 0; i < n_columns; i++) {  
 			switch(column_names[i])
 			{
 				case "id":
@@ -140,11 +214,19 @@ public class SqlClient : Object
 
 	public static bool to_bool(string input)
 	{
-		return (input == "true");
+		return (input == "1");
+	}
+	
+	public static int bool_to(bool b)
+	{
+		return b ? 1 : 0;
 	}
 
 	public class Server{
-		public int id = 0;
+
+		public const string[] keys = {"host", "port", "nickname", "realname", "username", "password", "on_connect", "encryption", "validate_server", "autoconnect"};
+		
+		public int id = -1;
 		public string host = "";
 		public int port = 6667;
 		public string nickname = "";
@@ -159,10 +241,11 @@ public class SqlClient : Object
 	}
 
 	public class Channel{
-		public int id;
+		public int id = -1;
 		public int server_id;
 		public string channel;
 	}
+
 
 	private void add_tables()
 	{
