@@ -10,7 +10,7 @@
     <property name="default_height">600</property>
     <signal name="destroy" handler="main_on_destroy" swapped="no"/>
     <child>
-      <object class="GtkPaned" id="paned1">
+      <object class="GtkPaned" id="pannel">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <child>

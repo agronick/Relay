@@ -23,8 +23,11 @@ public class ServerManager : Object
 	Grid form;
 	SqlClient.Server current_server = null;  
 	Gtk.TreeIter iter; 
-	bool none_selected = false;
-	
+	bool none_selected = false; 
+	public const char[] channel_char = {'&', '#', '+', '!'}; 
+
+ 
+	 
 	public bool open_window(Gdk.EventButton event)
 	{
 			current_server = null;
@@ -82,7 +85,8 @@ public class ServerManager : Object
 			box.pack_start(port, false, false, 0); 
 
 			add_servers();
-			window.show_all ();   
+			window.show_all ();  
+			set_forms_active (false);
 
 			return false;
 	}
@@ -230,13 +234,7 @@ public class ServerManager : Object
 			if(first_row == null)
 				first_row = lbr;
 		}
-
-		if(sqlclient.servers.size < 1)
-		{
-			add_channel.activate();
-		}else{
-			servers.select_row(first_row);
-		} 
+ 
 	}
 
 	private bool remove_channel_clicked(Gdk.EventButton event)
@@ -260,6 +258,19 @@ public class ServerManager : Object
 		string chan_name = new_channel.get_text().strip();
 		if(chan_name.length == 0)
 			return false;
+
+		if(!(chan_name[0] in channel_char))
+		{   
+			string message = "A channel name must begin with one of the following characters: &, #, +, !."; 
+			Gtk.MessageDialog msg = new Gtk.MessageDialog (window, Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK, message);
+			msg.response.connect ((response_id) => {  
+				host.grab_focus();
+				msg.destroy(); 
+			});
+			msg.show (); 
+			return false;
+		}
+		
 		var lbr = get_list_box_row(chan_name); 
 		new_channel.set_text("");
 		channels.add(lbr);  
@@ -294,21 +305,25 @@ public class ServerManager : Object
 
 	private bool add_server_clicked(Gdk.EventButton event)
 	{   
-		var lbr = get_list_box_row ("");
+		current_server = new SqlClient.Server(); 
+		int id = current_server.add_server_empty();		
+		current_server.id = id; 
+		current_server.host = "New Server " + id.to_string();
+		
+		var lbr = get_list_box_row (current_server.host);
 		servers.insert(lbr, -1);
 		servers.select_row(lbr); 
 		servers.show_all();
-		current_server = new SqlClient.Server();
-
-		int id = current_server.add_server_empty();		
-		current_server.id = id;
-		stderr.printf("id is " + current_server.id.to_string());
+		populate_fields (lbr);
+		host.grab_focus();
+		
 		return false;
 	}
  
 
 	private bool cancel_clicked(Gdk.EventButton event)
 	{ 
+		save_changes (select_row);
 		window.close(); 
 		return false;
 	}
