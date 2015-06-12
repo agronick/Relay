@@ -1,6 +1,6 @@
-/* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*-  */
+/* -*- Mode: vala; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*-  */
 /*
- * client.cc
+ * channeltab.vala
  * Copyright (C) 2015 Kyle Agronick <stack@kyle-ele>
  *
  * KyRC is free software: you can redistribute it and/or modify it
@@ -17,7 +17,16 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "client.h"
+public class ChannelTab : GLib.Object {
+	public int tab_index { get; set; }
+	public Client server { get; set; }
+	public string channel_name { get; set; }
 
 
+	// Constructor
+	public ChannelTab () {
+
+	}
+
+}
 

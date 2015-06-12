@@ -20,7 +20,7 @@ AM_CFLAGS =\
 bin_PROGRAMS = kyrc
 
 kyrc_SOURCES = \
-	kyrc.vala config.vapi client.vala sqlclient.vala server_manager.vala channel_item.vala channeltab.vala
+	kyrc.vala config.vapi client.vala sqlclient.vala server_manager.vala channel_item.vala channel_tab.vala
 
 kyrc_VALAFLAGS =  \
 	--pkg gtk+-3.0 --pkg glib-2.0 --pkg gee-0.8 --pkg granite --pkg sqlite3 -g --save-temps
