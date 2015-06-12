@@ -4,7 +4,7 @@
 
 
 uidir = $(pkgdatadir)/ui
-ui_DATA = kyrc.ui
+ui_DATA = kyrc.ui server_window.ui
 
 
 AM_CPPFLAGS = \

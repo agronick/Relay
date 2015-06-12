@@ -20,13 +20,14 @@ public class ServerManager : Object
 	Entry nick;
 	Switch encrypt;
 	Switch autoconnect;
-	Spinner spinner;
-	SqlClient.Server current_server;  
-	Gtk.TreeIter iter;
-	ArrayList<string> svr_channels = new ArrayList<string>();
+	Grid form;
+	SqlClient.Server current_server = null;  
+	Gtk.TreeIter iter; 
+	bool none_selected = false;
 	
 	public bool open_window(Gdk.EventButton event)
 	{
+			current_server = null;
 			var builder = new Builder();
 			builder.add_from_file(Main.UI_FILE_SERVERS);
 		
@@ -44,22 +45,24 @@ public class ServerManager : Object
 			real = builder.get_object ("real") as Entry;
 			user = builder.get_object ("user") as Entry;
 			pass = builder.get_object ("pass") as Entry;
-			nick = builder.get_object ("nick") as Entry;
-			spinner = builder.get_object ("spinner") as Spinner;
+			nick = builder.get_object ("nick") as Entry; 
 			encrypt = builder.get_object ("encrypt") as Switch;
 			autoconnect = builder.get_object ("autoconnect") as Switch;
+			form = builder.get_object ("form") as Grid;
 		 
  
 			servers.set_selection_mode(SelectionMode.BROWSE); 
 			servers.row_activated.connect(save_changes);
-			servers.row_activated.connect(populate_fields);
+			servers.row_activated.connect(populate_fields); 
+			servers.row_selected.connect(clear_row);
 
             var add_server = new Gtk.Button.from_icon_name("list-add-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
             var remove_server = new Gtk.Button.from_icon_name("list-remove-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
 			server_btns.pack_end(add_server, false, false, 0);
 			server_btns.pack_end(remove_server, false, false, 0);
 			
-			channels.set_size_request (100,100);	
+			channels.set_size_request (100,100);
+			channels.set_selection_mode(SelectionMode.BROWSE);
 			servers.set_size_request (175,50);	
 			
 
@@ -68,15 +71,14 @@ public class ServerManager : Object
 			add_server.button_release_event.connect(add_server_clicked);
 			remove_server.button_release_event.connect(remove_server_clicked);
 			remove_channel.button_release_event.connect(remove_channel_clicked);
-			//host.changed.connect(host_text_changed); 
+			host.focus_out_event.connect(host_text_changed); 
 
 		
 			var chn_adj = new Adjustment(1, 1, 500, 1, 2, 100); 
 			channels.set_adjustment(chn_adj);
 
 		
-			port = new Gtk.SpinButton.with_range (0, 65535, 1);
-			port.set_value(6667);
+			port = new Gtk.SpinButton.with_range (0, 65535, 1); 
 			box.pack_start(port, false, false, 0); 
 
 			add_servers();
@@ -84,25 +86,39 @@ public class ServerManager : Object
 
 			return false;
 	}
+
+	private void clear_row(ListBoxRow? row)
+	{ 
+		if(!(row is Widget))
+		{
+			none_selected = true;
+		}else if(none_selected) 
+		{
+			current_server = null;
+			select_row = null; 
+			none_selected = false;
+		}
+	}
  
 
 	public void save_changes(ListBoxRow row)
-	{ 
-		if(current_server == null)
-			return;
+	{   
+		if(current_server == null || select_row == null)
+			return; 
 
-		spinner.active = true;
+		var oldrow = select_row;
+
+		string hostname = host.get_text().strip();
+
+		if(hostname == "")
+			return;
 		
-		if(select_row != null)
-		{
-			int index = select_row.get_index();
-			var newrow = get_list_box_row (host.get_text());
-			servers.remove(select_row);
-			servers.insert(newrow, index);
-			servers.show_all();
-		}
+		var exists = sqlclient.get_server(hostname);
+		if(exists != null && exists.id != current_server.id)
+			return;
 		
-		current_server.host = host.get_text();
+		
+		current_server.host = hostname;
 		current_server.realname = real.get_text(); 
 		current_server.username = user.get_text();
 		current_server.password = pass.get_text();
@@ -110,27 +126,55 @@ public class ServerManager : Object
 		current_server.port = port.get_value_as_int();
 		current_server.encryption = encrypt.get_active();
 		current_server.autoconnect = autoconnect.get_active();
+ 
+		current_server.update();
 
-		current_server.channels.clear();
-		foreach(string c in svr_channels)
-		{ 
-			var chan = new SqlClient.Channel();
-			chan.channel = c;
-			chan.server_id = current_server.id;
-			current_server.channels.add(chan);
+
+		if(select_row != null)
+		{
+			int index = select_row.get_index();
+			var newrow = get_list_box_row (hostname);
+			servers.remove(select_row);
+			servers.insert(newrow, index);
+			servers.show_all();
 		}
-
-		sqlclient.update(current_server);
-		 
-		sqlclient.refresh(); 
-
-		spinner.active = false;
- 
 	}
- 
- 
-	public void populate_fields(ListBoxRow row)
+
+	private bool host_text_changed(EventFocus event)
+	{
+		string message = "";
+		string name = host.get_text().strip();
+		if(name.length == 0)
+		{
+			message = "Host can not be empty. Your changes will not be saved."; 
+		}
+		var exists = sqlclient.get_server(name);
+		if(exists != null && exists.id != current_server.id)
+		{
+			message = "A server with that host already exists. Your changes will not be saved."; 
+		}
+		if(message != "")
+		{ 
+			Gtk.MessageDialog msg = new Gtk.MessageDialog (window, Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK, message);
+			msg.response.connect ((response_id) => {  
+				host.grab_focus();
+				msg.destroy(); 
+			});
+			msg.show (); 
+		}
+		return false;
+	}
+  
+	public void populate_fields(ListBoxRow? row)
 	{     
+		if(row == null)
+		{
+			current_server = null;
+			select_row = null;
+		}
+		
+		set_forms_active(true);
+		
 		select_row = row;
 		
 		SqlClient.Server svr = sqlclient.get_server(row.name);
@@ -152,14 +196,12 @@ public class ServerManager : Object
 		{
 			channels.remove(lbr);
 		}
-
-		svr_channels.clear(); 
+ 
 		
 		foreach(SqlClient.Channel chn in svr.channels)
 		{  
 			var lbr = get_list_box_row(chn.channel); 
-			channels.insert(lbr, -1); 
-			svr_channels.add(chn.channel);
+			channels.insert(lbr, -1);  
 		}
 		
 		channels.show_all(); 
@@ -180,8 +222,9 @@ public class ServerManager : Object
 	private void add_servers()
 	{  
 		ListBoxRow first_row = null;
-		foreach(SqlClient.Server server in sqlclient.servers)
+		foreach(var svr in sqlclient.servers.entries)
 		{ 
+			var server = svr.value;
 			var lbr = get_list_box_row(server.host);
 			servers.insert(lbr, -1);
 			if(first_row == null)
@@ -198,43 +241,68 @@ public class ServerManager : Object
 
 	private bool remove_channel_clicked(Gdk.EventButton event)
 	{ 
-		var widget = channels.get_selected_row();
-		if(!svr_channels.remove(widget.name))
-			stderr.printf("Could not find row to remove" + widget.name);
-		channels.remove(widget);
+		var widget = channels.get_selected_row(); 
+		channels.remove(widget); 
+		var channel = new SqlClient.Channel();
+		channel.server_id = current_server.id;
+		channel.channel = widget.name;
+		channel.delete_channel(); 
+		foreach(var chan in current_server.channels)
+		{
+			if(chan.server_id == current_server.id && chan.channel == widget.name)
+				current_server.channels.remove(chan); 
+		}
 		return false;
 	}
-	
-	private bool remove_server_clicked(Gdk.EventButton event)
-	{
-		var widget = servers.get_selected_row();
-		
-		servers.remove(widget);
-		return false;
-	}
-
+ 
 	private bool add_channel_clicked(Gdk.EventButton event)
 	{
 		string chan_name = new_channel.get_text().strip();
 		if(chan_name.length == 0)
 			return false;
-		var lbr = get_list_box_row(chan_name);
-		svr_channels.add(chan_name);
+		var lbr = get_list_box_row(chan_name); 
 		new_channel.set_text("");
 		channels.add(lbr);  
 		channels.show_all();
+		var channel = new SqlClient.Channel();
+		channel.server_id = current_server.id;
+		channel.channel = chan_name;
+		channel.add_channel();
+		current_server.channels.add(channel);
+		return false;
+	}
+	
+	private bool remove_server_clicked(Gdk.EventButton event)
+	{
+		var widget = servers.get_selected_row(); 
+		servers.remove(widget);
+		set_forms_active(false); 
+		current_server.remove_server();
+		current_server = null;
 		return false;
 	}
 
+	private void set_forms_active(bool active)
+	{
+		var children = form.get_children();
+		foreach(var child in children)
+		{
+			child.set_sensitive(active);
+		}
+	}
+
+
 	private bool add_server_clicked(Gdk.EventButton event)
-	{  
-		var lbr = new ListBoxRow();
-		var lbl = new Label("");
-		lbl.set_halign(Align.START);
-		lbr.add(lbl);  
-		servers.insert(lbr, -1); 
+	{   
+		var lbr = get_list_box_row ("");
+		servers.insert(lbr, -1);
 		servers.select_row(lbr); 
 		servers.show_all();
+		current_server = new SqlClient.Server();
+
+		int id = current_server.add_server_empty();		
+		current_server.id = id;
+		stderr.printf("id is " + current_server.id.to_string());
 		return false;
 	}
  

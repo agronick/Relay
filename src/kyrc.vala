@@ -187,10 +187,10 @@ public class Main : Object
 	}
 
 	public void refresh_server_list()
-	{
-		stderr.printf(sqlclient.servers.size.to_string());
-		foreach(SqlClient.Server server in sqlclient.servers)
+	{ 
+		foreach(var svr in sqlclient.servers.entries)
 		{
+			var server = svr.value;
 			var lbr = new ListBoxRow();
 			var lbl = new Label(server.host); 
 			lbr.set_halign(Align.FILL);

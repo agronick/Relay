@@ -23,6 +23,7 @@ typedef struct _ClientPrivate ClientPrivate;
 #define _g_object_unref0(var) ((var == NULL) ? NULL : (var = (g_object_unref (var), NULL)))
 #define _g_free0(var) (var = (g_free (var), NULL))
 #define __g_list_free__g_object_unref0_0(var) ((var == NULL) ? NULL : (var = (_g_list_free__g_object_unref0_ (var), NULL)))
+#define _g_error_free0(var) ((var == NULL) ? NULL : (var = (g_error_free (var), NULL)))
 
 struct _Client {
 	GObject parent_instance;
@@ -31,6 +32,7 @@ struct _Client {
 	GDataOutputStream* output_stream;
 	gint tab;
 	gchar* username;
+	gboolean exit;
 };
 
 struct _ClientClass {
@@ -49,12 +51,14 @@ GType client_get_type (void) G_GNUC_CONST;
 enum  {
 	CLIENT_DUMMY_PROPERTY
 };
+#define CLIENT_default_port ((guint16) 6667)
 gboolean client_connect_to_server (Client* self, const gchar* location, gint tab_page);
 static gint client_do_connect (Client* self);
 static gpointer _client_do_connect_gthread_func (gpointer self);
 static void _g_object_unref0_ (gpointer var);
 static void _g_list_free__g_object_unref0_ (GList* self);
 void client_send_output (Client* self, const gchar* output);
+void client_stop (Client* self);
 Client* client_new (void);
 Client* client_construct (GType object_type);
 static void g_cclosure_user_marshal_VOID__INT_STRING (GClosure * closure, GValue * return_value, guint n_param_values, const GValue * param_values, gpointer invocation_hint, gpointer marshal_data);
@@ -64,11 +68,11 @@ static void client_finalize (GObject* obj);
 static gpointer _client_do_connect_gthread_func (gpointer self) {
 	gpointer result;
 	result = (gpointer) ((gintptr) client_do_connect ((Client*) self));
-#line 21 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 23 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	g_object_unref (self);
-#line 21 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 23 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	return result;
-#line 72 "client.c"
+#line 76 "client.c"
 }
 
 
@@ -78,62 +82,62 @@ gboolean client_connect_to_server (Client* self, const gchar* location, gint tab
 	gchar* _tmp1_ = NULL;
 	gint _tmp2_ = 0;
 	GError * _inner_error_ = NULL;
-#line 16 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 18 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	g_return_val_if_fail (self != NULL, FALSE);
-#line 16 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 18 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	g_return_val_if_fail (location != NULL, FALSE);
-#line 18 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 20 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp0_ = location;
-#line 18 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 20 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp1_ = g_strdup (_tmp0_);
-#line 18 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 20 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_g_free0 (self->priv->url);
-#line 18 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 20 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	self->priv->url = _tmp1_;
-#line 19 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 21 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp2_ = tab_page;
-#line 19 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 21 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	self->tab = _tmp2_;
-#line 21 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 23 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	g_thread_create (_client_do_connect_gthread_func, g_object_ref (self), TRUE, &_inner_error_);
-#line 21 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 23 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	if (G_UNLIKELY (_inner_error_ != NULL)) {
-#line 21 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 23 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
-#line 21 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 23 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		g_clear_error (&_inner_error_);
-#line 21 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 23 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		return FALSE;
-#line 108 "client.c"
+#line 112 "client.c"
 	}
-#line 23 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 25 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	result = TRUE;
-#line 23 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 25 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	return result;
-#line 114 "client.c"
+#line 118 "client.c"
 }
 
 
 static gpointer _g_object_ref0 (gpointer self) {
-#line 33 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	return self ? g_object_ref (self) : NULL;
-#line 121 "client.c"
+#line 125 "client.c"
 }
 
 
 static void _g_object_unref0_ (gpointer var) {
-#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	(var == NULL) ? NULL : (var = (g_object_unref (var), NULL));
-#line 128 "client.c"
+#line 132 "client.c"
 }
 
 
 static void _g_list_free__g_object_unref0_ (GList* self) {
-#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	g_list_foreach (self, (GFunc) _g_object_unref0_, NULL);
-#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	g_list_free (self);
-#line 137 "client.c"
+#line 141 "client.c"
 }
 
 
@@ -156,7 +160,175 @@ static gchar* string_strip (const gchar* self) {
 	result = _result_;
 #line 1118 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
 	return result;
-#line 160 "client.c"
+#line 164 "client.c"
+}
+
+
+static glong string_strnlen (gchar* str, glong maxlen) {
+	glong result = 0L;
+	gchar* end = NULL;
+	gchar* _tmp0_ = NULL;
+	glong _tmp1_ = 0L;
+	gchar* _tmp2_ = NULL;
+	gchar* _tmp3_ = NULL;
+#line 1197 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	_tmp0_ = str;
+#line 1197 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	_tmp1_ = maxlen;
+#line 1197 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	_tmp2_ = memchr (_tmp0_, 0, (gsize) _tmp1_);
+#line 1197 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	end = _tmp2_;
+#line 1198 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	_tmp3_ = end;
+#line 1198 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	if (_tmp3_ == NULL) {
+#line 187 "client.c"
+		glong _tmp4_ = 0L;
+#line 1199 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		_tmp4_ = maxlen;
+#line 1199 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		result = _tmp4_;
+#line 1199 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		return result;
+#line 195 "client.c"
+	} else {
+		gchar* _tmp5_ = NULL;
+		gchar* _tmp6_ = NULL;
+#line 1201 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		_tmp5_ = end;
+#line 1201 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		_tmp6_ = str;
+#line 1201 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		result = (glong) (_tmp5_ - _tmp6_);
+#line 1201 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		return result;
+#line 207 "client.c"
+	}
+}
+
+
+static gchar* string_substring (const gchar* self, glong offset, glong len) {
+	gchar* result = NULL;
+	glong string_length = 0L;
+	gboolean _tmp0_ = FALSE;
+	glong _tmp1_ = 0L;
+	glong _tmp8_ = 0L;
+	glong _tmp14_ = 0L;
+	glong _tmp17_ = 0L;
+	glong _tmp18_ = 0L;
+	glong _tmp19_ = 0L;
+	glong _tmp20_ = 0L;
+	glong _tmp21_ = 0L;
+	gchar* _tmp22_ = NULL;
+#line 1208 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	g_return_val_if_fail (self != NULL, NULL);
+#line 1210 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	_tmp1_ = offset;
+#line 1210 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	if (_tmp1_ >= ((glong) 0)) {
+#line 231 "client.c"
+		glong _tmp2_ = 0L;
+#line 1210 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		_tmp2_ = len;
+#line 1210 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		_tmp0_ = _tmp2_ >= ((glong) 0);
+#line 237 "client.c"
+	} else {
+#line 1210 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		_tmp0_ = FALSE;
+#line 241 "client.c"
+	}
+#line 1210 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	if (_tmp0_) {
+#line 245 "client.c"
+		glong _tmp3_ = 0L;
+		glong _tmp4_ = 0L;
+		glong _tmp5_ = 0L;
+#line 1212 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		_tmp3_ = offset;
+#line 1212 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		_tmp4_ = len;
+#line 1212 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		_tmp5_ = string_strnlen ((gchar*) self, _tmp3_ + _tmp4_);
+#line 1212 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		string_length = _tmp5_;
+#line 257 "client.c"
+	} else {
+		gint _tmp6_ = 0;
+		gint _tmp7_ = 0;
+#line 1214 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		_tmp6_ = strlen (self);
+#line 1214 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		_tmp7_ = _tmp6_;
+#line 1214 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		string_length = (glong) _tmp7_;
+#line 267 "client.c"
+	}
+#line 1217 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	_tmp8_ = offset;
+#line 1217 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	if (_tmp8_ < ((glong) 0)) {
+#line 273 "client.c"
+		glong _tmp9_ = 0L;
+		glong _tmp10_ = 0L;
+		glong _tmp11_ = 0L;
+#line 1218 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		_tmp9_ = string_length;
+#line 1218 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		_tmp10_ = offset;
+#line 1218 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		offset = _tmp9_ + _tmp10_;
+#line 1219 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		_tmp11_ = offset;
+#line 1219 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		g_return_val_if_fail (_tmp11_ >= ((glong) 0), NULL);
+#line 287 "client.c"
+	} else {
+		glong _tmp12_ = 0L;
+		glong _tmp13_ = 0L;
+#line 1221 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		_tmp12_ = offset;
+#line 1221 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		_tmp13_ = string_length;
+#line 1221 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		g_return_val_if_fail (_tmp12_ <= _tmp13_, NULL);
+#line 297 "client.c"
+	}
+#line 1223 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	_tmp14_ = len;
+#line 1223 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	if (_tmp14_ < ((glong) 0)) {
+#line 303 "client.c"
+		glong _tmp15_ = 0L;
+		glong _tmp16_ = 0L;
+#line 1224 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		_tmp15_ = string_length;
+#line 1224 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		_tmp16_ = offset;
+#line 1224 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+		len = _tmp15_ - _tmp16_;
+#line 312 "client.c"
+	}
+#line 1226 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	_tmp17_ = offset;
+#line 1226 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	_tmp18_ = len;
+#line 1226 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	_tmp19_ = string_length;
+#line 1226 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	g_return_val_if_fail ((_tmp17_ + _tmp18_) <= _tmp19_, NULL);
+#line 1227 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	_tmp20_ = offset;
+#line 1227 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	_tmp21_ = len;
+#line 1227 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	_tmp22_ = g_strndup (((gchar*) self) + _tmp20_, (gsize) _tmp21_);
+#line 1227 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	result = _tmp22_;
+#line 1227 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	return result;
+#line 332 "client.c"
 }
 
 
@@ -209,285 +381,409 @@ static gint client_do_connect (Client* self) {
 	gchar* line = NULL;
 	gchar* _tmp39_ = NULL;
 	GError * _inner_error_ = NULL;
-#line 26 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 28 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	g_return_val_if_fail (self != NULL, 0);
-#line 28 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 30 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp0_ = g_socket_client_new ();
-#line 28 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 30 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	client = _tmp0_;
-#line 31 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 33 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp1_ = g_resolver_get_default ();
-#line 31 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 33 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	resolver = _tmp1_;
-#line 32 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 34 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp2_ = resolver;
-#line 32 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 34 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp3_ = self->priv->url;
-#line 32 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 34 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp4_ = g_resolver_lookup_by_name (_tmp2_, _tmp3_, NULL, &_inner_error_);
-#line 32 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 34 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	addresses = _tmp4_;
-#line 32 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 34 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	if (G_UNLIKELY (_inner_error_ != NULL)) {
-#line 32 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 34 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		_g_object_unref0 (resolver);
-#line 32 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 34 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		_g_object_unref0 (client);
-#line 32 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 34 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
-#line 32 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 34 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		g_clear_error (&_inner_error_);
-#line 32 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 34 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		return 0;
-#line 243 "client.c"
+#line 415 "client.c"
 	}
-#line 33 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp5_ = addresses;
-#line 33 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp6_ = g_list_nth_data (_tmp5_, (guint) 0);
-#line 33 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp7_ = _g_object_ref0 ((GInetAddress*) _tmp6_);
-#line 33 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	address = _tmp7_;
-#line 34 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 36 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp8_ = stderr;
-#line 34 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 36 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp9_ = address;
-#line 34 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 36 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp10_ = g_inet_address_to_string (_tmp9_);
-#line 34 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 36 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp11_ = _tmp10_;
-#line 34 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 36 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp12_ = g_strconcat ("address ", _tmp11_, NULL);
-#line 34 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 36 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp13_ = _tmp12_;
-#line 34 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 36 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	fprintf (_tmp8_, "%s", _tmp13_);
-#line 34 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 36 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_g_free0 (_tmp13_);
-#line 34 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 36 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_g_free0 (_tmp11_);
-#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp14_ = client;
-#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp15_ = address;
-#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
-	_tmp16_ = (GInetSocketAddress*) g_inet_socket_address_new (_tmp15_, (guint16) 6667);
-#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
+	_tmp16_ = (GInetSocketAddress*) g_inet_socket_address_new (_tmp15_, CLIENT_default_port);
+#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp17_ = _tmp16_;
-#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp18_ = g_socket_client_connect (_tmp14_, (GSocketConnectable*) _tmp17_, NULL, &_inner_error_);
-#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp19_ = _tmp18_;
-#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_g_object_unref0 (_tmp17_);
-#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	conn = _tmp19_;
-#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	if (G_UNLIKELY (_inner_error_ != NULL)) {
-#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		_g_object_unref0 (address);
-#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		__g_list_free__g_object_unref0_0 (addresses);
-#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		_g_object_unref0 (resolver);
-#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		_g_object_unref0 (client);
-#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
-#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		g_clear_error (&_inner_error_);
-#line 35 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		return 0;
-#line 303 "client.c"
+#line 475 "client.c"
 	}
-#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 39 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp20_ = conn;
-#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 39 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp21_ = g_io_stream_get_input_stream ((GIOStream*) _tmp20_);
-#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 39 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp22_ = _tmp21_;
-#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 39 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp23_ = g_data_input_stream_new (_tmp22_);
-#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 39 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_g_object_unref0 (self->input_stream);
-#line 37 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 39 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	self->input_stream = _tmp23_;
-#line 38 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 40 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp24_ = conn;
-#line 38 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 40 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp25_ = g_io_stream_get_output_stream ((GIOStream*) _tmp24_);
-#line 38 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 40 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp26_ = _tmp25_;
-#line 38 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 40 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp27_ = g_data_output_stream_new (_tmp26_);
-#line 38 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 40 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_g_object_unref0 (self->output_stream);
-#line 38 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 40 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	self->output_stream = _tmp27_;
-#line 40 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 42 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp28_ = self->username;
-#line 40 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 42 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp29_ = g_strconcat ("NICK ", _tmp28_, NULL);
-#line 40 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 42 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp30_ = _tmp29_;
-#line 40 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 42 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	client_send_output (self, _tmp30_);
-#line 40 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 42 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_g_free0 (_tmp30_);
-#line 41 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 43 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp31_ = self->username;
-#line 41 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 43 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp32_ = g_strconcat ("USER ", _tmp31_, NULL);
-#line 41 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 43 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp33_ = _tmp32_;
-#line 41 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 43 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp34_ = g_strconcat (_tmp33_, " null null :", NULL);
-#line 41 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 43 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp35_ = _tmp34_;
-#line 41 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 43 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp36_ = self->username;
-#line 41 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 43 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp37_ = g_strconcat (_tmp35_, _tmp36_, NULL);
-#line 41 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 43 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp38_ = _tmp37_;
-#line 41 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 43 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	client_send_output (self, _tmp38_);
-#line 41 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 43 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_g_free0 (_tmp38_);
-#line 41 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 43 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_g_free0 (_tmp35_);
-#line 41 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 43 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_g_free0 (_tmp33_);
-#line 43 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp39_ = g_strdup ("");
-#line 43 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	line = _tmp39_;
-#line 367 "client.c"
+#line 539 "client.c"
 	{
 		gboolean _tmp40_ = FALSE;
-#line 44 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 46 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		_tmp40_ = TRUE;
-#line 44 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 46 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		while (TRUE) {
-#line 374 "client.c"
-			gchar* _tmp42_ = NULL;
-			GDataInputStream* _tmp43_ = NULL;
+#line 546 "client.c"
 			gchar* _tmp44_ = NULL;
-			gchar* _tmp45_ = NULL;
+			GDataInputStream* _tmp45_ = NULL;
 			gchar* _tmp46_ = NULL;
 			gchar* _tmp47_ = NULL;
 			gchar* _tmp48_ = NULL;
 			gchar* _tmp49_ = NULL;
-			FILE* _tmp50_ = NULL;
-			const gchar* _tmp51_ = NULL;
-			gchar* _tmp52_ = NULL;
-			gchar* _tmp53_ = NULL;
-			gint _tmp54_ = 0;
-			const gchar* _tmp55_ = NULL;
-#line 44 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			gchar* _tmp50_ = NULL;
+			gchar* _tmp51_ = NULL;
+			gint _tmp52_ = 0;
+			const gchar* _tmp53_ = NULL;
+#line 46 "/home/stack/Apps/projects/KyRC/src/client.vala"
 			if (!_tmp40_) {
-#line 391 "client.c"
-				const gchar* _tmp41_ = NULL;
-#line 48 "/home/stack/Apps/projects/KyRC/src/client.vala"
-				_tmp41_ = line;
-#line 48 "/home/stack/Apps/projects/KyRC/src/client.vala"
-				if (!(_tmp41_ != NULL)) {
-#line 48 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 559 "client.c"
+				gboolean _tmp41_ = FALSE;
+				const gchar* _tmp42_ = NULL;
+#line 49 "/home/stack/Apps/projects/KyRC/src/client.vala"
+				_tmp42_ = line;
+#line 49 "/home/stack/Apps/projects/KyRC/src/client.vala"
+				if (_tmp42_ != NULL) {
+#line 566 "client.c"
+					gboolean _tmp43_ = FALSE;
+#line 49 "/home/stack/Apps/projects/KyRC/src/client.vala"
+					_tmp43_ = self->exit;
+#line 49 "/home/stack/Apps/projects/KyRC/src/client.vala"
+					_tmp41_ = !_tmp43_;
+#line 572 "client.c"
+				} else {
+#line 49 "/home/stack/Apps/projects/KyRC/src/client.vala"
+					_tmp41_ = FALSE;
+#line 576 "client.c"
+				}
+#line 49 "/home/stack/Apps/projects/KyRC/src/client.vala"
+				if (!_tmp41_) {
+#line 49 "/home/stack/Apps/projects/KyRC/src/client.vala"
 					break;
-#line 399 "client.c"
+#line 582 "client.c"
 				}
 			}
-#line 44 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 46 "/home/stack/Apps/projects/KyRC/src/client.vala"
 			_tmp40_ = FALSE;
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
-			_tmp43_ = self->input_stream;
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
-			_tmp44_ = g_data_input_stream_read_line (_tmp43_, NULL, NULL, &_inner_error_);
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
-			_tmp42_ = _tmp44_;
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			_tmp45_ = self->input_stream;
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			_tmp46_ = g_data_input_stream_read_line (_tmp45_, NULL, NULL, &_inner_error_);
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			_tmp44_ = _tmp46_;
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
 			if (G_UNLIKELY (_inner_error_ != NULL)) {
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
 				_g_free0 (line);
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
 				_g_object_unref0 (conn);
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
 				_g_object_unref0 (address);
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
 				__g_list_free__g_object_unref0_0 (addresses);
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
 				_g_object_unref0 (resolver);
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
 				_g_object_unref0 (client);
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
 				g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
 				g_clear_error (&_inner_error_);
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
 				return 0;
-#line 430 "client.c"
+#line 613 "client.c"
 			}
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
-			_tmp45_ = _tmp42_;
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
-			_tmp42_ = NULL;
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
-			_tmp46_ = _tmp45_;
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
-			_tmp47_ = string_strip (_tmp46_);
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			_tmp47_ = _tmp44_;
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			_tmp44_ = NULL;
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
 			_tmp48_ = _tmp47_;
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
-			_tmp49_ = g_strconcat (_tmp48_, "\n", NULL);
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			_tmp49_ = string_strip (_tmp48_);
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			_tmp50_ = _tmp49_;
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			_tmp51_ = string_substring (_tmp50_, (glong) 1, (glong) (-1));
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
 			_g_free0 (line);
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
-			line = _tmp49_;
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			line = _tmp51_;
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			_g_free0 (_tmp50_);
+#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
 			_g_free0 (_tmp48_);
-#line 45 "/home/stack/Apps/projects/KyRC/src/client.vala"
-			_g_free0 (_tmp46_);
+#line 48 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			_tmp52_ = self->tab;
+#line 48 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			_tmp53_ = line;
+#line 48 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			g_signal_emit_by_name (self, "new-data", _tmp52_, _tmp53_);
 #line 46 "/home/stack/Apps/projects/KyRC/src/client.vala"
-			_tmp50_ = stderr;
-#line 46 "/home/stack/Apps/projects/KyRC/src/client.vala"
-			_tmp51_ = line;
-#line 46 "/home/stack/Apps/projects/KyRC/src/client.vala"
-			_tmp52_ = g_strconcat ("line ", _tmp51_, NULL);
-#line 46 "/home/stack/Apps/projects/KyRC/src/client.vala"
-			_tmp53_ = _tmp52_;
-#line 46 "/home/stack/Apps/projects/KyRC/src/client.vala"
-			fprintf (_tmp50_, "%s", _tmp53_);
-#line 46 "/home/stack/Apps/projects/KyRC/src/client.vala"
-			_g_free0 (_tmp53_);
-#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
-			_tmp54_ = self->tab;
-#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
-			_tmp55_ = line;
-#line 47 "/home/stack/Apps/projects/KyRC/src/client.vala"
-			g_signal_emit_by_name (self, "new-data", _tmp54_, _tmp55_);
-#line 44 "/home/stack/Apps/projects/KyRC/src/client.vala"
-			_g_free0 (_tmp42_);
-#line 472 "client.c"
+			_g_free0 (_tmp44_);
+#line 643 "client.c"
 		}
 	}
-#line 50 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 52 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	result = 1;
-#line 50 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 52 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_g_free0 (line);
-#line 50 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 52 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_g_object_unref0 (conn);
-#line 50 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 52 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_g_object_unref0 (address);
-#line 50 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 52 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	__g_list_free__g_object_unref0_0 (addresses);
-#line 50 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 52 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_g_object_unref0 (resolver);
-#line 50 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 52 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_g_object_unref0 (client);
-#line 50 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 52 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	return result;
-#line 491 "client.c"
+#line 662 "client.c"
+}
+
+
+void client_stop (Client* self) {
+	GDataInputStream* _tmp0_ = NULL;
+	GDataOutputStream* _tmp2_ = NULL;
+	GDataOutputStream* _tmp3_ = NULL;
+	GError * _inner_error_ = NULL;
+#line 55 "/home/stack/Apps/projects/KyRC/src/client.vala"
+	g_return_if_fail (self != NULL);
+#line 57 "/home/stack/Apps/projects/KyRC/src/client.vala"
+	self->exit = TRUE;
+#line 58 "/home/stack/Apps/projects/KyRC/src/client.vala"
+	_tmp0_ = self->input_stream;
+#line 58 "/home/stack/Apps/projects/KyRC/src/client.vala"
+	g_input_stream_clear_pending ((GInputStream*) _tmp0_);
+#line 679 "client.c"
+	{
+		GDataInputStream* _tmp1_ = NULL;
+#line 60 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		_tmp1_ = self->input_stream;
+#line 60 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		g_input_stream_close ((GInputStream*) _tmp1_, NULL, &_inner_error_);
+#line 60 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		if (G_UNLIKELY (_inner_error_ != NULL)) {
+#line 60 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			if (_inner_error_->domain == G_IO_ERROR) {
+#line 690 "client.c"
+				goto __catch1_g_io_error;
+			}
+#line 60 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			g_critical ("file %s: line %d: unexpected error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
+#line 60 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			g_clear_error (&_inner_error_);
+#line 60 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			return;
+#line 699 "client.c"
+		}
+	}
+	goto __finally1;
+	__catch1_g_io_error:
+	{
+		GError* e = NULL;
+#line 59 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		e = _inner_error_;
+#line 59 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		_inner_error_ = NULL;
+#line 59 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		_g_error_free0 (e);
+#line 712 "client.c"
+	}
+	__finally1:
+#line 59 "/home/stack/Apps/projects/KyRC/src/client.vala"
+	if (G_UNLIKELY (_inner_error_ != NULL)) {
+#line 59 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
+#line 59 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		g_clear_error (&_inner_error_);
+#line 59 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		return;
+#line 723 "client.c"
+	}
+#line 62 "/home/stack/Apps/projects/KyRC/src/client.vala"
+	_tmp2_ = self->output_stream;
+#line 62 "/home/stack/Apps/projects/KyRC/src/client.vala"
+	g_output_stream_clear_pending ((GOutputStream*) _tmp2_);
+#line 63 "/home/stack/Apps/projects/KyRC/src/client.vala"
+	_tmp3_ = self->output_stream;
+#line 63 "/home/stack/Apps/projects/KyRC/src/client.vala"
+	g_output_stream_flush ((GOutputStream*) _tmp3_, NULL, &_inner_error_);
+#line 63 "/home/stack/Apps/projects/KyRC/src/client.vala"
+	if (G_UNLIKELY (_inner_error_ != NULL)) {
+#line 63 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
+#line 63 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		g_clear_error (&_inner_error_);
+#line 63 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		return;
+#line 741 "client.c"
+	}
+	{
+		GDataOutputStream* _tmp4_ = NULL;
+#line 65 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		_tmp4_ = self->output_stream;
+#line 65 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		g_output_stream_close ((GOutputStream*) _tmp4_, NULL, &_inner_error_);
+#line 65 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		if (G_UNLIKELY (_inner_error_ != NULL)) {
+#line 65 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			if (_inner_error_->domain == G_IO_ERROR) {
+#line 753 "client.c"
+				goto __catch2_g_io_error;
+			}
+#line 65 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			g_critical ("file %s: line %d: unexpected error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
+#line 65 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			g_clear_error (&_inner_error_);
+#line 65 "/home/stack/Apps/projects/KyRC/src/client.vala"
+			return;
+#line 762 "client.c"
+		}
+	}
+	goto __finally2;
+	__catch2_g_io_error:
+	{
+		GError* e = NULL;
+#line 64 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		e = _inner_error_;
+#line 64 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		_inner_error_ = NULL;
+#line 64 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		_g_error_free0 (e);
+#line 775 "client.c"
+	}
+	__finally2:
+#line 64 "/home/stack/Apps/projects/KyRC/src/client.vala"
+	if (G_UNLIKELY (_inner_error_ != NULL)) {
+#line 64 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
+#line 64 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		g_clear_error (&_inner_error_);
+#line 64 "/home/stack/Apps/projects/KyRC/src/client.vala"
+		return;
+#line 786 "client.c"
+	}
 }
 
 
@@ -497,31 +793,31 @@ void client_send_output (Client* self, const gchar* output) {
 	gchar* _tmp2_ = NULL;
 	gchar* _tmp3_ = NULL;
 	GError * _inner_error_ = NULL;
-#line 53 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 69 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	g_return_if_fail (self != NULL);
-#line 53 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 69 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	g_return_if_fail (output != NULL);
-#line 55 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 71 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp0_ = self->output_stream;
-#line 55 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 71 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp1_ = output;
-#line 55 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 71 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp2_ = g_strconcat (_tmp1_, "\r\n", NULL);
-#line 55 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 71 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_tmp3_ = _tmp2_;
-#line 55 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 71 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	g_data_output_stream_put_string (_tmp0_, _tmp3_, NULL, &_inner_error_);
-#line 55 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 71 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	_g_free0 (_tmp3_);
-#line 55 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 71 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	if (G_UNLIKELY (_inner_error_ != NULL)) {
-#line 55 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 71 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
-#line 55 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 71 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		g_clear_error (&_inner_error_);
-#line 55 "/home/stack/Apps/projects/KyRC/src/client.vala"
+#line 71 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		return;
-#line 525 "client.c"
+#line 821 "client.c"
 	}
 }
 
@@ -532,14 +828,14 @@ Client* client_construct (GType object_type) {
 	self = (Client*) g_object_new (object_type, NULL);
 #line 4 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	return self;
-#line 536 "client.c"
+#line 832 "client.c"
 }
 
 
 Client* client_new (void) {
 #line 4 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	return client_construct (TYPE_CLIENT);
-#line 543 "client.c"
+#line 839 "client.c"
 }
 
 
@@ -558,19 +854,19 @@ static void g_cclosure_user_marshal_VOID__INT_STRING (GClosure * closure, GValue
 		data1 = closure->data;
 #line 4 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		data2 = param_values->data[0].v_pointer;
-#line 562 "client.c"
+#line 858 "client.c"
 	} else {
 #line 4 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		data1 = param_values->data[0].v_pointer;
 #line 4 "/home/stack/Apps/projects/KyRC/src/client.vala"
 		data2 = closure->data;
-#line 568 "client.c"
+#line 864 "client.c"
 	}
 #line 4 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	callback = (GMarshalFunc_VOID__INT_STRING) (marshal_data ? marshal_data : cc->callback);
 #line 4 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	callback (data1, g_value_get_int (param_values + 1), g_value_get_string (param_values + 2), data2);
-#line 574 "client.c"
+#line 870 "client.c"
 }
 
 
@@ -583,7 +879,7 @@ static void client_class_init (ClientClass * klass) {
 	G_OBJECT_CLASS (klass)->finalize = client_finalize;
 #line 4 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	g_signal_new ("new_data", TYPE_CLIENT, G_SIGNAL_RUN_LAST, 0, NULL, NULL, g_cclosure_user_marshal_VOID__INT_STRING, G_TYPE_NONE, 2, G_TYPE_INT, G_TYPE_STRING);
-#line 587 "client.c"
+#line 883 "client.c"
 }
 
 
@@ -600,7 +896,9 @@ static void client_instance_init (Client * self) {
 	_tmp1_ = g_strdup ("");
 #line 11 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	self->username = _tmp1_;
-#line 604 "client.c"
+#line 12 "/home/stack/Apps/projects/KyRC/src/client.vala"
+	self->exit = FALSE;
+#line 902 "client.c"
 }
 
 
@@ -618,7 +916,7 @@ static void client_finalize (GObject* obj) {
 	_g_free0 (self->username);
 #line 4 "/home/stack/Apps/projects/KyRC/src/client.vala"
 	G_OBJECT_CLASS (client_parent_class)->finalize (obj);
-#line 622 "client.c"
+#line 920 "client.c"
 }
 
 

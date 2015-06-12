@@ -22,12 +22,14 @@
 
 #include <glib.h>
 #include <glib-object.h>
+#include <granite.h>
 #include <gtk/gtk.h>
 #include <gee.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <gio/gio.h>
+#include <gdk/gdk.h>
 
 
 #define TYPE_MAIN (main_get_type ())
@@ -41,6 +43,16 @@ typedef struct _Main Main;
 typedef struct _MainClass MainClass;
 typedef struct _MainPrivate MainPrivate;
 
+#define TYPE_SQL_CLIENT (sql_client_get_type ())
+#define SQL_CLIENT(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), TYPE_SQL_CLIENT, SqlClient))
+#define SQL_CLIENT_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST ((klass), TYPE_SQL_CLIENT, SqlClientClass))
+#define IS_SQL_CLIENT(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), TYPE_SQL_CLIENT))
+#define IS_SQL_CLIENT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), TYPE_SQL_CLIENT))
+#define SQL_CLIENT_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), TYPE_SQL_CLIENT, SqlClientClass))
+
+typedef struct _SqlClient SqlClient;
+typedef struct _SqlClientClass SqlClientClass;
+
 #define TYPE_CLIENT (client_get_type ())
 #define CLIENT(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), TYPE_CLIENT, Client))
 #define CLIENT_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST ((klass), TYPE_CLIENT, ClientClass))
@@ -51,10 +63,44 @@ typedef struct _MainPrivate MainPrivate;
 typedef struct _Client Client;
 typedef struct _ClientClass ClientClass;
 #define _g_object_unref0(var) ((var == NULL) ? NULL : (var = (g_object_unref (var), NULL)))
+typedef struct _Block1Data Block1Data;
+#define _g_free0(var) (var = (g_free (var), NULL))
 #define _g_error_free0(var) ((var == NULL) ? NULL : (var = (g_error_free (var), NULL)))
 typedef struct _ClientPrivate ClientPrivate;
-#define _g_free0(var) (var = (g_free (var), NULL))
-typedef struct _Block1Data Block1Data;
+typedef struct _Block2Data Block2Data;
+
+#define SQL_CLIENT_TYPE_SERVER (sql_client_server_get_type ())
+#define SQL_CLIENT_SERVER(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), SQL_CLIENT_TYPE_SERVER, SqlClientServer))
+#define SQL_CLIENT_SERVER_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST ((klass), SQL_CLIENT_TYPE_SERVER, SqlClientServerClass))
+#define SQL_CLIENT_IS_SERVER(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SQL_CLIENT_TYPE_SERVER))
+#define SQL_CLIENT_IS_SERVER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), SQL_CLIENT_TYPE_SERVER))
+#define SQL_CLIENT_SERVER_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), SQL_CLIENT_TYPE_SERVER, SqlClientServerClass))
+
+typedef struct _SqlClientServer SqlClientServer;
+typedef struct _SqlClientServerClass SqlClientServerClass;
+typedef struct _SqlClientServerPrivate SqlClientServerPrivate;
+
+#define SQL_CLIENT_TYPE_CHANNEL (sql_client_channel_get_type ())
+#define SQL_CLIENT_CHANNEL(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), SQL_CLIENT_TYPE_CHANNEL, SqlClientChannel))
+#define SQL_CLIENT_CHANNEL_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST ((klass), SQL_CLIENT_TYPE_CHANNEL, SqlClientChannelClass))
+#define SQL_CLIENT_IS_CHANNEL(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), SQL_CLIENT_TYPE_CHANNEL))
+#define SQL_CLIENT_IS_CHANNEL_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), SQL_CLIENT_TYPE_CHANNEL))
+#define SQL_CLIENT_CHANNEL_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), SQL_CLIENT_TYPE_CHANNEL, SqlClientChannelClass))
+
+typedef struct _SqlClientChannel SqlClientChannel;
+typedef struct _SqlClientChannelClass SqlClientChannelClass;
+#define _sql_client_server_unref0(var) ((var == NULL) ? NULL : (var = (sql_client_server_unref (var), NULL)))
+
+#define TYPE_SERVER_MANAGER (server_manager_get_type ())
+#define SERVER_MANAGER(obj) (G_TYPE_CHECK_INSTANCE_CAST ((obj), TYPE_SERVER_MANAGER, ServerManager))
+#define SERVER_MANAGER_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST ((klass), TYPE_SERVER_MANAGER, ServerManagerClass))
+#define IS_SERVER_MANAGER(obj) (G_TYPE_CHECK_INSTANCE_TYPE ((obj), TYPE_SERVER_MANAGER))
+#define IS_SERVER_MANAGER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), TYPE_SERVER_MANAGER))
+#define SERVER_MANAGER_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), TYPE_SERVER_MANAGER, ServerManagerClass))
+
+typedef struct _ServerManager ServerManager;
+typedef struct _ServerManagerClass ServerManagerClass;
+typedef struct _Block3Data Block3Data;
 
 struct _Main {
 	GObject parent_instance;
@@ -66,11 +112,20 @@ struct _MainClass {
 };
 
 struct _MainPrivate {
-	GtkNotebook* tabs;
+	GraniteWidgetsDynamicNotebook* tabs;
 	GtkWindow* window;
 	GtkEntry* input;
+	SqlClient* sqlclient;
 	GeeHashMap* outputs;
 	GeeHashMap* clients;
+	GtkListBox* servers;
+};
+
+struct _Block1Data {
+	int _ref_count_;
+	Main* self;
+	GtkDialog* dialog;
+	GtkEntry* server_name;
 };
 
 struct _Client {
@@ -80,231 +135,562 @@ struct _Client {
 	GDataOutputStream* output_stream;
 	gint tab;
 	gchar* username;
+	gboolean exit;
 };
 
 struct _ClientClass {
 	GObjectClass parent_class;
 };
 
-struct _Block1Data {
+struct _Block2Data {
 	int _ref_count_;
 	Main* self;
 	GtkTextView* tv;
+	GtkTextIter outiter;
+	GtkScrolledWindow* sw;
 	gchar* data;
+};
+
+struct _SqlClientServer {
+	GTypeInstance parent_instance;
+	volatile int ref_count;
+	SqlClientServerPrivate * priv;
+	gint id;
+	gchar* host;
+	gint port;
+	gchar* nickname;
+	gchar* realname;
+	gchar* username;
+	gchar* password;
+	gchar* on_connect;
+	gboolean encryption;
+	gboolean autoconnect;
+	gboolean validate_server;
+	GeeArrayList* channels;
+};
+
+struct _SqlClientServerClass {
+	GTypeClass parent_class;
+	void (*finalize) (SqlClientServer *self);
+};
+
+struct _Block3Data {
+	int _ref_count_;
+	Main* self;
+	ServerManager* sm;
 };
 
 
 static gpointer main_parent_class = NULL;
+extern GeeHashMap* sql_client_servers;
 
 GType main_get_type (void) G_GNUC_CONST;
+GType sql_client_get_type (void) G_GNUC_CONST;
 GType client_get_type (void) G_GNUC_CONST;
 #define MAIN_GET_PRIVATE(o) (G_TYPE_INSTANCE_GET_PRIVATE ((o), TYPE_MAIN, MainPrivate))
 enum  {
 	MAIN_DUMMY_PROPERTY
 };
+SqlClient* sql_client_get_instance (void);
 #define MAIN_UI_FILE "src/kyrc.ui"
+#define MAIN_UI_FILE_SERVERS "src/server_window.ui"
 Main* main_new (void);
 Main* main_construct (GType object_type);
-static void ___lambda4_ (Main* self);
+static void ___lambda5_ (Main* self);
 void main_send_text_out (Main* self, const gchar* text);
-static void ____lambda4__gtk_entry_activate (GtkEntry* _sender, gpointer self);
+static void ____lambda5__gtk_entry_activate (GtkEntry* _sender, gpointer self);
+void main_refresh_server_list (Main* self);
+void main_set_up_add_sever (Main* self, GtkHeaderBar* toolbar);
 void main_add_tab (Main* self, const gchar* url);
+static void ___lambda10_ (Main* self);
+static Block1Data* block1_data_ref (Block1Data* _data1_);
+static void block1_data_unref (void * _userdata_);
+static void __lambda11_ (Block1Data* _data1_, gint id);
+static void ___lambda11__gtk_dialog_response (GtkDialog* _sender, gint response_id, gpointer self);
+static void ____lambda10__granite_widgets_dynamic_notebook_new_tab_requested (GraniteWidgetsDynamicNotebook* _sender, gpointer self);
 Client* client_new (void);
 Client* client_construct (GType object_type);
 void main_add_text (Main* self, gint index, const gchar* data);
 static void _main_add_text_client_new_data (Client* _sender, gint index, const gchar* data, gpointer self);
 gboolean client_connect_to_server (Client* self, const gchar* location, gint tab_page);
-static Block1Data* block1_data_ref (Block1Data* _data1_);
-static void block1_data_unref (void * _userdata_);
-static gboolean __lambda5_ (Block1Data* _data1_);
-static gboolean ___lambda5__gsource_func (gpointer self);
+static Block2Data* block2_data_ref (Block2Data* _data2_);
+static void block2_data_unref (void * _userdata_);
+static gboolean __lambda6_ (Block2Data* _data2_);
+static gboolean ___lambda6__gsource_func (gpointer self);
+static gboolean __lambda7_ (Block2Data* _data2_);
+static gboolean ___lambda7__gsource_func (gpointer self);
 void client_send_output (Client* self, const gchar* output);
+gpointer sql_client_server_ref (gpointer instance);
+void sql_client_server_unref (gpointer instance);
+GParamSpec* sql_client_param_spec_server (const gchar* name, const gchar* nick, const gchar* blurb, GType object_type, GParamFlags flags);
+void sql_client_value_set_server (GValue* value, gpointer v_object);
+void sql_client_value_take_server (GValue* value, gpointer v_object);
+gpointer sql_client_value_get_server (const GValue* value);
+GType sql_client_server_get_type (void) G_GNUC_CONST;
+gpointer sql_client_channel_ref (gpointer instance);
+void sql_client_channel_unref (gpointer instance);
+GParamSpec* sql_client_param_spec_channel (const gchar* name, const gchar* nick, const gchar* blurb, GType object_type, GParamFlags flags);
+void sql_client_value_set_channel (GValue* value, gpointer v_object);
+void sql_client_value_take_channel (GValue* value, gpointer v_object);
+gpointer sql_client_value_get_channel (const GValue* value);
+GType sql_client_channel_get_type (void) G_GNUC_CONST;
+GType server_manager_get_type (void) G_GNUC_CONST;
+static Block3Data* block3_data_ref (Block3Data* _data3_);
+static void block3_data_unref (void * _userdata_);
+ServerManager* server_manager_new (void);
+ServerManager* server_manager_construct (GType object_type);
+static gboolean __lambda9_ (Block3Data* _data3_, GdkEventButton* event);
+gboolean server_manager_open_window (ServerManager* self, GdkEventButton* event);
+static gboolean ___lambda9__gtk_widget_button_release_event (GtkWidget* _sender, GdkEventButton* event, gpointer self);
+static void main_remove_tab (Main* self, gint index);
+void client_stop (Client* self);
 void main_on_destroy (GtkWidget* window, Main* self);
 static gint main_main (gchar** args, int args_length1);
 static void main_finalize (GObject* obj);
 
 
 static gpointer _g_object_ref0 (gpointer self) {
-#line 57 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 63 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	return self ? g_object_ref (self) : NULL;
-#line 131 "kyrc.c"
+#line 256 "kyrc.c"
 }
 
 
-static void ___lambda4_ (Main* self) {
+static void ___lambda5_ (Main* self) {
 	GtkEntry* _tmp0_ = NULL;
 	const gchar* _tmp1_ = NULL;
 	GtkEntry* _tmp2_ = NULL;
-#line 62 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 74 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_tmp0_ = self->priv->input;
-#line 62 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 74 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_tmp1_ = gtk_entry_get_text (_tmp0_);
-#line 62 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 74 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	main_send_text_out (self, _tmp1_);
-#line 63 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 75 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_tmp2_ = self->priv->input;
-#line 63 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 75 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	gtk_entry_set_text (_tmp2_, "");
-#line 149 "kyrc.c"
+#line 274 "kyrc.c"
 }
 
 
-static void ____lambda4__gtk_entry_activate (GtkEntry* _sender, gpointer self) {
-#line 61 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	___lambda4_ ((Main*) self);
-#line 156 "kyrc.c"
+static void ____lambda5__gtk_entry_activate (GtkEntry* _sender, gpointer self) {
+#line 73 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	___lambda5_ ((Main*) self);
+#line 281 "kyrc.c"
+}
+
+
+static Block1Data* block1_data_ref (Block1Data* _data1_) {
+#line 92 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	g_atomic_int_inc (&_data1_->_ref_count_);
+#line 92 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	return _data1_;
+#line 290 "kyrc.c"
+}
+
+
+static void block1_data_unref (void * _userdata_) {
+	Block1Data* _data1_;
+	_data1_ = (Block1Data*) _userdata_;
+#line 92 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	if (g_atomic_int_dec_and_test (&_data1_->_ref_count_)) {
+#line 299 "kyrc.c"
+		Main* self;
+#line 92 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		self = _data1_->self;
+#line 92 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_g_object_unref0 (_data1_->server_name);
+#line 92 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_g_object_unref0 (_data1_->dialog);
+#line 92 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_g_object_unref0 (self);
+#line 92 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		g_slice_free (Block1Data, _data1_);
+#line 311 "kyrc.c"
+	}
+}
+
+
+static gchar* string_strip (const gchar* self) {
+	gchar* result = NULL;
+	gchar* _result_ = NULL;
+	gchar* _tmp0_ = NULL;
+	const gchar* _tmp1_ = NULL;
+#line 1115 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	g_return_val_if_fail (self != NULL, NULL);
+#line 1116 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	_tmp0_ = g_strdup (self);
+#line 1116 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	_result_ = _tmp0_;
+#line 1117 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	_tmp1_ = _result_;
+#line 1117 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	g_strstrip (_tmp1_);
+#line 1118 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	result = _result_;
+#line 1118 "/usr/share/vala-0.26/vapi/glib-2.0.vapi"
+	return result;
+#line 335 "kyrc.c"
+}
+
+
+static void __lambda11_ (Block1Data* _data1_, gint id) {
+	Main* self;
+	gint _tmp0_ = 0;
+#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	self = _data1_->self;
+#line 103 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp0_ = id;
+#line 103 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	switch (_tmp0_) {
+#line 103 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		case GTK_RESPONSE_ACCEPT:
+#line 350 "kyrc.c"
+		{
+			gchar* name = NULL;
+			const gchar* _tmp1_ = NULL;
+			gchar* _tmp2_ = NULL;
+			const gchar* _tmp3_ = NULL;
+			gint _tmp4_ = 0;
+			gint _tmp5_ = 0;
+#line 105 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp1_ = gtk_entry_get_text (_data1_->server_name);
+#line 105 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp2_ = string_strip (_tmp1_);
+#line 105 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			name = _tmp2_;
+#line 106 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp3_ = name;
+#line 106 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp4_ = strlen (_tmp3_);
+#line 106 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp5_ = _tmp4_;
+#line 106 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			if (_tmp5_ > 2) {
+#line 372 "kyrc.c"
+				const gchar* _tmp6_ = NULL;
+#line 108 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+				_tmp6_ = name;
+#line 108 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+				main_add_tab (self, _tmp6_);
+#line 109 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+				g_signal_emit_by_name (_data1_->dialog, "close");
+#line 380 "kyrc.c"
+			}
+#line 111 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_g_free0 (name);
+#line 111 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			break;
+#line 386 "kyrc.c"
+		}
+#line 103 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		case GTK_RESPONSE_CANCEL:
+#line 390 "kyrc.c"
+		{
+#line 113 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			g_signal_emit_by_name (_data1_->dialog, "close");
+#line 114 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			break;
+#line 396 "kyrc.c"
+		}
+		default:
+#line 103 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		break;
+#line 401 "kyrc.c"
+	}
+}
+
+
+static void ___lambda11__gtk_dialog_response (GtkDialog* _sender, gint response_id, gpointer self) {
+#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	__lambda11_ (self, response_id);
+#line 409 "kyrc.c"
+}
+
+
+static void ___lambda10_ (Main* self) {
+	Block1Data* _data1_;
+	GtkWindow* _tmp0_ = NULL;
+	GtkDialog* _tmp1_ = NULL;
+	GtkBox* content = NULL;
+	GtkBox* _tmp2_ = NULL;
+	GtkBox* _tmp3_ = NULL;
+	GtkLabel* _tmp4_ = NULL;
+	GtkLabel* _tmp5_ = NULL;
+	GtkEntry* _tmp6_ = NULL;
+#line 92 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_data1_ = g_slice_new0 (Block1Data);
+#line 92 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_data1_->_ref_count_ = 1;
+#line 92 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_data1_->self = g_object_ref (self);
+#line 93 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp0_ = self->priv->window;
+#line 93 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp1_ = (GtkDialog*) gtk_dialog_new_with_buttons ("New Connection", _tmp0_, GTK_DIALOG_DESTROY_WITH_PARENT, "Connect", GTK_RESPONSE_ACCEPT, "Cancel", GTK_RESPONSE_CANCEL, NULL);
+#line 93 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	g_object_ref_sink (_tmp1_);
+#line 93 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_data1_->dialog = _tmp1_;
+#line 97 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp2_ = (GtkBox*) gtk_dialog_get_content_area (_data1_->dialog);
+#line 97 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp3_ = _g_object_ref0 (G_TYPE_CHECK_INSTANCE_TYPE (_tmp2_, gtk_box_get_type ()) ? ((GtkBox*) _tmp2_) : NULL);
+#line 97 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	content = _tmp3_;
+#line 98 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp4_ = (GtkLabel*) gtk_label_new ("Server address");
+#line 98 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	g_object_ref_sink (_tmp4_);
+#line 98 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp5_ = _tmp4_;
+#line 98 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	gtk_box_pack_start (content, (GtkWidget*) _tmp5_, FALSE, FALSE, (guint) 5);
+#line 98 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_g_object_unref0 (_tmp5_);
+#line 99 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp6_ = (GtkEntry*) gtk_entry_new ();
+#line 99 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	g_object_ref_sink (_tmp6_);
+#line 99 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_data1_->server_name = _tmp6_;
+#line 100 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	gtk_box_pack_start (content, (GtkWidget*) _data1_->server_name, FALSE, FALSE, (guint) 5);
+#line 101 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	gtk_widget_show_all ((GtkWidget*) _data1_->dialog);
+#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	g_signal_connect_data (_data1_->dialog, "response", (GCallback) ___lambda11__gtk_dialog_response, block1_data_ref (_data1_), (GClosureNotify) block1_data_unref, 0);
+#line 92 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_g_object_unref0 (content);
+#line 92 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	block1_data_unref (_data1_);
+#line 92 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_data1_ = NULL;
+#line 471 "kyrc.c"
+}
+
+
+static void ____lambda10__granite_widgets_dynamic_notebook_new_tab_requested (GraniteWidgetsDynamicNotebook* _sender, gpointer self) {
+#line 92 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	___lambda10_ ((Main*) self);
+#line 478 "kyrc.c"
 }
 
 
 Main* main_construct (GType object_type) {
 	Main * self = NULL;
 	GError * _inner_error_ = NULL;
-#line 44 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 48 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	self = (Main*) g_object_new (object_type, NULL);
-#line 165 "kyrc.c"
+#line 487 "kyrc.c"
 	{
 		GtkSettings* _tmp0_ = NULL;
 		GtkBuilder* builder = NULL;
 		GtkBuilder* _tmp1_ = NULL;
 		GtkHeaderBar* toolbar = NULL;
 		GtkHeaderBar* _tmp2_ = NULL;
-		GObject* _tmp3_ = NULL;
-		GtkWindow* _tmp4_ = NULL;
+		GraniteWidgetsDynamicNotebook* _tmp3_ = NULL;
+		GraniteWidgetsDynamicNotebook* _tmp4_ = NULL;
 		GObject* _tmp5_ = NULL;
-		GtkNotebook* _tmp6_ = NULL;
+		GtkWindow* _tmp6_ = NULL;
+		GtkBox* nb_wrapper = NULL;
 		GObject* _tmp7_ = NULL;
-		GtkEntry* _tmp8_ = NULL;
-		GtkEntry* _tmp9_ = NULL;
-		GtkHeaderBar* _tmp10_ = NULL;
-		GtkWindow* _tmp11_ = NULL;
-		GtkHeaderBar* _tmp12_ = NULL;
-		GtkWindow* _tmp13_ = NULL;
-#line 49 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		GtkBox* _tmp8_ = NULL;
+		GtkBox* _tmp9_ = NULL;
+		GraniteWidgetsDynamicNotebook* _tmp10_ = NULL;
+		GtkBox* server_list_container = NULL;
+		GObject* _tmp11_ = NULL;
+		GtkBox* _tmp12_ = NULL;
+		GtkBox* _tmp13_ = NULL;
+		GtkListBox* _tmp14_ = NULL;
+		GObject* _tmp15_ = NULL;
+		GtkEntry* _tmp16_ = NULL;
+		GtkEntry* _tmp17_ = NULL;
+		GtkHeaderBar* _tmp18_ = NULL;
+		GtkHeaderBar* _tmp19_ = NULL;
+		GtkHeaderBar* _tmp20_ = NULL;
+		GtkHeaderBar* _tmp21_ = NULL;
+		GtkWindow* _tmp22_ = NULL;
+		GtkHeaderBar* _tmp23_ = NULL;
+		GtkWindow* _tmp24_ = NULL;
+		GraniteWidgetsDynamicNotebook* _tmp25_ = NULL;
+#line 53 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		_tmp0_ = gtk_settings_get_default ();
-#line 49 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 53 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		g_object_set ((GObject*) _tmp0_, "gtk-application-prefer-dark-theme", TRUE, NULL);
-#line 51 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 55 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		_tmp1_ = gtk_builder_new ();
-#line 51 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 55 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		builder = _tmp1_;
-#line 52 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 56 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		gtk_builder_add_from_file (builder, MAIN_UI_FILE, &_inner_error_);
-#line 52 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 56 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		if (G_UNLIKELY (_inner_error_ != NULL)) {
-#line 52 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 56 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 			_g_object_unref0 (builder);
-#line 197 "kyrc.c"
+#line 533 "kyrc.c"
 			goto __catch0_g_error;
 		}
-#line 53 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 57 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		gtk_builder_connect_signals (builder, self);
-#line 55 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 59 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		_tmp2_ = (GtkHeaderBar*) gtk_header_bar_new ();
-#line 55 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 59 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		g_object_ref_sink (_tmp2_);
-#line 55 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 59 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		toolbar = _tmp2_;
-#line 57 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		_tmp3_ = gtk_builder_get_object (builder, "window");
-#line 57 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		_tmp4_ = _g_object_ref0 (G_TYPE_CHECK_INSTANCE_TYPE (_tmp3_, gtk_window_get_type ()) ? ((GtkWindow*) _tmp3_) : NULL);
-#line 57 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		_g_object_unref0 (self->priv->window);
-#line 57 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		self->priv->window = _tmp4_;
-#line 58 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		_tmp5_ = gtk_builder_get_object (builder, "tabs");
-#line 58 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		_tmp6_ = _g_object_ref0 (G_TYPE_CHECK_INSTANCE_TYPE (_tmp5_, gtk_notebook_get_type ()) ? ((GtkNotebook*) _tmp5_) : NULL);
-#line 58 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 60 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp3_ = granite_widgets_dynamic_notebook_new ();
+#line 60 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		g_object_ref_sink (_tmp3_);
+#line 60 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		_g_object_unref0 (self->priv->tabs);
-#line 58 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		self->priv->tabs = _tmp6_;
-#line 59 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		_tmp7_ = gtk_builder_get_object (builder, "input");
-#line 59 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		_tmp8_ = _g_object_ref0 (G_TYPE_CHECK_INSTANCE_TYPE (_tmp7_, gtk_entry_get_type ()) ? ((GtkEntry*) _tmp7_) : NULL);
-#line 59 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 60 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		self->priv->tabs = _tmp3_;
+#line 61 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp4_ = self->priv->tabs;
+#line 61 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		granite_widgets_dynamic_notebook_set_allow_drag (_tmp4_, TRUE);
+#line 63 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp5_ = gtk_builder_get_object (builder, "window");
+#line 63 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp6_ = _g_object_ref0 (G_TYPE_CHECK_INSTANCE_TYPE (_tmp5_, gtk_window_get_type ()) ? ((GtkWindow*) _tmp5_) : NULL);
+#line 63 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_g_object_unref0 (self->priv->window);
+#line 63 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		self->priv->window = _tmp6_;
+#line 64 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp7_ = gtk_builder_get_object (builder, "notebook_wrapper");
+#line 64 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp8_ = _g_object_ref0 (G_TYPE_CHECK_INSTANCE_TYPE (_tmp7_, gtk_box_get_type ()) ? ((GtkBox*) _tmp7_) : NULL);
+#line 64 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		nb_wrapper = _tmp8_;
+#line 65 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp9_ = nb_wrapper;
+#line 65 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp10_ = self->priv->tabs;
+#line 65 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		gtk_box_pack_start (_tmp9_, (GtkWidget*) _tmp10_, TRUE, TRUE, (guint) 1);
+#line 68 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp11_ = gtk_builder_get_object (builder, "server_list_container");
+#line 68 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp12_ = _g_object_ref0 (G_TYPE_CHECK_INSTANCE_TYPE (_tmp11_, gtk_box_get_type ()) ? ((GtkBox*) _tmp11_) : NULL);
+#line 68 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		server_list_container = _tmp12_;
+#line 69 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp13_ = server_list_container;
+#line 69 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp14_ = self->priv->servers;
+#line 69 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		gtk_box_pack_start (_tmp13_, (GtkWidget*) _tmp14_, TRUE, TRUE, (guint) 0);
+#line 71 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp15_ = gtk_builder_get_object (builder, "input");
+#line 71 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp16_ = _g_object_ref0 (G_TYPE_CHECK_INSTANCE_TYPE (_tmp15_, gtk_entry_get_type ()) ? ((GtkEntry*) _tmp15_) : NULL);
+#line 71 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		_g_object_unref0 (self->priv->input);
-#line 59 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		self->priv->input = _tmp8_;
-#line 61 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		_tmp9_ = self->priv->input;
-#line 61 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		g_signal_connect_object (_tmp9_, "activate", (GCallback) ____lambda4__gtk_entry_activate, self, 0);
-#line 66 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		_tmp10_ = toolbar;
-#line 66 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		gtk_header_bar_set_show_close_button (_tmp10_, TRUE);
-#line 67 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		_tmp11_ = self->priv->window;
-#line 67 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		_tmp12_ = toolbar;
-#line 67 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		gtk_window_set_titlebar (_tmp11_, (GtkWidget*) _tmp12_);
-#line 69 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		_tmp13_ = self->priv->window;
-#line 69 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		gtk_widget_show_all ((GtkWidget*) _tmp13_);
-#line 72 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 71 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		self->priv->input = _tmp16_;
+#line 73 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp17_ = self->priv->input;
+#line 73 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		g_signal_connect_object (_tmp17_, "activate", (GCallback) ____lambda5__gtk_entry_activate, self, 0);
+#line 78 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		main_refresh_server_list (self);
+#line 80 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp18_ = toolbar;
+#line 80 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		main_set_up_add_sever (self, _tmp18_);
+#line 82 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp19_ = toolbar;
+#line 82 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		gtk_header_bar_set_title (_tmp19_, "Kyrc");
+#line 83 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp20_ = toolbar;
+#line 83 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		gtk_widget_show_all ((GtkWidget*) _tmp20_);
+#line 85 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp21_ = toolbar;
+#line 85 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		gtk_header_bar_set_show_close_button (_tmp21_, TRUE);
+#line 86 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp22_ = self->priv->window;
+#line 86 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp23_ = toolbar;
+#line 86 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		gtk_window_set_titlebar (_tmp22_, (GtkWidget*) _tmp23_);
+#line 88 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp24_ = self->priv->window;
+#line 88 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		gtk_widget_show_all ((GtkWidget*) _tmp24_);
+#line 90 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		main_add_tab (self, "irc.freenode.net");
-#line 47 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 92 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp25_ = self->priv->tabs;
+#line 92 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		g_signal_connect_object (_tmp25_, "new-tab-requested", (GCallback) ____lambda10__granite_widgets_dynamic_notebook_new_tab_requested, self, 0);
+#line 51 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_g_object_unref0 (server_list_container);
+#line 51 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_g_object_unref0 (nb_wrapper);
+#line 51 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		_g_object_unref0 (toolbar);
-#line 47 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 51 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		_g_object_unref0 (builder);
-#line 256 "kyrc.c"
+#line 642 "kyrc.c"
 	}
 	goto __finally0;
 	__catch0_g_error:
 	{
 		GError* e = NULL;
-		FILE* _tmp14_ = NULL;
-		GError* _tmp15_ = NULL;
-		const gchar* _tmp16_ = NULL;
-#line 47 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		FILE* _tmp26_ = NULL;
+		GError* _tmp27_ = NULL;
+		const gchar* _tmp28_ = NULL;
+#line 51 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		e = _inner_error_;
-#line 47 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 51 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		_inner_error_ = NULL;
-#line 76 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		_tmp14_ = stderr;
-#line 76 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		_tmp15_ = e;
-#line 76 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		_tmp16_ = _tmp15_->message;
-#line 76 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		fprintf (_tmp14_, "Could not load UI: %s\n", _tmp16_);
-#line 47 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 120 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp26_ = stderr;
+#line 120 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp27_ = e;
+#line 120 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp28_ = _tmp27_->message;
+#line 120 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		fprintf (_tmp26_, "Could not load UI: %s\n", _tmp28_);
+#line 51 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		_g_error_free0 (e);
-#line 279 "kyrc.c"
+#line 665 "kyrc.c"
 	}
 	__finally0:
-#line 47 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 51 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	if (G_UNLIKELY (_inner_error_ != NULL)) {
-#line 47 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 51 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		g_critical ("file %s: line %d: uncaught error: %s (%s, %d)", __FILE__, __LINE__, _inner_error_->message, g_quark_to_string (_inner_error_->domain), _inner_error_->code);
-#line 47 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 51 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		g_clear_error (&_inner_error_);
-#line 47 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 51 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		return NULL;
-#line 290 "kyrc.c"
+#line 676 "kyrc.c"
 	}
-#line 44 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 48 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	return self;
-#line 294 "kyrc.c"
+#line 680 "kyrc.c"
 }
 
 
 Main* main_new (void) {
-#line 44 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 48 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	return main_construct (TYPE_MAIN);
-#line 301 "kyrc.c"
+#line 687 "kyrc.c"
 }
 
 
 static void _main_add_text_client_new_data (Client* _sender, gint index, const gchar* data, gpointer self) {
-#line 98 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 151 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	main_add_text ((Main*) self, index, data);
-#line 308 "kyrc.c"
+#line 694 "kyrc.c"
 }
 
 
@@ -312,265 +698,693 @@ void main_add_tab (Main* self, const gchar* url) {
 	GtkLabel* title = NULL;
 	const gchar* _tmp0_ = NULL;
 	GtkLabel* _tmp1_ = NULL;
-	GtkScrolledWindow* scrolled = NULL;
-	GtkScrolledWindow* _tmp2_ = NULL;
 	GtkTextView* output = NULL;
-	GtkTextView* _tmp3_ = NULL;
+	GtkTextView* _tmp2_ = NULL;
+	GtkScrolledWindow* scrolled = NULL;
+	GtkScrolledWindow* _tmp3_ = NULL;
+	GraniteWidgetsTab* tab = NULL;
+	GraniteWidgetsTab* _tmp4_ = NULL;
+	const gchar* _tmp5_ = NULL;
+	GraniteWidgetsDynamicNotebook* _tmp6_ = NULL;
 	gint index = 0;
-	GtkNotebook* _tmp4_ = NULL;
-	gint _tmp5_ = 0;
-	GeeHashMap* _tmp6_ = NULL;
-	GtkWindow* _tmp7_ = NULL;
+	GeeHashMap* _tmp7_ = NULL;
+	GraniteWidgetsDynamicNotebook* _tmp8_ = NULL;
 	Client* client = NULL;
-	Client* _tmp8_ = NULL;
-	gchar* _tmp9_ = NULL;
-	GeeHashMap* _tmp10_ = NULL;
-#line 81 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	Client* _tmp9_ = NULL;
+	gchar* _tmp10_ = NULL;
+	GeeHashMap* _tmp11_ = NULL;
+	const gchar* _tmp12_ = NULL;
+#line 126 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	g_return_if_fail (self != NULL);
-#line 81 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 126 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	g_return_if_fail (url != NULL);
-#line 83 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 128 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_tmp0_ = url;
-#line 83 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 128 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_tmp1_ = (GtkLabel*) gtk_label_new (_tmp0_);
-#line 83 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 128 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	g_object_ref_sink (_tmp1_);
-#line 83 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 128 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	title = _tmp1_;
-#line 84 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp2_ = (GtkScrolledWindow*) gtk_scrolled_window_new (NULL, NULL);
-#line 84 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 129 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp2_ = (GtkTextView*) gtk_text_view_new ();
+#line 129 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	g_object_ref_sink (_tmp2_);
-#line 84 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	scrolled = _tmp2_;
-#line 85 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp3_ = (GtkTextView*) gtk_text_view_new ();
-#line 85 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 129 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	output = _tmp2_;
+#line 130 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp3_ = (GtkScrolledWindow*) gtk_scrolled_window_new (NULL, NULL);
+#line 130 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	g_object_ref_sink (_tmp3_);
-#line 85 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	output = _tmp3_;
-#line 86 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	gtk_text_view_set_wrap_mode (output, GTK_WRAP_WORD);
-#line 87 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 130 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	scrolled = _tmp3_;
+#line 131 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	gtk_container_add ((GtkContainer*) scrolled, (GtkWidget*) output);
-#line 89 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp4_ = self->priv->tabs;
-#line 89 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp5_ = gtk_notebook_append_page (_tmp4_, (GtkWidget*) scrolled, (GtkWidget*) title);
-#line 89 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	index = _tmp5_;
-#line 90 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp6_ = self->priv->outputs;
-#line 90 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	gee_abstract_map_set ((GeeAbstractMap*) _tmp6_, (gpointer) ((gintptr) index), output);
-#line 92 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp7_ = self->priv->window;
-#line 92 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	gtk_widget_show_all ((GtkWidget*) _tmp7_);
-#line 94 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp8_ = client_new ();
-#line 94 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	client = _tmp8_;
-#line 95 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp9_ = g_strdup ("kyle123456");
-#line 95 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 132 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	gtk_text_view_set_editable (output, FALSE);
+#line 133 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	gtk_text_view_set_wrap_mode (output, GTK_WRAP_WORD);
+#line 135 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp4_ = granite_widgets_tab_new ("", NULL, NULL);
+#line 135 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	g_object_ref_sink (_tmp4_);
+#line 135 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	tab = _tmp4_;
+#line 136 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp5_ = url;
+#line 136 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	granite_widgets_tab_set_label (tab, _tmp5_);
+#line 138 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	granite_widgets_tab_set_page (tab, (GtkWidget*) scrolled);
+#line 139 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp6_ = self->priv->tabs;
+#line 139 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	granite_widgets_dynamic_notebook_insert_tab (_tmp6_, tab, 0);
+#line 141 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	index = 0;
+#line 143 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp7_ = self->priv->outputs;
+#line 143 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	gee_abstract_map_set ((GeeAbstractMap*) _tmp7_, (gpointer) ((gintptr) index), output);
+#line 145 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp8_ = self->priv->tabs;
+#line 145 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	gtk_widget_show_all ((GtkWidget*) _tmp8_);
+#line 147 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp9_ = client_new ();
+#line 147 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	client = _tmp9_;
+#line 148 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp10_ = g_strdup ("kyle123456");
+#line 148 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_g_free0 (client->username);
-#line 95 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	client->username = _tmp9_;
-#line 96 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp10_ = self->priv->clients;
-#line 96 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	gee_abstract_map_set ((GeeAbstractMap*) _tmp10_, (gpointer) ((gintptr) index), client);
-#line 98 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 148 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	client->username = _tmp10_;
+#line 149 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp11_ = self->priv->clients;
+#line 149 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	gee_abstract_map_set ((GeeAbstractMap*) _tmp11_, (gpointer) ((gintptr) index), client);
+#line 151 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	g_signal_connect_object (client, "new-data", (GCallback) _main_add_text_client_new_data, self, 0);
-#line 99 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	client_connect_to_server (client, "irc.freenode.net", index);
-#line 81 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 152 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp12_ = url;
+#line 152 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	client_connect_to_server (client, _tmp12_, index);
+#line 126 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_g_object_unref0 (client);
-#line 81 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_g_object_unref0 (output);
-#line 81 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 126 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_g_object_unref0 (tab);
+#line 126 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_g_object_unref0 (scrolled);
-#line 81 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 126 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_g_object_unref0 (output);
+#line 126 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_g_object_unref0 (title);
-#line 397 "kyrc.c"
+#line 804 "kyrc.c"
 }
 
 
-static Block1Data* block1_data_ref (Block1Data* _data1_) {
-#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	g_atomic_int_inc (&_data1_->_ref_count_);
-#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	return _data1_;
-#line 406 "kyrc.c"
+static Block2Data* block2_data_ref (Block2Data* _data2_) {
+#line 156 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	g_atomic_int_inc (&_data2_->_ref_count_);
+#line 156 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	return _data2_;
+#line 813 "kyrc.c"
 }
 
 
-static void block1_data_unref (void * _userdata_) {
-	Block1Data* _data1_;
-	_data1_ = (Block1Data*) _userdata_;
-#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	if (g_atomic_int_dec_and_test (&_data1_->_ref_count_)) {
-#line 415 "kyrc.c"
+static void block2_data_unref (void * _userdata_) {
+	Block2Data* _data2_;
+	_data2_ = (Block2Data*) _userdata_;
+#line 156 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	if (g_atomic_int_dec_and_test (&_data2_->_ref_count_)) {
+#line 822 "kyrc.c"
 		Main* self;
-#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		self = _data1_->self;
-#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		_g_object_unref0 (_data1_->tv);
-#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		_g_free0 (_data1_->data);
-#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 156 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		self = _data2_->self;
+#line 156 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_g_object_unref0 (_data2_->sw);
+#line 156 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_g_object_unref0 (_data2_->tv);
+#line 156 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_g_free0 (_data2_->data);
+#line 156 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 		_g_object_unref0 (self);
-#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-		g_slice_free (Block1Data, _data1_);
-#line 427 "kyrc.c"
+#line 156 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		g_slice_free (Block2Data, _data2_);
+#line 836 "kyrc.c"
 	}
 }
 
 
-static gboolean __lambda5_ (Block1Data* _data1_) {
+static gboolean __lambda6_ (Block2Data* _data2_) {
 	Main* self;
 	gboolean result = FALSE;
-	GtkTextBuffer* _tmp0_ = NULL;
-	GtkTextBuffer* _tmp1_ = NULL;
+	gchar* text = NULL;
+	const gchar* _tmp0_ = NULL;
+	gchar* _tmp1_ = NULL;
 	GtkTextBuffer* _tmp2_ = NULL;
 	GtkTextBuffer* _tmp3_ = NULL;
-	gchar* _tmp4_ = NULL;
-	gchar* _tmp5_ = NULL;
-	gchar* _tmp6_ = NULL;
-	const gchar* _tmp7_ = NULL;
-	gchar* _tmp8_ = NULL;
-	gchar* _tmp9_ = NULL;
-#line 105 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	self = _data1_->self;
-#line 106 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp0_ = gtk_text_view_get_buffer (_data1_->tv);
-#line 106 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp1_ = _tmp0_;
-#line 106 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp2_ = gtk_text_view_get_buffer (_data1_->tv);
-#line 106 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	gint _tmp4_ = 0;
+	gint _tmp5_ = 0;
+	GtkAdjustment* adj = NULL;
+	GtkAdjustment* _tmp6_ = NULL;
+	GtkAdjustment* _tmp7_ = NULL;
+	gdouble _tmp8_ = 0.0;
+	gdouble _tmp9_ = 0.0;
+#line 162 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	self = _data2_->self;
+#line 163 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp0_ = _data2_->data;
+#line 163 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp1_ = g_strconcat (_tmp0_, "\n", NULL);
+#line 163 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	text = _tmp1_;
+#line 164 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp2_ = gtk_text_view_get_buffer (_data2_->tv);
+#line 164 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_tmp3_ = _tmp2_;
-#line 106 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	g_object_get (_tmp3_, "text", &_tmp4_, NULL);
-#line 106 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 164 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp4_ = strlen (text);
+#line 164 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_tmp5_ = _tmp4_;
-#line 106 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp6_ = _tmp5_;
-#line 106 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp7_ = _data1_->data;
-#line 106 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp8_ = g_strconcat (_tmp6_, _tmp7_, NULL);
-#line 106 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp9_ = _tmp8_;
-#line 106 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	g_object_set (_tmp3_, "text", _tmp9_, NULL);
-#line 106 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_g_free0 (_tmp9_);
-#line 106 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_g_free0 (_tmp6_);
-#line 107 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 164 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	gtk_text_buffer_insert (_tmp3_, &_data2_->outiter, text, _tmp5_);
+#line 165 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp6_ = gtk_scrolled_window_get_vadjustment (_data2_->sw);
+#line 165 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp7_ = _g_object_ref0 (_tmp6_);
+#line 165 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	adj = _tmp7_;
+#line 166 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp8_ = gtk_adjustment_get_upper (adj);
+#line 166 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp9_ = gtk_adjustment_get_page_size (adj);
+#line 166 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	gtk_adjustment_set_value (adj, _tmp8_ - _tmp9_);
+#line 167 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	result = FALSE;
-#line 107 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 167 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_g_object_unref0 (adj);
+#line 167 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_g_free0 (text);
+#line 167 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	return result;
-#line 477 "kyrc.c"
+#line 894 "kyrc.c"
 }
 
 
-static gboolean ___lambda5__gsource_func (gpointer self) {
+static gboolean ___lambda6__gsource_func (gpointer self) {
 	gboolean result;
-	result = __lambda5_ (self);
-#line 105 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	result = __lambda6_ (self);
+#line 162 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	return result;
-#line 486 "kyrc.c"
+#line 903 "kyrc.c"
+}
+
+
+static gboolean __lambda7_ (Block2Data* _data2_) {
+	Main* self;
+	gboolean result = FALSE;
+	GtkAdjustment* adj = NULL;
+	GtkAdjustment* _tmp0_ = NULL;
+	GtkAdjustment* _tmp1_ = NULL;
+	gdouble _tmp2_ = 0.0;
+	gdouble _tmp3_ = 0.0;
+#line 173 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	self = _data2_->self;
+#line 174 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp0_ = gtk_scrolled_window_get_vadjustment (_data2_->sw);
+#line 174 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp1_ = _g_object_ref0 (_tmp0_);
+#line 174 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	adj = _tmp1_;
+#line 175 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp2_ = gtk_adjustment_get_upper (adj);
+#line 175 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp3_ = gtk_adjustment_get_page_size (adj);
+#line 175 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	gtk_adjustment_set_value (adj, _tmp2_ - _tmp3_);
+#line 176 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	gtk_scrolled_window_set_vadjustment (_data2_->sw, adj);
+#line 177 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	result = FALSE;
+#line 177 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_g_object_unref0 (adj);
+#line 177 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	return result;
+#line 937 "kyrc.c"
+}
+
+
+static gboolean ___lambda7__gsource_func (gpointer self) {
+	gboolean result;
+	result = __lambda7_ (self);
+#line 173 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	return result;
+#line 946 "kyrc.c"
 }
 
 
 void main_add_text (Main* self, gint index, const gchar* data) {
-	Block1Data* _data1_;
+	Block2Data* _data2_;
 	const gchar* _tmp0_ = NULL;
 	gchar* _tmp1_ = NULL;
 	GeeHashMap* _tmp2_ = NULL;
 	gint _tmp3_ = 0;
 	gpointer _tmp4_ = NULL;
-#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	GtkTextBuffer* _tmp5_ = NULL;
+	GtkTextBuffer* _tmp6_ = NULL;
+	GtkTextIter _tmp7_ = {0};
+	GtkContainer* _tmp8_ = NULL;
+	GtkScrolledWindow* _tmp9_ = NULL;
+#line 156 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	g_return_if_fail (self != NULL);
-#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 156 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	g_return_if_fail (data != NULL);
-#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_data1_ = g_slice_new0 (Block1Data);
-#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_data1_->_ref_count_ = 1;
-#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_data1_->self = g_object_ref (self);
-#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 156 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_data2_ = g_slice_new0 (Block2Data);
+#line 156 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_data2_->_ref_count_ = 1;
+#line 156 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_data2_->self = g_object_ref (self);
+#line 156 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_tmp0_ = data;
-#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 156 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_tmp1_ = g_strdup (_tmp0_);
-#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_g_free0 (_data1_->data);
-#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_data1_->data = _tmp1_;
-#line 104 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 156 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_g_free0 (_data2_->data);
+#line 156 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_data2_->data = _tmp1_;
+#line 158 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_tmp2_ = self->priv->outputs;
-#line 104 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 158 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_tmp3_ = index;
-#line 104 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 158 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_tmp4_ = gee_abstract_map_get ((GeeAbstractMap*) _tmp2_, (gpointer) ((gintptr) _tmp3_));
-#line 104 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_data1_->tv = (GtkTextView*) _tmp4_;
-#line 105 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, ___lambda5__gsource_func, block1_data_ref (_data1_), block1_data_unref);
-#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	block1_data_unref (_data1_);
-#line 102 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_data1_ = NULL;
-#line 529 "kyrc.c"
+#line 158 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_data2_->tv = (GtkTextView*) _tmp4_;
+#line 160 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp5_ = gtk_text_view_get_buffer (_data2_->tv);
+#line 160 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp6_ = _tmp5_;
+#line 160 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	gtk_text_buffer_get_end_iter (_tmp6_, &_tmp7_);
+#line 160 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_data2_->outiter = _tmp7_;
+#line 161 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp8_ = (GtkContainer*) gtk_widget_get_parent ((GtkWidget*) _data2_->tv);
+#line 161 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp9_ = _g_object_ref0 (G_TYPE_CHECK_INSTANCE_CAST (_tmp8_, gtk_scrolled_window_get_type (), GtkScrolledWindow));
+#line 161 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_data2_->sw = _tmp9_;
+#line 162 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, ___lambda6__gsource_func, block2_data_ref (_data2_), block2_data_unref);
+#line 171 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	g_usleep ((gulong) 5000);
+#line 173 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	g_idle_add_full (G_PRIORITY_DEFAULT_IDLE, ___lambda7__gsource_func, block2_data_ref (_data2_), block2_data_unref);
+#line 156 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	block2_data_unref (_data2_);
+#line 156 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_data2_ = NULL;
+#line 1012 "kyrc.c"
 }
 
 
 void main_send_text_out (Main* self, const gchar* text) {
 	gint page = 0;
-	GtkNotebook* _tmp0_ = NULL;
-	gint _tmp1_ = 0;
-	GeeHashMap* _tmp2_ = NULL;
-	gpointer _tmp3_ = NULL;
-	Client* _tmp4_ = NULL;
-	const gchar* _tmp5_ = NULL;
-#line 111 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	GeeHashMap* _tmp0_ = NULL;
+	gpointer _tmp1_ = NULL;
+	Client* _tmp2_ = NULL;
+	const gchar* _tmp3_ = NULL;
+	GeeHashMap* _tmp4_ = NULL;
+	gpointer _tmp5_ = NULL;
+	Client* _tmp6_ = NULL;
+	const gchar* _tmp7_ = NULL;
+	gchar* _tmp8_ = NULL;
+	gchar* _tmp9_ = NULL;
+	const gchar* _tmp10_ = NULL;
+	gchar* _tmp11_ = NULL;
+	gchar* _tmp12_ = NULL;
+#line 182 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	g_return_if_fail (self != NULL);
-#line 111 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 182 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	g_return_if_fail (text != NULL);
-#line 113 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 184 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	page = 0;
+#line 185 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp0_ = self->priv->clients;
+#line 185 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp1_ = gee_abstract_map_get ((GeeAbstractMap*) _tmp0_, (gpointer) ((gintptr) page));
+#line 185 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp2_ = (Client*) _tmp1_;
+#line 185 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp3_ = text;
+#line 185 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	client_send_output (_tmp2_, _tmp3_);
+#line 185 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_g_object_unref0 (_tmp2_);
+#line 186 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp4_ = self->priv->clients;
+#line 186 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp5_ = gee_abstract_map_get ((GeeAbstractMap*) _tmp4_, (gpointer) ((gintptr) page));
+#line 186 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp6_ = (Client*) _tmp5_;
+#line 186 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp7_ = _tmp6_->username;
+#line 186 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp8_ = g_strconcat (_tmp7_, ": ", NULL);
+#line 186 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp9_ = _tmp8_;
+#line 186 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp10_ = text;
+#line 186 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp11_ = g_strconcat (_tmp9_, _tmp10_, NULL);
+#line 186 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp12_ = _tmp11_;
+#line 186 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	main_add_text (self, page, _tmp12_);
+#line 186 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_g_free0 (_tmp12_);
+#line 186 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_g_free0 (_tmp9_);
+#line 186 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_g_object_unref0 (_tmp6_);
+#line 1075 "kyrc.c"
+}
+
+
+static gpointer _sql_client_server_ref0 (gpointer self) {
+#line 193 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	return self ? sql_client_server_ref (self) : NULL;
+#line 1082 "kyrc.c"
+}
+
+
+void main_refresh_server_list (Main* self) {
+#line 189 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	g_return_if_fail (self != NULL);
+#line 1089 "kyrc.c"
+	{
+		GeeIterator* _svr_it = NULL;
+		SqlClient* _tmp0_ = NULL;
+		GeeHashMap* _tmp1_ = NULL;
+		GeeSet* _tmp2_ = NULL;
+		GeeSet* _tmp3_ = NULL;
+		GeeSet* _tmp4_ = NULL;
+		GeeIterator* _tmp5_ = NULL;
+		GeeIterator* _tmp6_ = NULL;
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp0_ = self->priv->sqlclient;
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp1_ = sql_client_servers;
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp2_ = gee_abstract_map_get_entries ((GeeMap*) _tmp1_);
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp3_ = _tmp2_;
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp4_ = _tmp3_;
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp5_ = gee_iterable_iterator ((GeeIterable*) _tmp4_);
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_tmp6_ = _tmp5_;
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_g_object_unref0 (_tmp4_);
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_svr_it = _tmp6_;
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		while (TRUE) {
+#line 1119 "kyrc.c"
+			GeeIterator* _tmp7_ = NULL;
+			gboolean _tmp8_ = FALSE;
+			GeeMapEntry* svr = NULL;
+			GeeIterator* _tmp9_ = NULL;
+			gpointer _tmp10_ = NULL;
+			SqlClientServer* server = NULL;
+			GeeMapEntry* _tmp11_ = NULL;
+			gconstpointer _tmp12_ = NULL;
+			SqlClientServer* _tmp13_ = NULL;
+			SqlClientServer* _tmp14_ = NULL;
+			GtkListBoxRow* lbr = NULL;
+			GtkListBoxRow* _tmp15_ = NULL;
+			GtkLabel* lbl = NULL;
+			SqlClientServer* _tmp16_ = NULL;
+			const gchar* _tmp17_ = NULL;
+			GtkLabel* _tmp18_ = NULL;
+			GtkListBoxRow* _tmp19_ = NULL;
+			GtkLabel* _tmp20_ = NULL;
+			GtkListBoxRow* _tmp21_ = NULL;
+			GtkLabel* _tmp22_ = NULL;
+			GtkListBox* _tmp23_ = NULL;
+			GtkListBoxRow* _tmp24_ = NULL;
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp7_ = _svr_it;
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp8_ = gee_iterator_next (_tmp7_);
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			if (!_tmp8_) {
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+				break;
+#line 1150 "kyrc.c"
+			}
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp9_ = _svr_it;
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp10_ = gee_iterator_get (_tmp9_);
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			svr = (GeeMapEntry*) _tmp10_;
+#line 193 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp11_ = svr;
+#line 193 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp12_ = gee_map_entry_get_value (_tmp11_);
+#line 193 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp13_ = _tmp12_;
+#line 193 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp14_ = _sql_client_server_ref0 ((SqlClientServer*) _tmp13_);
+#line 193 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			server = _tmp14_;
+#line 194 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp15_ = (GtkListBoxRow*) gtk_list_box_row_new ();
+#line 194 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			g_object_ref_sink (_tmp15_);
+#line 194 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			lbr = _tmp15_;
+#line 195 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp16_ = server;
+#line 195 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp17_ = _tmp16_->host;
+#line 195 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp18_ = (GtkLabel*) gtk_label_new (_tmp17_);
+#line 195 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			g_object_ref_sink (_tmp18_);
+#line 195 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			lbl = _tmp18_;
+#line 196 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp19_ = lbr;
+#line 196 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			gtk_widget_set_halign ((GtkWidget*) _tmp19_, GTK_ALIGN_FILL);
+#line 197 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp20_ = lbl;
+#line 197 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			gtk_widget_set_halign ((GtkWidget*) _tmp20_, GTK_ALIGN_START);
+#line 198 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp21_ = lbr;
+#line 198 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp22_ = lbl;
+#line 198 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			gtk_container_add ((GtkContainer*) _tmp21_, (GtkWidget*) _tmp22_);
+#line 199 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp23_ = self->priv->servers;
+#line 199 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_tmp24_ = lbr;
+#line 199 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			gtk_list_box_insert (_tmp23_, (GtkWidget*) _tmp24_, -1);
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_g_object_unref0 (lbl);
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_g_object_unref0 (lbr);
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_sql_client_server_unref0 (server);
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+			_g_object_unref0 (svr);
+#line 1212 "kyrc.c"
+		}
+#line 191 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_g_object_unref0 (_svr_it);
+#line 1216 "kyrc.c"
+	}
+}
+
+
+static Block3Data* block3_data_ref (Block3Data* _data3_) {
+#line 203 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	g_atomic_int_inc (&_data3_->_ref_count_);
+#line 203 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	return _data3_;
+#line 1226 "kyrc.c"
+}
+
+
+static void block3_data_unref (void * _userdata_) {
+	Block3Data* _data3_;
+	_data3_ = (Block3Data*) _userdata_;
+#line 203 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	if (g_atomic_int_dec_and_test (&_data3_->_ref_count_)) {
+#line 1235 "kyrc.c"
+		Main* self;
+#line 203 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		self = _data3_->self;
+#line 203 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_g_object_unref0 (_data3_->sm);
+#line 203 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		_g_object_unref0 (self);
+#line 203 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+		g_slice_free (Block3Data, _data3_);
+#line 1245 "kyrc.c"
+	}
+}
+
+
+static gboolean __lambda9_ (Block3Data* _data3_, GdkEventButton* event) {
+	Main* self;
+	gboolean result = FALSE;
+	GdkEventButton* _tmp0_ = NULL;
+#line 209 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	self = _data3_->self;
+#line 209 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	g_return_val_if_fail (event != NULL, FALSE);
+#line 210 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp0_ = event;
+#line 210 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	server_manager_open_window (_data3_->sm, _tmp0_);
+#line 211 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	result = FALSE;
+#line 211 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	return result;
+#line 1266 "kyrc.c"
+}
+
+
+static gboolean ___lambda9__gtk_widget_button_release_event (GtkWidget* _sender, GdkEventButton* event, gpointer self) {
+	gboolean result;
+	result = __lambda9_ (self, event);
+#line 209 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	return result;
+#line 1275 "kyrc.c"
+}
+
+
+void main_set_up_add_sever (Main* self, GtkHeaderBar* toolbar) {
+	Block3Data* _data3_;
+	GtkButton* add_server_button = NULL;
+	GtkButton* _tmp0_ = NULL;
+	ServerManager* _tmp1_ = NULL;
+	GtkHeaderBar* _tmp2_ = NULL;
+#line 203 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	g_return_if_fail (self != NULL);
+#line 203 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	g_return_if_fail (toolbar != NULL);
+#line 203 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_data3_ = g_slice_new0 (Block3Data);
+#line 203 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_data3_->_ref_count_ = 1;
+#line 203 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_data3_->self = g_object_ref (self);
+#line 205 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp0_ = (GtkButton*) gtk_button_new_from_icon_name ("list-add-symbolic", GTK_ICON_SIZE_LARGE_TOOLBAR);
+#line 205 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	g_object_ref_sink (_tmp0_);
+#line 205 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	add_server_button = _tmp0_;
+#line 206 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	gtk_widget_set_tooltip_text ((GtkWidget*) add_server_button, "Add new server");
+#line 208 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp1_ = server_manager_new ();
+#line 208 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_data3_->sm = _tmp1_;
+#line 209 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	g_signal_connect_data ((GtkWidget*) add_server_button, "button-release-event", (GCallback) ___lambda9__gtk_widget_button_release_event, block3_data_ref (_data3_), (GClosureNotify) block3_data_unref, 0);
+#line 214 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp2_ = toolbar;
+#line 214 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	gtk_header_bar_pack_start (_tmp2_, (GtkWidget*) add_server_button);
+#line 203 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_g_object_unref0 (add_server_button);
+#line 203 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	block3_data_unref (_data3_);
+#line 203 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_data3_ = NULL;
+#line 1319 "kyrc.c"
+}
+
+
+static void main_remove_tab (Main* self, gint index) {
+	GraniteWidgetsDynamicNotebook* _tmp0_ = NULL;
+	GraniteWidgetsDynamicNotebook* _tmp1_ = NULL;
+	gint _tmp2_ = 0;
+	GraniteWidgetsTab* _tmp3_ = NULL;
+	GraniteWidgetsTab* _tmp4_ = NULL;
+	GeeHashMap* _tmp5_ = NULL;
+	gint _tmp6_ = 0;
+	gpointer _tmp7_ = NULL;
+	Client* _tmp8_ = NULL;
+	GeeHashMap* _tmp9_ = NULL;
+	gint _tmp10_ = 0;
+	GeeHashMap* _tmp11_ = NULL;
+	gint _tmp12_ = 0;
+#line 217 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	g_return_if_fail (self != NULL);
+#line 219 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_tmp0_ = self->priv->tabs;
-#line 113 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp1_ = gtk_notebook_get_current_page (_tmp0_);
-#line 113 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	page = _tmp1_;
-#line 114 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp2_ = self->priv->clients;
-#line 114 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp3_ = gee_abstract_map_get ((GeeAbstractMap*) _tmp2_, (gpointer) ((gintptr) page));
-#line 114 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp4_ = (Client*) _tmp3_;
-#line 114 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp5_ = text;
-#line 114 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	client_send_output (_tmp4_, _tmp5_);
-#line 114 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 219 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp1_ = self->priv->tabs;
+#line 219 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp2_ = index;
+#line 219 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp3_ = granite_widgets_dynamic_notebook_get_tab_by_index (_tmp1_, _tmp2_);
+#line 219 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp4_ = _tmp3_;
+#line 219 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	granite_widgets_dynamic_notebook_remove_tab (_tmp0_, _tmp4_);
+#line 219 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_g_object_unref0 (_tmp4_);
-#line 563 "kyrc.c"
+#line 220 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp5_ = self->priv->clients;
+#line 220 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp6_ = index;
+#line 220 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp7_ = gee_abstract_map_get ((GeeAbstractMap*) _tmp5_, (gpointer) ((gintptr) _tmp6_));
+#line 220 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp8_ = (Client*) _tmp7_;
+#line 220 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	client_stop (_tmp8_);
+#line 220 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_g_object_unref0 (_tmp8_);
+#line 221 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp9_ = self->priv->clients;
+#line 221 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp10_ = index;
+#line 221 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	gee_abstract_map_unset ((GeeAbstractMap*) _tmp9_, (gpointer) ((gintptr) _tmp10_), NULL);
+#line 222 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp11_ = self->priv->outputs;
+#line 222 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp12_ = index;
+#line 222 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	gee_abstract_map_unset ((GeeAbstractMap*) _tmp11_, (gpointer) ((gintptr) _tmp12_), NULL);
+#line 1377 "kyrc.c"
 }
 
 
 void main_on_destroy (GtkWidget* window, Main* self) {
-#line 118 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 226 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	g_return_if_fail (self != NULL);
-#line 118 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 226 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	g_return_if_fail (window != NULL);
-#line 120 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 228 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	gtk_main_quit ();
-#line 574 "kyrc.c"
+#line 1388 "kyrc.c"
 }
 
 
@@ -578,21 +1392,21 @@ static gint main_main (gchar** args, int args_length1) {
 	gint result = 0;
 	Main* app = NULL;
 	Main* _tmp0_ = NULL;
-#line 125 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 233 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	gtk_init (&args_length1, &args);
-#line 126 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 234 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_tmp0_ = main_new ();
-#line 126 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 234 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	app = _tmp0_;
-#line 128 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 236 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	gtk_main ();
-#line 130 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 238 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	result = 0;
-#line 130 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 238 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_g_object_unref0 (app);
-#line 130 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 238 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	return result;
-#line 596 "kyrc.c"
+#line 1410 "kyrc.c"
 }
 
 
@@ -600,57 +1414,73 @@ int main (int argc, char ** argv) {
 #if !GLIB_CHECK_VERSION (2,35,0)
 	g_type_init ();
 #endif
-#line 123 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 231 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	return main_main (argv, argc);
-#line 606 "kyrc.c"
+#line 1420 "kyrc.c"
 }
 
 
 static void main_class_init (MainClass * klass) {
-#line 24 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 25 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	main_parent_class = g_type_class_peek_parent (klass);
-#line 24 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 25 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	g_type_class_add_private (klass, sizeof (MainPrivate));
-#line 24 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 25 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	G_OBJECT_CLASS (klass)->finalize = main_finalize;
-#line 617 "kyrc.c"
+#line 1431 "kyrc.c"
 }
 
 
 static void main_instance_init (Main * self) {
-	GeeHashMap* _tmp0_ = NULL;
+	SqlClient* _tmp0_ = NULL;
 	GeeHashMap* _tmp1_ = NULL;
-#line 24 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	GeeHashMap* _tmp2_ = NULL;
+	GtkListBox* _tmp3_ = NULL;
+#line 25 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	self->priv = MAIN_GET_PRIVATE (self);
-#line 40 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp0_ = gee_hash_map_new (G_TYPE_INT, NULL, NULL, gtk_text_view_get_type (), (GBoxedCopyFunc) g_object_ref, g_object_unref, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-#line 40 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	self->priv->outputs = _tmp0_;
 #line 41 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_tmp1_ = gee_hash_map_new (G_TYPE_INT, NULL, NULL, TYPE_CLIENT, (GBoxedCopyFunc) g_object_ref, g_object_unref, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+	_tmp0_ = sql_client_get_instance ();
 #line 41 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	self->priv->clients = _tmp1_;
-#line 634 "kyrc.c"
+	self->priv->sqlclient = _tmp0_;
+#line 43 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp1_ = gee_hash_map_new (G_TYPE_INT, NULL, NULL, gtk_text_view_get_type (), (GBoxedCopyFunc) g_object_ref, g_object_unref, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+#line 43 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	self->priv->outputs = _tmp1_;
+#line 44 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp2_ = gee_hash_map_new (G_TYPE_INT, NULL, NULL, TYPE_CLIENT, (GBoxedCopyFunc) g_object_ref, g_object_unref, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+#line 44 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	self->priv->clients = _tmp2_;
+#line 45 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_tmp3_ = (GtkListBox*) gtk_list_box_new ();
+#line 45 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	g_object_ref_sink (_tmp3_);
+#line 45 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	self->priv->servers = _tmp3_;
+#line 1460 "kyrc.c"
 }
 
 
 static void main_finalize (GObject* obj) {
 	Main * self;
-#line 24 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 25 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	self = G_TYPE_CHECK_INSTANCE_CAST (obj, TYPE_MAIN, Main);
-#line 36 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_g_object_unref0 (self->priv->tabs);
-#line 37 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_g_object_unref0 (self->priv->window);
 #line 38 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_g_object_unref0 (self->priv->input);
+	_g_object_unref0 (self->priv->tabs);
+#line 39 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_g_object_unref0 (self->priv->window);
 #line 40 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
-	_g_object_unref0 (self->priv->outputs);
+	_g_object_unref0 (self->priv->input);
 #line 41 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_g_object_unref0 (self->priv->sqlclient);
+#line 43 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_g_object_unref0 (self->priv->outputs);
+#line 44 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	_g_object_unref0 (self->priv->clients);
-#line 24 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+#line 45 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
+	_g_object_unref0 (self->priv->servers);
+#line 25 "/home/stack/Apps/projects/KyRC/src/kyrc.vala"
 	G_OBJECT_CLASS (main_parent_class)->finalize (obj);
-#line 654 "kyrc.c"
+#line 1484 "kyrc.c"
 }
 
 

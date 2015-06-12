@@ -10,6 +10,7 @@ public class Client : Object
 	public int tab;
 	public string username = "";
 	public bool exit = false; 
+	public static const uint16 default_port = 6667;
 
 	public signal void new_data(int index, string data);
  
@@ -33,7 +34,7 @@ public class Client : Object
 		List<InetAddress> addresses = resolver.lookup_by_name (url, null);
 		InetAddress address = addresses.nth_data (0);
 		stderr.printf ("address " + address.to_string());   
-		SocketConnection conn = client.connect (new InetSocketAddress (address, 6667));
+		SocketConnection conn = client.connect (new InetSocketAddress (address, default_port));
  
 		input_stream = new DataInputStream (conn.input_stream);
 		output_stream = new DataOutputStream (conn.output_stream);

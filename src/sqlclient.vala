@@ -6,8 +6,8 @@ using Gee;
 public class SqlClient : Object
 {
 	static SqlClient self = null;
-	Sqlite.Database db;
-	public ArrayList<Server> servers = new ArrayList<Server>();
+	public static Sqlite.Database db;
+	public static HashMap<int, Server> servers = new HashMap<int, Server>();
 	
 	private SqlClient()
 	{ 
@@ -49,99 +49,35 @@ public class SqlClient : Object
 
 	public Server get_server(string name)
 	{
-		foreach(Server svr in servers)
+		foreach(var svr in servers.entries)
 		{
-			if(svr.host == name)
-				return svr;
+			if(svr.value.host == name)
+				return svr.value;
 		}
 		return null;
 	}
 
 	public Server get_server_id(int id)
 	{
-		foreach(Server svr in servers)
+		foreach(var svr in servers.entries)
 		{
-			if(svr.id == id)
-				return svr;
+			if(svr.value.id == id)
+				return svr.value;
+		}
+		return null;
+	}  
+
+	public static Channel find_channel(Server current_server,  string name)
+	{
+		foreach(var chan in current_server.channels)
+		{
+			if(chan.server_id == current_server.id && chan.channel == name)
+				return chan; 
 		}
 		return null;
 	}
 
-	public int update(Server svr)
-	{
-		stderr.printf("RUNNING SQL\n");
-		
-		Sqlite.Statement stmt;
-		int ok;
-		string sql = "SELECT id FROM servers WHERE id = " + svr.id.to_string();
-		bool exists = false;
-		db.exec(sql, (n_columns, values, column_names) => { 
-			exists = true;
-			return 0;
-		}); 
- 
-		
-		string keys = "";
-		foreach(string i in Server.keys)
-		{
-			//Skip over ID
-			if(keys == "")
-			{
-				keys = " ";
-				
-			}
-			keys += i + "=$" + i + ", ";
-		}
-
-		keys = keys[0:-2];
- 
-
-		if(exists)
-		{
-			sql = "UPDATE servers SET " + keys + " WHERE id = " + svr.id.to_string();
-		
-			ok = db.prepare_v2(sql, sql.length, out stmt);
-			if (ok != Sqlite.OK) { 
-				critical (db.errmsg ());
-				return -1;
-	  		}
-	 
-			stmt.bind_text(1, svr.host);
-			stmt.bind_int(2, svr.port);
-			stmt.bind_text(3, svr.nickname);
-			stmt.bind_text(4, svr.realname);
-			stmt.bind_text(5, svr.username);
-			stmt.bind_text(6, svr.password);
-			stmt.bind_text(7, svr.on_connect); 
-			stmt.bind_int(8, bool_to(svr.encryption));  
-			stmt.bind_int(9, bool_to(svr.validate_server)); 
-			stmt.bind_int(10, bool_to(svr.autoconnect));
-
-			if(stmt.step() == Sqlite.DONE)
-			{
-				sql = "DELETE FROM channels WHERE server_id=" + svr.id.to_string();
-				string errmsg;
-				ok = db.exec(sql, null, out errmsg);  
-				
-				sql = "INSERT INTO channels (server_id, channel) VALUES(" + svr.id.to_string() + ", $CHANNEL)";
-
-				ok = db.prepare_v2(sql, sql.length, out stmt);
-				if (ok == Sqlite.ERROR) { 
-					critical (db.errmsg ());
-					return -1;
-				}
-				
-				foreach(Channel chn in svr.channels)
-				{ 
-					stmt.bind_text(1, chn.channel);
-					stmt.step(); 
-				}
-			}
-		}
-		return 0;
-	}
-
-	private int refresh_callback(int n_columns, string[] values, string[] column_names) {
+	public int refresh_callback(int n_columns, string[] values, string[] column_names) {
 		var server = new Server();
 		for (int i = 0; i < n_columns; i++) {  
 			switch(column_names[i])
@@ -181,11 +117,11 @@ public class SqlClient : Object
 					break; 
 			}
 		} 
-		servers.add(server);
+		servers[server.id] = server;
 		return 0;
 	}
 
-	private int refresh_callback_channel(int n_columns, string[] values, string[] column_names) {
+	public int refresh_callback_channel(int n_columns, string[] values, string[] column_names) {
 		Server svr = null;
 		for (int i = 0; i < n_columns; i++) { 
 			if(column_names[i] == "server_id")
@@ -193,6 +129,10 @@ public class SqlClient : Object
 				svr = get_server_id(values[i].to_int());
 			}
 		}
+		
+		if(svr == null)
+			return 0;
+		
 		Channel chn = new Channel();
 		for (int i = 0; i < n_columns; i++) { 
 			switch(column_names[i])
@@ -208,7 +148,10 @@ public class SqlClient : Object
 					break;
 			}
 		}
+ 
+	 
 		svr.channels.add(chn);
+		
 		return 0;
 	}
 
@@ -238,12 +181,124 @@ public class SqlClient : Object
 		public bool autoconnect = false;
 		public bool validate_server = false;
 		public ArrayList<Channel> channels = new ArrayList<Channel>();
+
+		public int add_server_empty()
+		{
+			string sql = "INSERT INTO servers (host, port) VALUES('', " + Client.default_port.to_string() + ")";
+			db.exec(sql);
+			this.id = (int)db.last_insert_rowid ();
+			stderr.printf("new server id " + this.id.to_string());
+			servers[this.id]=this;
+			return this.id;
+		}
+
+		public int add_server()
+		{
+			this.id = add_server_empty ();
+			servers[id]=this;
+			update();
+			return id;
+		}
+
+		public int update()
+		{
+			var svr = this;
+			Sqlite.Statement stmt;
+			int ok;
+			string sql = "SELECT id FROM servers WHERE id = " + svr.id.to_string();
+			bool exists = false;
+			db.exec(sql, (n_columns, values, column_names) => { 
+				exists = true;
+				return 0;
+			}); 
+	 
+		
+			string keys = "";
+			foreach(string i in Server.keys)
+			{
+				//Skip over ID
+				if(keys == "")
+				{
+					keys = " ";
+				
+				}
+				keys += i + "=$" + i + ", ";
+			}
+
+			keys = keys[0:-2];
+	 
+
+			if(exists)
+			{
+				sql = "UPDATE servers SET " + keys + " WHERE id = " + svr.id.to_string();
+		
+				ok = db.prepare_v2(sql, sql.length, out stmt);
+				if (ok != Sqlite.OK) { 
+					critical (db.errmsg ());
+					return -1;
+		  		}
+		 
+				stmt.bind_text(1, svr.host);
+				stmt.bind_int(2, svr.port);
+				stmt.bind_text(3, svr.nickname);
+				stmt.bind_text(4, svr.realname);
+				stmt.bind_text(5, svr.username);
+				stmt.bind_text(6, svr.password);
+				stmt.bind_text(7, svr.on_connect); 
+				stmt.bind_int(8, bool_to(svr.encryption));  
+				stmt.bind_int(9, bool_to(svr.validate_server)); 
+				stmt.bind_int(10, bool_to(svr.autoconnect)); 
+				 
+				stmt.step();
+
+				SqlClient.servers[svr.id] = svr;
+				 
+			
+			}
+
+			return 0;
+		}
+
+		public void remove_server()
+		{
+			servers.unset(this.id);
+			string sql = "DELETE FROM servers WHERE id=" + this.id.to_string();  
+			db.exec(sql);
+			sql = "DELETE FROM channels WHERE server_id=" + this.id.to_string(); 
+			db.exec(sql);
+		}
 	}
 
 	public class Channel{
 		public int id = -1;
 		public int server_id;
 		public string channel;
+
+		public void delete_channel()
+		{ 
+			string sql = "DELETE FROM channels WHERE server_id=" + this.server_id.to_string() + " AND channel=$NAME";
+			channel_query(sql);
+		}
+
+		public void add_channel()
+		{ 
+			if(this.server_id < 0)
+				return;
+			string sql = "INSERT INTO channels (server_id, channel) VALUES(" + this.server_id.to_string() + ", $CHANNEL)";
+			channel_query(sql);
+		}
+
+		private void channel_query(string sql)
+		{
+			Sqlite.Statement stmt;
+			int ok = db.prepare_v2(sql, sql.length, out stmt);
+			if (ok == Sqlite.ERROR) { 
+				critical (db.errmsg ());
+				return;
+			}	
+			stmt.bind_text(1, this.channel);
+			stmt.step();
+		}
 	}
 
 
