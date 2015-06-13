@@ -25,15 +25,14 @@ kyrc_SOURCES = \
 	kyrc.vala config.vapi client.vala sqlclient.vala server_manager.vala channel_item.vala channel_tab.vala message.vala
 
 kyrc_VALAFLAGS =  \
-	--pkg gtk+-3.0 --pkg glib-2.0 --pkg gee-0.8 --pkg granite --pkg sqlite3 --target-glib 2.32  -g --save-temps
+	--pkg gtk+-3.0 --pkg glib-2.0 --pkg gee-0.8 --pkg granite --pkg sqlite3 --target-glib 2.32  -g --save-temps --Xcc=-X --Xcc=-w
 
 
 kyrc_LDFLAGS = \
 	-Wl,--export-dynamic
 
 kyrc_LDADD = $(KYRC_LIBS)
-
-
+ 
 
 
 EXTRA_DIST = $(ui_DATA) $(assets_DATA)

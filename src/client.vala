@@ -57,14 +57,19 @@ public class Client : Object
 	{   
 		SocketClient client = new SocketClient ();
 
-		// Resolve hostname to IP address:
-		Resolver resolver = Resolver.get_default ();
-		GLib.List<InetAddress> addresses = resolver.lookup_by_name (url, null);
-		InetAddress address = addresses.nth_data (0); 
-		SocketConnection conn = client.connect (new InetSocketAddress (address, default_port));
+		try{
+			// Resolve hostname to IP address:
+			Resolver resolver = Resolver.get_default ();
+			GLib.List<InetAddress> addresses = resolver.lookup_by_name (url, null);
+			InetAddress address = addresses.nth_data (0); 
+			SocketConnection conn = client.connect (new InetSocketAddress (address, default_port));
+			input_stream = new DataInputStream (conn.input_stream);
+			output_stream = new DataOutputStream (conn.output_stream);
+		}catch(Error e) {
+			warning("Unable to connect " + e.message);
+			return -1;
+		}
 
-		input_stream = new DataInputStream (conn.input_stream);
-		output_stream = new DataOutputStream (conn.output_stream);
 
 		send_output ("PASS  -p");
 		send_output ("NICK " + username);
@@ -74,7 +79,9 @@ public class Client : Object
 		string? line = "";
 		do{
 			size_t size;
-			line = input_stream.read_line_utf8(out size);
+			try{
+				line = input_stream.read_line_utf8(out size);
+			}catch(IOError e){}
 			handle_input(line);
 		}while(line != null && !exit);
 
@@ -141,7 +148,7 @@ public class Client : Object
 	}
 
 	public void stop()
-	{
+	{ 
 		exit = true; 
 		input_stream.clear_pending();
 		try{

@@ -37,8 +37,7 @@ public class Kyrc : Object
  
 	Granite.Widgets.DynamicNotebook tabs;
 	Window window;
-	Entry input;
-	SqlClient sqlclient = SqlClient.get_instance();
+	Entry input; 
 	Paned pannel;
 	
 	Gee.HashMap<int, ChannelTab> outputs = new Gee.HashMap<int, ChannelTab> ();
@@ -140,8 +139,7 @@ public class Kyrc : Object
 	public static int index = 0;
 	public void add_tab(ChannelTab newTab)
 	{  
-		Idle.add( () => { 
-			Gtk.Label title = new Gtk.Label (newTab.channel_name);    
+		Idle.add( () => {  
 			TextView output = new TextView();  
 			ScrolledWindow scrolled = new Gtk.ScrolledWindow (null, null); 
 			scrolled.shadow_type = ShadowType.IN;
@@ -197,7 +195,7 @@ public class Kyrc : Object
 			case "PRIVMSG":
 				data = message.user_name + ": " + message.message + "\n";
 				tag = tv.buffer.create_tag(null);
-				rgba = new Gdk.RGBA();
+				rgba = Gdk.RGBA();
 				rgba.red = 1.0;
 				rgba.alpha = 1.0;
 				tag.foreground_rgba = rgba;
@@ -263,7 +261,7 @@ public class Kyrc : Object
 	{     
 		var root = servers.root;
 		root.clear(); 
-		foreach(Map.Entry<int,SqlClient.Server> svr in sqlclient.servers.entries)
+		foreach(var svr in SqlClient.servers.entries)
 		{
 			var s =  new Granite.Widgets.SourceList.ExpandableItem(svr.value.host); 
 			root.add(s);
@@ -285,8 +283,8 @@ public class Kyrc : Object
 	}
 
 	public bool slide_panel()
-	{
-		Thread.create<int>(move_slider_t, true);  
+	{ 
+		new Thread<int>("slider_move", move_slider_t);
 		return false;
 	}
  
@@ -359,7 +357,14 @@ public class Kyrc : Object
 			case LogLevelFlags.LEVEL_WARNING:
 				prefix = "\x1b[93mWarning: ";
 				break; 
+			case LogLevelFlags.LEVEL_ERROR:
+				prefix = "\x1b[91mError: ";
+				break; 
+			default:
+				prefix = message;
+				break;
 		} 
+		stdout.printf(prefix + message + suffix + "\n");
 	}
 
 	public static string get_asset_file(string name)
@@ -383,12 +388,10 @@ public class Kyrc : Object
 	}
 
 	static int main (string[] args) 
-	{
-		File prog = File.new_for_path (args[0]); 
-		
+	{ 
 		GLib.Log.set_default_handler(handle_log);  
 		
-		Gtk.init (ref args);
+		Gtk.init (ref args); 
 		new Kyrc ();
 
 		Gtk.main ();

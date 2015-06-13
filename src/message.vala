@@ -46,6 +46,7 @@ public class Message : GLib.Object {
 
 	public void parse_regex()
 	{  
+		try{
 		 regex.replace_eval (message, -1, 0, 0, (mi, s) => {
                 prefix = mi.fetch_named ("prefix");
                 command = mi.fetch_named ("command");
@@ -55,6 +56,9 @@ public class Message : GLib.Object {
 					user_name = prefix.split("!")[0];
                 return false;
             });
+		}catch(RegexError e){
+			warning("Regex error with " + message);
+		}
 	} 
  
 

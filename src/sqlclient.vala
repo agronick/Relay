@@ -31,8 +31,12 @@ public class SqlClient : Object
 	{
 		string confbase = GLib.Environment.get_user_config_dir() + "/kyrc";
 		File dir = File.new_for_path(confbase);
+		try{
 		if(!dir.query_exists())
 			dir.make_directory();
+		}catch(Error e){
+			error("Unable to create database. Can not write to " + confbase + ". Program will not function.");
+		}
 
 		string conffile = confbase + "/kyrc.db";
 		
@@ -52,7 +56,7 @@ public class SqlClient : Object
 		db.exec("SELECT * from channels", refresh_callback_channel);
 	}
 
-	public Server get_server(string name)
+	public Server? get_server(string name)
 	{
 		foreach(var svr in servers.entries)
 		{
@@ -62,7 +66,7 @@ public class SqlClient : Object
 		return null;
 	}
 
-	public Server get_server_id(int id)
+	public Server? get_server_id(int id)
 	{
 		foreach(var svr in servers.entries)
 		{
@@ -72,7 +76,7 @@ public class SqlClient : Object
 		return null;
 	}  
 
-	public static Channel find_channel(Server current_server,  string name)
+	public static Channel? find_channel(Server current_server,  string name)
 	{
 		foreach(var chan in current_server.channels)
 		{
@@ -88,13 +92,13 @@ public class SqlClient : Object
 			switch(column_names[i])
 			{
 				case "id":
-					server.id = values[i].to_int();
+					server.id = int.parse(values[i]);
 					break;
 				case "host":
 					server.host = values[i];
 					break;
 				case "port":
-					server.port = values[i].to_int();
+					server.port =  int.parse(values[i]);
 					break;
 				case "nickname":
 					server.nickname = values[i];
@@ -131,7 +135,7 @@ public class SqlClient : Object
 		for (int i = 0; i < n_columns; i++) { 
 			if(column_names[i] == "server_id")
 			{
-				svr = get_server_id(values[i].to_int());
+				svr = get_server_id( int.parse(values[i]));
 			}
 		}
 		
@@ -143,10 +147,10 @@ public class SqlClient : Object
 			switch(column_names[i])
 			{
 				case "id":
-					chn.id = values[i].to_int();
+					chn.id = int.parse(values[i]);
 					break;
 				case "server_id":
-					chn.server_id = values[i].to_int();
+					chn.server_id = int.parse(values[i]);
 					break;
 				case "channel":
 					chn.channel = values[i];

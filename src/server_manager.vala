@@ -21,8 +21,7 @@ public class ServerManager : Object
 	Switch encrypt;
 	Switch autoconnect;
 	Grid form;
-	SqlClient.Server current_server = null;  
-	Gtk.TreeIter iter; 
+	SqlClient.Server current_server = null;   
 	bool none_selected = false; 
 	public const char[] channel_char = {'&', '#', '+', '!'}; 
 
@@ -32,11 +31,14 @@ public class ServerManager : Object
 	{
 			current_server = null;
 			var builder = new Builder();
-			builder.add_from_file(Kyrc.get_asset_file(Kyrc.UI_FILE_SERVERS));
+			try{
+				builder.add_from_file(Kyrc.get_asset_file(Kyrc.UI_FILE_SERVERS));
+			}catch(Error e){
+				error("Unable to load UI file " + Kyrc.get_asset_file(Kyrc.UI_FILE_SERVERS));
+			}
 		
 			window = builder.get_object ("window") as Gtk.Window;
-			var box = builder.get_object ("port_wrap") as Box;
-			var ok = builder.get_object ("ok") as Button;
+			var box = builder.get_object ("port_wrap") as Box; 
 			var cancel = builder.get_object ("cancel") as Button;
 			var remove_channel = builder.get_object ("remove_channel") as Button;
 			var server_btns = builder.get_object ("server_buttons") as Box;
@@ -108,9 +110,7 @@ public class ServerManager : Object
 	public void save_changes(ListBoxRow row)
 	{   
 		if(current_server == null || select_row == null)
-			return; 
-
-		var oldrow = select_row;
+			return;  
 
 		string hostname = host.get_text().strip();
 
@@ -226,7 +226,7 @@ public class ServerManager : Object
 	private void add_servers()
 	{  
 		ListBoxRow first_row = null;
-		foreach(var svr in sqlclient.servers.entries)
+		foreach(var svr in SqlClient.servers.entries)
 		{ 
 			var server = svr.value;
 			var lbr = get_list_box_row(server.host);
