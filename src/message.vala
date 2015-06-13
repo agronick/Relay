@@ -39,7 +39,7 @@ public class Message : GLib.Object {
 				error("There was a regex error that should never happen");
 			}
 		}
- 
+
 		parse_regex();
 	}
 
@@ -47,48 +47,22 @@ public class Message : GLib.Object {
 	public void parse_regex()
 	{  
 		try{
-		 regex.replace_eval (message, -1, 0, 0, (mi, s) => {
-                prefix = mi.fetch_named ("prefix");
-                command = mi.fetch_named ("command");
-                parameters = mi.fetch_named ("params").split(" ") ;
-                message = mi.fetch_named ("trail"); 
+			regex.replace_eval (message, -1, 0, 0, (mi, s) => {
+				prefix = mi.fetch_named ("prefix");
+				command = mi.fetch_named ("command");
+				parameters = mi.fetch_named ("params").split(" ") ;
+				message = mi.fetch_named ("trail"); 
 				if(command == "PRIVMSG")
 					user_name = prefix.split("!")[0];
-                return false;
-            });
+				return false;
+			});
 		}catch(RegexError e){
 			warning("Regex error with " + message);
 		}
 	} 
- 
 
-	/**
-	 * DELETE THIS WHEN YOU KNOW YOU DONT NEED IT
-	public void parse()
-	{
-		if (message[0] == ':')
-		{
-			prefixEnd = message.index_of(" "); 
-		//	prefix = message[1, prefixEnd -1];
-		}
 
-		trailingStart = message.index_of(" :"); 
-		if (trailingStart >= 0)
-		{
-			trailing = message.substring(trailingStart + 2);
-		} else {
-		//	trailingStart = message.Length;
-		}
-		
-		commandAndParameters = message.substring(prefixEnd + 1, trailingStart - prefixEnd - 1).split(" ");
-		command = commandAndParameters[0];
 
-		if (commandAndParameters.length > 1)
-			parameters = commandAndParameters[1:commandAndParameters.length - 1];
-	}
-*/
-		
 
 }
-	
-	
+
