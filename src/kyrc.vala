@@ -30,8 +30,8 @@ public class Kyrc : Object
 	 * or installing
 	 */
 	//const string UI_FILE = Config.PACKAGE_DATA_DIR + "/ui/" + "kyrc.ui";
-	public const string UI_FILE = "src/kyrc.ui";
-	public const string UI_FILE_SERVERS = "src/server_window.ui";
+	public const string UI_FILE = "ui/kyrc.ui";
+	public const string UI_FILE_SERVERS = "ui/server_window.ui"; 
 
 	/* ANJUTA: Widgets declaration for kyrc.ui - DO NOT REMOVE */
  
@@ -55,7 +55,7 @@ public class Kyrc : Object
 			Gtk.Settings.get_default().set("gtk-application-prefer-dark-theme", true);
 			
 			var builder = new Builder ();
-			builder.add_from_file (UI_FILE);
+			builder.add_from_file (get_asset_file(UI_FILE));
 			builder.connect_signals (this);
 
 			var toolbar = new Gtk.HeaderBar (); 
@@ -262,19 +262,26 @@ public class Kyrc : Object
 	public void refresh_server_list()
 	{     
 		var root = servers.root;
-		root.clear();
+		root.clear(); 
 		foreach(Map.Entry<int,SqlClient.Server> svr in sqlclient.servers.entries)
 		{
-			var s =  new Granite.Widgets.SourceList.ExpandableItem(svr.value.host);
+			var s =  new Granite.Widgets.SourceList.ExpandableItem(svr.value.host); 
 			root.add(s);
-			var chn = new Granite.Widgets.SourceList.Item (svr.value.host);
+			var chn = new Granite.Widgets.SourceList.Item (svr.value.host);   
 			s.add(chn);
+			chn.activated.connect(channel_clicked);
 			foreach(var c in svr.value.channels)
 			{
 				chn = new Granite.Widgets.SourceList.Item (c.channel);
+				chn.activated.connect(channel_clicked); 
 				s.add(chn);
 			}
 		} 
+	}
+
+	public void channel_clicked()
+	{
+		stderr.printf("Channel clicked");
 	}
 
 	public bool slide_panel()
@@ -337,8 +344,50 @@ public class Kyrc : Object
 		Gtk.main_quit();
 	}
 
+	public static void handle_log(string? log_domain, LogLevelFlags log_levels, string message)
+	{
+		string prefix = "";
+		string suffix = "\x1b[39;49m " ;
+		switch(log_levels)
+		{
+			case LogLevelFlags.LEVEL_DEBUG: 
+				prefix = "\x1b[94mDebug: ";
+				break;
+			case LogLevelFlags.LEVEL_INFO:
+				prefix = "\x1b[92mInfo: ";
+				break;
+			case LogLevelFlags.LEVEL_WARNING:
+				prefix = "\x1b[93mWarning: ";
+				break; 
+		} 
+	}
+
+	public static string get_asset_file(string name)
+	{
+		string check = Config.PACKAGE_DATA_DIR + name;
+		File file = File.new_for_path (check);
+		if(file.query_exists()) 
+			return check;
+
+		check = "src/" + name; 
+		file = File.new_for_path (check);
+		if(file.query_exists()) 
+			return check;
+		
+		check =  name; 
+		file = File.new_for_path (check);
+		if(file.query_exists()) 
+			return check;
+
+		error("Unable to find UI file."); 
+	}
+
 	static int main (string[] args) 
 	{
+		File prog = File.new_for_path (args[0]); 
+		
+		GLib.Log.set_default_handler(handle_log);  
+		
 		Gtk.init (ref args);
 		new Kyrc ();
 

@@ -14,6 +14,7 @@ public class Client : Object
 	private Kyrc backref;
 	public ChannelTab server_tab;
 	public HashMap<string, ChannelTab> channel_tabs = new HashMap<string, ChannelTab>();
+	public ArrayList<string> channel_autoconnect = new ArrayList<string>();
 
 	public signal void new_data(ChannelTab tab, Message data);
 	public signal void new_topic(ChannelTab tab, string topic);

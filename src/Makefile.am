@@ -4,8 +4,10 @@
 
 
 uidir = $(pkgdatadir)/ui
-ui_DATA = kyrc.ui server_window.ui
+ui_DATA = ui/kyrc.ui ui/server_window.ui
 
+assetsdir = $(pkgdatadir)/assets
+assets_DATA = assets/server_run.png
 
 AM_CPPFLAGS = \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
@@ -34,10 +36,11 @@ kyrc_LDADD = $(KYRC_LIBS)
 
 
 
-EXTRA_DIST = $(ui_DATA)
+EXTRA_DIST = $(ui_DATA) $(assets_DATA)
 
 # Remove ui directory on uninstall
 uninstall-local:
 	-rm -r $(uidir)
+	-rm -r $(imagedir)
 	-rm -r $(pkgdatadir)
 

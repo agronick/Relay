@@ -32,7 +32,7 @@ public class ServerManager : Object
 	{
 			current_server = null;
 			var builder = new Builder();
-			builder.add_from_file(Kyrc.UI_FILE_SERVERS);
+			builder.add_from_file(Kyrc.get_asset_file(Kyrc.UI_FILE_SERVERS));
 		
 			window = builder.get_object ("window") as Gtk.Window;
 			var box = builder.get_object ("port_wrap") as Box;

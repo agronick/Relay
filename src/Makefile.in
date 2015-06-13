@@ -93,7 +93,8 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(uidir)"
+am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(assetsdir)" \
+	"$(DESTDIR)$(uidir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_kyrc_OBJECTS = kyrc.$(OBJEXT) client.$(OBJEXT) sqlclient.$(OBJEXT) \
 	server_manager.$(OBJEXT) channel_item.$(OBJEXT) \
@@ -184,7 +185,7 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-DATA = $(ui_DATA)
+DATA = $(assets_DATA) $(ui_DATA)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
 # and print each of them once, without duplicates.  Input order is
@@ -326,7 +327,9 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 uidir = $(pkgdatadir)/ui
-ui_DATA = kyrc.ui server_window.ui
+ui_DATA = ui/kyrc.ui ui/server_window.ui
+assetsdir = $(pkgdatadir)/assets
+assets_DATA = assets/server_run.png
 AM_CPPFLAGS = \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-DPACKAGE_SRC_DIR=\""$(srcdir)"\" \
@@ -347,7 +350,7 @@ kyrc_LDFLAGS = \
 	-Wl,--export-dynamic
 
 kyrc_LDADD = $(KYRC_LIBS)
-EXTRA_DIST = $(ui_DATA)
+EXTRA_DIST = $(ui_DATA) $(assets_DATA)
 all: all-am
 
 .SUFFIXES:
@@ -520,6 +523,27 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
+install-assetsDATA: $(assets_DATA)
+	@$(NORMAL_INSTALL)
+	@list='$(assets_DATA)'; test -n "$(assetsdir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(assetsdir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(assetsdir)" || exit 1; \
+	fi; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(assetsdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(assetsdir)" || exit $$?; \
+	done
+
+uninstall-assetsDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(assets_DATA)'; test -n "$(assetsdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	dir='$(DESTDIR)$(assetsdir)'; $(am__uninstall_files_from_dir)
 install-uiDATA: $(ui_DATA)
 	@$(NORMAL_INSTALL)
 	@list='$(ui_DATA)'; test -n "$(uidir)" || list=; \
@@ -628,7 +652,7 @@ check-am: all-am
 check: check-am
 all-am: Makefile $(PROGRAMS) $(DATA)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(uidir)"; do \
+	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(assetsdir)" "$(DESTDIR)$(uidir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -699,7 +723,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-uiDATA
+install-data-am: install-assetsDATA install-uiDATA
 
 install-dvi: install-dvi-am
 
@@ -745,7 +769,8 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-local uninstall-uiDATA
+uninstall-am: uninstall-assetsDATA uninstall-binPROGRAMS \
+	uninstall-local uninstall-uiDATA
 
 .MAKE: install-am install-strip
 
@@ -753,21 +778,23 @@ uninstall-am: uninstall-binPROGRAMS uninstall-local uninstall-uiDATA
 	clean-binPROGRAMS clean-generic clean-libtool cscopelist-am \
 	ctags ctags-am distclean distclean-compile distclean-generic \
 	distclean-libtool distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-binPROGRAMS \
-	install-data install-data-am install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	install-uiDATA installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags tags-am uninstall uninstall-am \
-	uninstall-binPROGRAMS uninstall-local uninstall-uiDATA
+	html-am info info-am install install-am install-assetsDATA \
+	install-binPROGRAMS install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-pdf install-pdf-am install-ps install-ps-am \
+	install-strip install-uiDATA installcheck installcheck-am \
+	installdirs maintainer-clean maintainer-clean-generic \
+	mostlyclean mostlyclean-compile mostlyclean-generic \
+	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
+	uninstall-am uninstall-assetsDATA uninstall-binPROGRAMS \
+	uninstall-local uninstall-uiDATA
 
 
 # Remove ui directory on uninstall
 uninstall-local:
 	-rm -r $(uidir)
+	-rm -r $(imagedir)
 	-rm -r $(pkgdatadir)
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
