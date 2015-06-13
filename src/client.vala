@@ -1,46 +1,67 @@
 using GLib;
 using Gtk;
+using Gee;
 
 public class Client : Object
 {
 
 	public DataInputStream input_stream;
 	public DataOutputStream output_stream;
-	public string url = ""; 
-	public int tab;
+	public string url = "";  
 	public string username = "";
 	public bool exit = false; 
 	public static const uint16 default_port = 6667;
 	private Main backref;
+	public ChannelTab server_tab;
+	public HashMap<string, ChannelTab> channel_tabs = new HashMap<string, ChannelTab>();
 
-	public signal void new_data(int index, string data);
+	public signal void new_data(ChannelTab tab, string data);
+	public signal void new_topic(ChannelTab tab, string topic);
+
+	public const string RPL_TOPIC = "332";
+    public const string RPL_MOTDSTART = "375";
+              //":- <server> Message of the day - "
+     public const string RPL_MOTD = "372";
+             // ":- <text>"
+      public const string RPL_ENDOFMOTD = "376";
+			 //End server messages
 
 	public Client(Main back)
 	{
 		backref = back;
 	}
 
-	public bool connect_to_server(string location, int tab_page)
+	public bool connect_to_server(string location)
 	{
-		url = location;
-		tab = tab_page;
-		
-		Thread.create<int> (this.do_connect, true);  
-		
+		url = location; 
+		server_tab = new ChannelTab(this, url);
+		backref.add_tab(server_tab);
+
+		new Thread<int>("Connection " + location, do_connect);
+
 		return true;
 	}
- 
+
+	private ChannelTab add_channel_tab(string name)
+	{
+		if(channel_tabs.has_key(name))
+			return channel_tabs[name];
+		var newTab = new ChannelTab(this, name);
+		backref.add_tab(newTab);
+		channel_tabs[name] = newTab;
+		return newTab;
+	}
+
 	private int do_connect()
 	{   
 		SocketClient client = new SocketClient ();
-		
+
 		// Resolve hostname to IP address:
 		Resolver resolver = Resolver.get_default ();
-		List<InetAddress> addresses = resolver.lookup_by_name (url, null);
-		InetAddress address = addresses.nth_data (0);
-		stderr.printf ("address " + address.to_string());   
+		GLib.List<InetAddress> addresses = resolver.lookup_by_name (url, null);
+		InetAddress address = addresses.nth_data (0); 
 		SocketConnection conn = client.connect (new InetSocketAddress (address, default_port));
- 
+
 		input_stream = new DataInputStream (conn.input_stream);
 		output_stream = new DataOutputStream (conn.output_stream);
 
@@ -55,38 +76,53 @@ public class Client : Object
 			line = input_stream.read_line_utf8(out size);
 			handle_input(line);
 		}while(line != null && !exit);
- 
-		 
+
+
 		return 1;
 	}
 
 	private void handle_input(string? msg)
-	{
+	{ 
 		if(msg == null)
 		{
 			stop();
 			return;
-		} 
-		if(msg[0:4] == "PING")
+		}
+
+		Message message = new Message(msg); 
+		if(message.command == "PING")
 		{
-			handle_ping(msg);
+			handle_ping(ref message);
 			return;
-		}if(msg[0:4] == "PONG")
+		}if(message.command == "PONG")
 		{
 			info(msg);
 			return;
-		}else if(msg.length > 0 && msg[0] == ':')
-		{ 
-			new_data(tab, msg.substring(1) + "\n"); 
+		} 
+		if(message.command == RPL_TOPIC){ 
+			set_topic(ref message);
+			return;
+		}else if(message.command == "PRIVMSG")
+		{  
+			var tab = channel_tabs.has_key(message.parameters[0]) ? channel_tabs[message.parameters[0]] : server_tab;
+			new_data(tab, message.message + "\n");
+		}else if( message.command == "NOTICE" || message.command == RPL_MOTD || message.command == RPL_MOTDSTART ){
+			new_data (server_tab, message.message + "\n");
 		}else{
 			warning("Unhandled message: " + msg + "\n");
-		}
+		} 
+	}
+	public void set_topic(ref Message msg)
+	{ 
+		string channel = msg.parameters[1];   
+		ChannelTab t = add_channel_tab(channel); 
+		stderr.printf("NEW TOPIC " + msg.message); 
+		new_data(t, msg.message + "\n");
 	}
 
-	private void handle_ping(string msg)
-	{
-		var split = msg.split(" ");
-		send_output("PONG " + split[1]);
+	private void handle_ping(ref Message msg)
+	{ 
+		send_output("PONG " + msg.message);
 	}
 
 	public void stop()
@@ -97,15 +133,18 @@ public class Client : Object
 			input_stream.close();
 		} catch (GLib.IOError e){} 
 		output_stream.clear_pending();
-		output_stream.flush();
 		try{
+			output_stream.flush();
 			output_stream.close(); 
-		} catch (GLib.IOError e){} 
+		} catch (GLib.Error e){} 
 	}
 
 	public void send_output(string output)
 	{
-		output_stream.put_string(output + "\r\n");
+		stderr.printf("Sending out " + output + "\n");
+		try{
+			output_stream.put_string(output + "\r\n");
+		}catch(GLib.Error e){}
 	}
-	
+
 }

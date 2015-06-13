@@ -22,6 +22,11 @@ public class SqlClient : Object
 		return self;
 	}
 
+	public HashMap<int, Server> get_servers()
+	{
+		return servers;
+	}
+
 	private void init()
 	{
 		string confbase = GLib.Environment.get_user_config_dir() + "/kyrc";

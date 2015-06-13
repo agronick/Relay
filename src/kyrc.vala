@@ -41,7 +41,7 @@ public class Main : Object
 	SqlClient sqlclient = SqlClient.get_instance();
 	Paned pannel;
 	
-	Gee.HashMap<int, TextView> outputs = new Gee.HashMap<int, TextView> ();
+	Gee.HashMap<int, ChannelTab> outputs = new Gee.HashMap<int, ChannelTab> ();
 	Gee.HashMap<int, Client> clients = new Gee.HashMap<int, Client> ();
 	Granite.Widgets.SourceList servers = new Granite.Widgets.SourceList();
 	
@@ -97,7 +97,7 @@ public class Main : Object
 			/* ANJUTA: Widgets initialization for kyrc.ui - DO NOT REMOVE */
 			window.show_all ();  
 
-			add_tab("irc.freenode.net");
+			add_server("irc.freenode.net");
 			
 			tabs.new_tab_requested.connect(() => {
 				var dialog = new Dialog.with_buttons("New Connection", window, 
@@ -118,7 +118,7 @@ public class Main : Object
 							string name = server_name.get_text().strip();
 							if(name.length > 2)
 							{
-								add_tab(name);
+								add_server(name);
 								dialog.close();
 							}
 							break;
@@ -130,46 +130,56 @@ public class Main : Object
 			});
 		} 
 		catch (Error e) {
-			stderr.printf ("Could not load UI: %s\n", e.message);
+			error("Could not load UI: %s\n", e.message);
 		} 
 
 	}
 
 	public static int index = 0;
-	public void add_tab(string url)
-	{ 
-		Gtk.Label title = new Gtk.Label (url);    
-		TextView output = new TextView();  
-		ScrolledWindow scrolled = new Gtk.ScrolledWindow (null, null); 
-		scrolled.add(output); 
-		output.set_editable(false); 
-		output.set_wrap_mode (Gtk.WrapMode.WORD); 
+	public void add_tab(ChannelTab newTab)
+	{  
+		Idle.add( () => { 
+			Gtk.Label title = new Gtk.Label (newTab.channel_name);    
+			TextView output = new TextView();  
+			ScrolledWindow scrolled = new Gtk.ScrolledWindow (null, null); 
+			scrolled.shadow_type = ShadowType.IN;
+			scrolled.add(output); 
+			output.set_editable(false); 
+			output.set_wrap_mode (Gtk.WrapMode.WORD); 
 
-		var tab = new Granite.Widgets.Tab(); 
-		tab.label = url;
+			var tab = new Granite.Widgets.Tab(); 
+			tab.label = newTab.channel_name;
 		
-		tab.page = scrolled;
-		tabs.insert_tab(tab, index); 
-		 
-		outputs.set(index, output);
+			tab.page = scrolled;
+			tabs.insert_tab(tab, index); 
+
+			newTab.output = output;
+			outputs.set(index, newTab); 
 		
-		tabs.show_all();
-		
+			tabs.show_all();
+			return false;
+		});
+		newTab.tab_index = index;
+
+		index++;
+	}
+ 
+
+	public void add_server(string url)
+	{
 		var client = new Client(this);  
 		client.username = "kyle123456";
 		clients.set(index, client);
 		
 		client.new_data.connect(add_text);
-		client.connect_to_server(url, index);
-
-		index++;
+		client.connect_to_server(url); 
 	}
 
 	public static bool is_locked = false;
-	public void add_text(int index, string data)
+	public void add_text(ChannelTab tab, string data)
 	{
-		TextView tv = outputs[index]; 
-		ScrolledWindow sw = (ScrolledWindow)tv.get_parent();
+		TextView tv = tab.output; 
+		ScrolledWindow sw = (ScrolledWindow)tv.get_parent(); 
 		while(is_locked)
 		{
 			Thread.usleep(111);
@@ -178,44 +188,43 @@ public class Main : Object
 			is_locked = true;
 			TextIter outiter;
 			tv.buffer.get_end_iter(out outiter); 
-			tv.buffer.insert(ref outiter, data, data.length);
-			Adjustment adj = sw.get_vadjustment(); 
-			adj.set_value(adj.get_upper() - adj.get_page_size());
+			tv.buffer.insert(ref outiter, data, data.length); 
 			is_locked = false;
 			return false;
 		});
 
 		//Sleep for a little bit so the adjustment is updated
 		Thread.usleep(5000);
-		
-		Idle.add( () => { 
-			Adjustment adj = sw.get_vadjustment(); 
-			adj.set_value(adj.get_upper() - adj.get_page_size());  
-			sw.set_vadjustment(adj);  
-			return false;
-		});
+		Adjustment position = sw.get_vadjustment();
+		if(position.value > position.upper - position.page_size - 350)
+		{
+			Idle.add( () => {  
+				position.set_value(position.upper - position.page_size);  
+				sw.set_vadjustment(position);  
+				return false;
+			});
+		}
 	 
 	}
-
+ 
 	public void send_text_out(string text)
 	{
-		var current = tabs.current;
-		foreach(var client in clients.entries)
+		var current = tabs.current; 
+		foreach(Map.Entry<int,ChannelTab> output in outputs.entries)
 		{
-			if(current.label == client.value.url)
-			{
-				int page = client.value.tab;
-				clients[page].send_output(text);
-				add_text(page, clients[page].username + ": " + text); 
+			if(current.label == output.value.channel_name)
+			{ 
+				output.value.server.send_output(text);  
+				add_text(output.value, output.value.server.username + ": " + text); 
 				return;
 			}
-		}
+		} 
 	}
 
 	public void refresh_server_list()
 	{    
 		var root = servers.root;
-		foreach(var svr in sqlclient.servers.entries)
+		foreach(Map.Entry<int,SqlClient.Server> svr in sqlclient.servers.entries)
 		{
 			var s =  new Granite.Widgets.SourceList.ExpandableItem(svr.value.host);
 			root.add(s);

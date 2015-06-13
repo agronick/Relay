@@ -16,16 +16,32 @@
  * You should have received a copy of the GNU General Public License along
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+using Granite;
+using Gtk;
 
 public class ChannelTab : GLib.Object {
 	public int tab_index { get; set; }
 	public Client server { get; set; }
 	public string channel_name { get; set; }
+	public Granite.Widgets.Tab tab;
+	public TextView output;
 
+	public void add_text(string msg)
+	{
+		server.send_output(msg);
+	}
 
 	// Constructor
-	public ChannelTab () {
+	public ChannelTab (Client? param_server = null, string param_channel_name = "", int param_tab_index = -1) {
+		server = param_server;
+		channel_name = param_channel_name;
+		tab_index = param_tab_index;
+	}
 
+	public void set_tab(Widgets.Tab t, int index)
+	{
+		tab_index = index;
+		tab = t;
 	}
 
 }
