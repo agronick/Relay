@@ -11,11 +11,11 @@ public class Client : Object
 	public string username = "";
 	public bool exit = false; 
 	public static const uint16 default_port = 6667;
-	private Main backref;
+	private Kyrc backref;
 	public ChannelTab server_tab;
 	public HashMap<string, ChannelTab> channel_tabs = new HashMap<string, ChannelTab>();
 
-	public signal void new_data(ChannelTab tab, string data);
+	public signal void new_data(ChannelTab tab, Message data);
 	public signal void new_topic(ChannelTab tab, string topic);
 
 	public const string RPL_TOPIC = "332";
@@ -26,7 +26,7 @@ public class Client : Object
       public const string RPL_ENDOFMOTD = "376";
 			 //End server messages
 
-	public Client(Main back)
+	public Client(Kyrc back)
 	{
 		backref = back;
 	}
@@ -104,21 +104,35 @@ public class Client : Object
 			return;
 		}else if(message.command == "PRIVMSG")
 		{  
-			var tab = channel_tabs.has_key(message.parameters[0]) ? channel_tabs[message.parameters[0]] : server_tab;
-			new_data(tab, message.message + "\n");
+			var tab = add_channel_tab(message.parameters[0]);
+			new_data(tab, message);
 		}else if( message.command == "NOTICE" || message.command == RPL_MOTD || message.command == RPL_MOTDSTART ){
-			new_data (server_tab, message.message + "\n");
+			new_data (server_tab, message);
 		}else{
 			warning("Unhandled message: " + msg + "\n");
 		} 
 	}
+	
 	public void set_topic(ref Message msg)
 	{ 
 		string channel = msg.parameters[1];   
-		ChannelTab t = add_channel_tab(channel); 
-		stderr.printf("NEW TOPIC " + msg.message); 
-		new_data(t, msg.message + "\n");
+		ChannelTab t = add_channel_tab(channel);   
+		topic_message = msg;
+		topic_tab = t;
+		new Thread<int>("Creating topic", set_topic_thread);
 	}
+
+	private static ChannelTab? topic_tab;
+	private static Message topic_message;
+	private int set_topic_thread()
+	{
+		Thread.usleep(200000);
+		new_data(topic_tab, topic_message);
+		topic_tab = null;
+		topic_message = null;
+		return 0;
+	}
+ 
 
 	private void handle_ping(ref Message msg)
 	{ 

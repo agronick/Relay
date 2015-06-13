@@ -22,7 +22,7 @@ using Gtk;
 using Gee;
 using Granite;
 
-public class Main : Object 
+public class Kyrc : Object 
 {
 
 	/* 
@@ -44,10 +44,11 @@ public class Main : Object
 	Gee.HashMap<int, ChannelTab> outputs = new Gee.HashMap<int, ChannelTab> ();
 	Gee.HashMap<int, Client> clients = new Gee.HashMap<int, Client> ();
 	Granite.Widgets.SourceList servers = new Granite.Widgets.SourceList();
+ 
 	
 
-	public Main ()
-	{
+	public Kyrc ()
+	{ 
 
 		try 
 		{
@@ -128,6 +129,7 @@ public class Main : Object
 					}
 				});
 			});
+			tabs.tab_removed.connect(remove_tab);
 		} 
 		catch (Error e) {
 			error("Could not load UI: %s\n", e.message);
@@ -145,6 +147,7 @@ public class Main : Object
 			scrolled.shadow_type = ShadowType.IN;
 			scrolled.add(output); 
 			output.set_editable(false); 
+			output.set_cursor_visible(false);
 			output.set_wrap_mode (Gtk.WrapMode.WORD); 
 
 			var tab = new Granite.Widgets.Tab(); 
@@ -152,6 +155,7 @@ public class Main : Object
 		
 			tab.page = scrolled;
 			tabs.insert_tab(tab, index); 
+			index = tabs.get_tab_position(tab);
 
 			newTab.output = output;
 			outputs.set(index, newTab); 
@@ -176,7 +180,7 @@ public class Main : Object
 	}
 
 	public static bool is_locked = false;
-	public void add_text(ChannelTab tab, string data)
+	public void add_text(ChannelTab tab, Message message)
 	{
 		TextView tv = tab.output; 
 		ScrolledWindow sw = (ScrolledWindow)tv.get_parent(); 
@@ -184,12 +188,46 @@ public class Main : Object
 		{
 			Thread.usleep(111);
 		}
+		string data = "";
+		int offset = -1;
+		TextTag? tag = null;
+		Gdk.RGBA rgba;
+		switch(message.command)
+		{
+			case "PRIVMSG":
+				data = message.user_name + ": " + message.message + "\n";
+				tag = tv.buffer.create_tag(null);
+				rgba = new Gdk.RGBA();
+				rgba.red = 1.0;
+				rgba.alpha = 1.0;
+				tag.foreground_rgba = rgba;
+				offset = message.user_name.length + 1;
+				
+			break;
+			case Client.RPL_TOPIC: 
+				data = message.message + "\n";
+			break;
+			case "NOTICE":
+			case Client.RPL_MOTD:
+			case Client.RPL_MOTDSTART:
+				data = message.message + "\n";
+			break;
+		}
 		Idle.add( () => {     
 			is_locked = true;
+			int char_count = tv.buffer.get_char_count();
 			TextIter outiter;
 			tv.buffer.get_end_iter(out outiter); 
-			tv.buffer.insert(ref outiter, data, data.length); 
-			is_locked = false;
+			tv.buffer.insert(ref outiter, data + "\n", data.length); 
+			is_locked = false; 
+			if(offset > 0)
+			{  
+				TextIter siter;
+				TextIter eiter;
+				tv.buffer.get_iter_at_offset( out siter, char_count );
+				tv.buffer.get_iter_at_offset( out eiter, char_count + offset);
+				tv.buffer.apply_tag(tag, siter, eiter);	
+			}
 			return false;
 		});
 
@@ -215,15 +253,16 @@ public class Main : Object
 			if(current.label == output.value.channel_name)
 			{ 
 				output.value.server.send_output(text);  
-				add_text(output.value, output.value.server.username + ": " + text); 
+				//add_text(output.value, output.value.server.username + ": " + text); 
 				return;
 			}
 		} 
 	}
 
 	public void refresh_server_list()
-	{    
+	{     
 		var root = servers.root;
+		root.clear();
 		foreach(Map.Entry<int,SqlClient.Server> svr in sqlclient.servers.entries)
 		{
 			var s =  new Granite.Widgets.SourceList.ExpandableItem(svr.value.host);
@@ -274,15 +313,18 @@ public class Main : Object
 		var sm = new ServerManager();
 		add_server_button.button_release_event.connect( (event) => { 
 			sm.open_window(event);
-			refresh_server_list();
+			sm.window.destroy.connect( () => {
+				refresh_server_list ();
+			});
 			return false;
 		});
 		
 		toolbar.pack_start(add_server_button); 
 	}
 
-	private void remove_tab(int index)
+	private void remove_tab(Widgets.Tab tab)
 	{
+		int index = tabs.get_tab_position(tab);
 		tabs.remove_tab(tabs.get_tab_by_index(index));
 		clients[index].stop(); 
 		clients.unset(index);
@@ -298,7 +340,7 @@ public class Main : Object
 	static int main (string[] args) 
 	{
 		Gtk.init (ref args);
-		var app = new Main ();
+		new Kyrc ();
 
 		Gtk.main ();
 		

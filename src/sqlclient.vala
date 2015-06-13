@@ -283,6 +283,11 @@ public class SqlClient : Object
 		{ 
 			string sql = "DELETE FROM channels WHERE server_id=" + this.server_id.to_string() + " AND channel=$NAME";
 			channel_query(sql);
+			foreach(Channel chan in servers[server_id].channels)
+			{
+				if(chan.channel == this.channel)
+					servers[server_id].channels.remove(chan);
+			}
 		}
 
 		public void add_channel()
@@ -291,6 +296,7 @@ public class SqlClient : Object
 				return;
 			string sql = "INSERT INTO channels (server_id, channel) VALUES(" + this.server_id.to_string() + ", $CHANNEL)";
 			channel_query(sql);
+			servers[server_id].channels.add(this);
 		}
 
 		private void channel_query(string sql)

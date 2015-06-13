@@ -4,7 +4,7 @@ using Gee;
 
 public class ServerManager : Object
 {
-	Gtk.Window window;
+	public Gtk.Window window;
 	Entry new_channel;
 	ListBox channels;
 	ListBox servers;
@@ -32,7 +32,7 @@ public class ServerManager : Object
 	{
 			current_server = null;
 			var builder = new Builder();
-			builder.add_from_file(Main.UI_FILE_SERVERS);
+			builder.add_from_file(Kyrc.UI_FILE_SERVERS);
 		
 			window = builder.get_object ("window") as Gtk.Window;
 			var box = builder.get_object ("port_wrap") as Box;
@@ -244,12 +244,8 @@ public class ServerManager : Object
 		var channel = new SqlClient.Channel();
 		channel.server_id = current_server.id;
 		channel.channel = widget.name;
-		channel.delete_channel(); 
-		foreach(var chan in current_server.channels)
-		{
-			if(chan.server_id == current_server.id && chan.channel == widget.name)
-				current_server.channels.remove(chan); 
-		}
+		channel.delete_channel();  
+		current_server.channels = SqlClient.servers[current_server.id].channels;
 		return false;
 	}
  
@@ -279,7 +275,7 @@ public class ServerManager : Object
 		channel.server_id = current_server.id;
 		channel.channel = chan_name;
 		channel.add_channel();
-		current_server.channels.add(channel);
+		current_server.channels = SqlClient.servers[current_server.id].channels;
 		return false;
 	}
 	
@@ -316,6 +312,7 @@ public class ServerManager : Object
 		servers.show_all();
 		populate_fields (lbr);
 		host.grab_focus();
+		port.set_value((int) Client.default_port);
 		
 		return false;
 	}

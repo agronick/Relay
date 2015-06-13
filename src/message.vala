@@ -23,6 +23,7 @@ public class Message : GLib.Object {
 	public string prefix { get; set; } 
 	public string command { get; set; }
 	public string[] parameters { get; set; }
+	public string user_name;
 	private static Regex? regex = null;
 
 	private static const string regex_string = """^(:(?<prefix>\S+) )?(?<command>\S+)( (?!:)(?<params>.+?))?( :(?<trail>.+))?$""";
@@ -50,6 +51,8 @@ public class Message : GLib.Object {
                 command = mi.fetch_named ("command");
                 parameters = mi.fetch_named ("params").split(" ") ;
                 message = mi.fetch_named ("trail"); 
+				if(command == "PRIVMSG")
+					user_name = prefix.split("!")[0];
                 return false;
             });
 	} 
