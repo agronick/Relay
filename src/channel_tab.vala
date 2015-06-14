@@ -25,6 +25,7 @@ public class ChannelTab : GLib.Object {
 	public string channel_name { get; set; }
 	public Granite.Widgets.Tab tab;
 	public TextView output;
+	public bool is_server_tab = false;
 
 	public void add_text(string msg)
 	{
@@ -32,7 +33,7 @@ public class ChannelTab : GLib.Object {
 	}
 
 	// Constructor
-	public ChannelTab (Client? param_server = null, string param_channel_name = "", int param_tab_index = -1) {
+	public ChannelTab (Client? param_server = null, string param_channel_name = "", int param_tab_index = -1) { 
 		server = param_server;
 		channel_name = param_channel_name;
 		tab_index = param_tab_index;

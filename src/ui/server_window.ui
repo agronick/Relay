@@ -69,6 +69,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Host</property>
+                <property name="selectable">True</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -91,6 +92,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Port</property>
+                <property name="selectable">True</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -102,6 +104,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Nickanme</property>
+                <property name="selectable">True</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -113,6 +116,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Realname</property>
+                <property name="selectable">True</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -124,6 +128,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Username</property>
+                <property name="selectable">True</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -135,6 +140,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Password</property>
+                <property name="selectable">True</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -247,6 +253,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Use encryption</property>
+                <property name="selectable">True</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -258,6 +265,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Channels</property>
+                <property name="selectable">True</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -269,6 +277,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Autoconnect</property>
+                <property name="selectable">True</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>

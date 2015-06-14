@@ -36,6 +36,7 @@ public class Client : Object
     {
         url = location; 
         server_tab = new ChannelTab(this, url);
+        server_tab.is_server_tab = true;
         backref.add_tab(server_tab);
 
         new Thread<int>("Connection " + location, do_connect);
@@ -44,7 +45,7 @@ public class Client : Object
     }
 
     private ChannelTab add_channel_tab(string name)
-    {
+    { 
         if(channel_tabs.has_key(name))
             return channel_tabs[name];
         var newTab = new ChannelTab(this, name);
@@ -53,24 +54,27 @@ public class Client : Object
         return newTab;
     }
 
+    private ChannelTab find_channel_tab(string name)
+    { 
+        if(channel_tabs.has_key(name))
+            return channel_tabs[name];
+
+        return server_tab;
+    }
+
     private int do_connect()
     {   
         SocketClient client = new SocketClient ();
 
-        try{
-            // Resolve hostname to IP address:
-            Resolver resolver = Resolver.get_default ();
-            GLib.List<InetAddress> addresses = resolver.lookup_by_name (url, null);
-            InetAddress address = addresses.nth_data (0); 
-            SocketConnection conn = client.connect (new InetSocketAddress (address, default_port));
-            input_stream = new DataInputStream (conn.input_stream);
-            output_stream = new DataOutputStream (conn.output_stream);
-        }catch(Error e) {
-            warning("Unable to connect " + e.message);
-            return -1;
-        }
+        // Resolve hostname to IP address:
+        Resolver resolver = Resolver.get_default ();
+        GLib.List<InetAddress> addresses = resolver.lookup_by_name (url, null);
+        InetAddress address = addresses.nth_data (0); 
+        SocketConnection conn = client.connect (new InetSocketAddress (address, default_port));
+        input_stream = new DataInputStream (conn.input_stream);
+        output_stream = new DataOutputStream (conn.output_stream); 
 
-
+        
         send_output ("PASS  -p");
         send_output ("NICK " + username);
         send_output("USER " + username + " " + username + " * :" + username);
@@ -81,8 +85,11 @@ public class Client : Object
             size_t size;
             try{
                 line = input_stream.read_line_utf8(out size);
-            }catch(IOError e){}
-            handle_input(line);
+                handle_input(line);
+            }catch(IOError e)
+            {
+                warning("IO error while reading");
+            }
         }while(line != null && !exit);
 
 
@@ -95,8 +102,7 @@ public class Client : Object
         {
             stop();
             return;
-        }
-
+        } 
         Message message = new Message(msg); 
         if(message.command == "PING")
         {
@@ -112,7 +118,7 @@ public class Client : Object
             return;
         }else if(message.command == "PRIVMSG")
         {  
-            var tab = add_channel_tab(message.parameters[0]);
+            var tab = find_channel_tab(message.parameters[0]);
             new_data(tab, message);
         }else if( message.command == "NOTICE" || message.command == RPL_MOTD || message.command == RPL_MOTDSTART ){
             new_data (server_tab, message);

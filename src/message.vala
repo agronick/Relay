@@ -28,9 +28,10 @@ public class Message : GLib.Object {
 
 	private static const string regex_string = """^(:(?<prefix>\S+) )?(?<command>\S+)( (?!:)(?<params>.+?))?( :(?<trail>.+))?$""";
 
-	public Message (string _message) {
+	public Message (string _message = "") {
 		message = _message; 
-
+		if(message == "")
+			return;
 		if(regex == null) 
 		{
 			try{
