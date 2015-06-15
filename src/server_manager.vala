@@ -42,8 +42,7 @@ public class ServerManager : Object
 
 
 
-    public bool open_window(Gdk.EventButton event)
-    {
+    public bool open_window (Gdk.EventButton event) {
         current_server = null;
         var builder = new Builder();
         try{
@@ -108,13 +107,10 @@ public class ServerManager : Object
         return false;
     }
 
-    private void clear_row(ListBoxRow? row)
-    {
-        if(!(row is Widget))
-        {
+    private void clear_row (ListBoxRow? row) {
+        if (!(row is Widget)) {
             none_selected = true;
-        }else if(none_selected)
-        {
+        }else if (none_selected) {
             current_server = null;
             select_row = null;
             none_selected = false;
@@ -122,18 +118,17 @@ public class ServerManager : Object
     }
 
 
-    public void save_changes(ListBoxRow row)
-    {
-        if(current_server == null || select_row == null)
+    public void save_changes (ListBoxRow row) {
+        if (current_server == null || select_row == null)
             return;
 
         string hostname = host.get_text().strip();
 
-        if(hostname == "")
+        if (hostname == "")
             return;
 
         var exists = sqlclient.get_server(hostname);
-        if(exists != null && exists.id != current_server.id)
+        if (exists != null && exists.id != current_server.id)
             return;
 
 
@@ -149,8 +144,7 @@ public class ServerManager : Object
         current_server.update();
 
 
-        if(select_row != null)
-        {
+        if (select_row != null) {
             int index = select_row.get_index();
             var newrow = get_list_box_row (hostname);
             servers.remove(select_row);
@@ -159,21 +153,17 @@ public class ServerManager : Object
         }
     }
 
-    private bool host_text_changed(EventFocus event)
-    {
+    private bool host_text_changed (EventFocus event) {
         string message = "";
         string name = host.get_text().strip();
-        if(name.length == 0)
-        {
+        if (name.length == 0) {
             message = "Host can not be empty. Your changes will not be saved.";
         }
         var exists = sqlclient.get_server(name);
-        if(exists != null && exists.id != current_server.id)
-        {
+        if (exists != null && exists.id != current_server.id) {
             message = "A server with that host already exists. Your changes will not be saved.";
         }
-        if(message != "")
-        {
+        if (message != "") {
             Gtk.MessageDialog msg = new Gtk.MessageDialog (window, Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK, message);
             msg.response.connect ((response_id) => {
                 host.grab_focus();
@@ -184,10 +174,8 @@ public class ServerManager : Object
         return false;
     }
 
-    public void populate_fields(ListBoxRow? row)
-    {
-        if(row == null)
-        {
+    public void populate_fields (ListBoxRow? row) {
+        if (row == null) {
             current_server = null;
             select_row = null;
         }
@@ -197,7 +185,7 @@ public class ServerManager : Object
         select_row = row;
 
         SqlClient.Server svr = sqlclient.get_server(row.name);
-        if(svr == null)
+        if (svr == null)
             svr = new SqlClient.Server();
 
         current_server = svr;
@@ -211,14 +199,12 @@ public class ServerManager : Object
         encrypt.set_state(svr.encryption);
         autoconnect.set_state(svr.autoconnect);
 
-        foreach(Widget lbr in channels.get_children())
-        {
+        foreach (Widget lbr in channels.get_children()) {
             channels.remove(lbr);
         }
 
 
-        foreach(SqlClient.Channel chn in svr.channels)
-        {
+        foreach (SqlClient.Channel chn in svr.channels) {
             var lbr = get_list_box_row(chn.channel);
             channels.insert(lbr, -1);
         }
@@ -226,8 +212,7 @@ public class ServerManager : Object
         channels.show_all();
     }
 
-    private ListBoxRow get_list_box_row(string name)
-    {
+    private ListBoxRow get_list_box_row (string name) {
         var lbr = new ListBoxRow();
         var lbl = new Label(name);
         lbr.add(lbl);
@@ -238,22 +223,19 @@ public class ServerManager : Object
     }
 
 
-    private void add_servers()
-    {
+    private void add_servers () {
         ListBoxRow first_row = null;
-        foreach(var svr in SqlClient.servers.entries)
-        {
+        foreach (var svr in SqlClient.servers.entries) {
             var server = svr.value;
             var lbr = get_list_box_row(server.host);
             servers.insert(lbr, -1);
-            if(first_row == null)
+            if (first_row == null)
                 first_row = lbr;
         }
 
     }
 
-    private bool remove_channel_clicked(Gdk.EventButton event)
-    {
+    private bool remove_channel_clicked (Gdk.EventButton event) {
         var widget = channels.get_selected_row();
         channels.remove(widget);
         var channel = new SqlClient.Channel();
@@ -264,14 +246,12 @@ public class ServerManager : Object
         return false;
     }
 
-    private bool add_channel_clicked(Gdk.EventButton event)
-    {
+    private bool add_channel_clicked (Gdk.EventButton event) {
         string chan_name = new_channel.get_text().strip();
-        if(chan_name.length == 0)
+        if (chan_name.length == 0)
             return false;
 
-        if(!(chan_name[0] in channel_char))
-        {
+        if (!(chan_name[0] in channel_char)) {
             string message = "A channel name must begin with one of the following characters: &, #, +, !.";
             Gtk.MessageDialog msg = new Gtk.MessageDialog (window, Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK, message);
             msg.response.connect ((response_id) => {
@@ -294,8 +274,7 @@ public class ServerManager : Object
         return false;
     }
 
-    private bool remove_server_clicked(Gdk.EventButton event)
-    {
+    private bool remove_server_clicked (Gdk.EventButton event) {
         var widget = servers.get_selected_row();
         servers.remove(widget);
         set_forms_active(false);
@@ -304,18 +283,15 @@ public class ServerManager : Object
         return false;
     }
 
-    private void set_forms_active(bool active)
-    {
+    private void set_forms_active (bool active) {
         var children = form.get_children();
-        foreach(var child in children)
-        {
+        foreach (var child in children) {
             child.set_sensitive(active);
         }
     }
 
 
-    private bool add_server_clicked(Gdk.EventButton event)
-    {
+    private bool add_server_clicked (Gdk.EventButton event) {
         current_server = new SqlClient.Server();
         int id = current_server.add_server_empty();
         current_server.id = id;
@@ -333,8 +309,7 @@ public class ServerManager : Object
     }
 
 
-    private bool cancel_clicked(Gdk.EventButton event)
-    {
+    private bool cancel_clicked (Gdk.EventButton event) {
         save_changes (select_row);
         window.close();
         return false;

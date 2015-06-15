@@ -42,13 +42,11 @@ public class Client : Object
     public const string RPL_ENDOFMOTD = "376";
     //End server messages
 
-    public Client(Kyrc back)
-    {
+    public Client(Kyrc back) {
         backref = back;
     }
 
-    public bool connect_to_server(string location)
-    {
+    public bool connect_to_server (string location) {
         url = location;
         server_tab = new ChannelTab(this, url);
         server_tab.is_server_tab = true;
@@ -59,9 +57,8 @@ public class Client : Object
         return true;
     }
 
-    private ChannelTab add_channel_tab(string name)
-    {
-        if(channel_tabs.has_key(name))
+    private ChannelTab add_channel_tab (string name) {
+        if (channel_tabs.has_key(name))
             return channel_tabs[name];
         var newTab = new ChannelTab(this, name);
         backref.add_tab(newTab);
@@ -69,16 +66,14 @@ public class Client : Object
         return newTab;
     }
 
-    private ChannelTab find_channel_tab(string name)
-    {
-        if(channel_tabs.has_key(name))
+    private ChannelTab find_channel_tab (string name) {
+        if (channel_tabs.has_key(name))
             return channel_tabs[name];
 
         return server_tab;
     }
 
-    private int do_connect()
-    {
+    private int do_connect () {
         SocketClient client = new SocketClient ();
 
         // Resolve hostname to IP address:
@@ -101,49 +96,42 @@ public class Client : Object
             try{
                 line = input_stream.read_line_utf8(out size);
                 handle_input(line);
-            }catch(IOError e)
-            {
+            }catch(IOError e) {
                 warning("IO error while reading");
             }
-        }while(line != null && !exit);
+        }while (line != null && !exit);
 
 
         return 1;
     }
 
-    private void handle_input(string? msg)
-    {
-        if(msg == null)
-        {
+    private void handle_input (string? msg) {
+        if (msg == null) {
             stop();
             return;
         }
-        Message message = new Message(msg);
-        if(message.command == "PING")
-        {
+        Message message = new Message (msg);
+        if (message.command == "PING") {
             handle_ping(ref message);
             return;
-        }if(message.command == "PONG")
-        {
+        }if (message.command == "PONG") {
             info(msg);
             return;
         }
-        if(message.command == RPL_TOPIC){
+        if (message.command == RPL_TOPIC){
             set_topic(ref message);
             return;
-        }else if(message.command == "PRIVMSG")
-        {
+        }else if (message.command == "PRIVMSG") {
             var tab = find_channel_tab(message.parameters[0]);
             new_data(tab, message);
-        }else if( message.command == "NOTICE" || message.command == RPL_MOTD || message.command == RPL_MOTDSTART ){
+        }else if ( message.command == "NOTICE" || message.command == RPL_MOTD || message.command == RPL_MOTDSTART ){
             new_data (server_tab, message);
-        }else{
+        } else {
             warning("Unhandled message: " + msg + "\n");
         }
     }
 
-    public void set_topic(ref Message msg)
-    {
+    public void set_topic (ref Message msg) {
         string channel = msg.parameters[1];
         ChannelTab t = add_channel_tab(channel);
         topic_message = msg;
@@ -153,8 +141,7 @@ public class Client : Object
 
     private static ChannelTab? topic_tab;
     private static Message topic_message;
-    private int set_topic_thread()
-    {
+    private int set_topic_thread () {
         Thread.usleep(200000);
         new_data(topic_tab, topic_message);
         topic_tab = null;
@@ -163,13 +150,11 @@ public class Client : Object
     }
 
 
-    private void handle_ping(ref Message msg)
-    {
+    private void handle_ping (ref Message msg) {
         send_output("PONG " + msg.message);
     }
 
-    public void stop()
-    {
+    public void stop () {
         exit = true;
         input_stream.clear_pending();
         try{
@@ -182,8 +167,7 @@ public class Client : Object
         } catch (GLib.Error e){}
     }
 
-    public void send_output(string output)
-    {
+    public void send_output (string output) {
         stderr.printf("Sending out " + output + "\n");
         try{
             output_stream.put_string(output + "\r\n");

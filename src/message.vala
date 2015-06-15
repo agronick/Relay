@@ -27,10 +27,9 @@ public class Message : GLib.Object {
 
 	public Message (string _message = "") {
 		message = _message;
-		if(message == "")
+		if (message == "")
 			return;
-		if(regex == null)
-		{
+		if (regex == null) {
 			try{
 				regex = new Regex(regex_string, RegexCompileFlags.OPTIMIZE );
 			}catch(RegexError e){
@@ -42,8 +41,7 @@ public class Message : GLib.Object {
 	}
 
 
-	public void parse_regex()
-	{
+	public void parse_regex () {
 		try{
 			regex.replace_eval (message, -1, 0, 0, (mi, s) => {
 				prefix = mi.fetch_named ("prefix");
@@ -54,7 +52,7 @@ public class Message : GLib.Object {
 					user_name = prefix.split("!")[0];
 				return false;
 			});
-		}catch(RegexError e){
+		}catch (RegexError e){
 			warning("Regex error with " + message);
 		}
 	}

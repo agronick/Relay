@@ -43,8 +43,7 @@ public class Kyrc : Object
 
 
 
-	public Kyrc ()
-	{
+	public Kyrc () {
 
 		try
 		{
@@ -113,8 +112,7 @@ public class Kyrc : Object
 					switch (id){
 						case Gtk.ResponseType.ACCEPT:
 							string name = server_name.get_text().strip();
-							if(name.length > 2)
-						{
+							if (name.length > 2) {
 							add_server(name);
 							dialog.close();
 						}
@@ -128,22 +126,19 @@ public class Kyrc : Object
 			tabs.tab_removed.connect(remove_tab);
 			refresh_server_list();
 		}
-		catch (Error e)
-		{
+		catch (Error e) {
 			error("Could not load UI: %s\n", e.message);
 		}
 
 	}
 
 	private static Granite.Widgets.SourceList.Item current_selected_item;
-	private void set_item_selected(Granite.Widgets.SourceList.Item? item)
-	{
+	private void set_item_selected (Granite.Widgets.SourceList.Item? item) {
 		current_selected_item = item;
 	}
 
 	public static int index = 0;
-	public void add_tab(ChannelTab newTab)
-	{
+	public void add_tab (ChannelTab newTab) {
 		Idle.add( () => {
 			TextView output = new TextView();
 			ScrolledWindow scrolled = new Gtk.ScrolledWindow (null, null);
@@ -192,8 +187,7 @@ public class Kyrc : Object
 	}
 
 
-	public void add_server(string url)
-	{
+	public void add_server (string url) {
 		var client = new Client(this);
 		client.username = "kyle123456";
 		clients.set(index, client);
@@ -203,21 +197,18 @@ public class Kyrc : Object
 	}
 
 	public static bool is_locked = false;
-	public void add_text(ChannelTab tab, Message message)
-	{
+	public void add_text (ChannelTab tab, Message message) {
 		message.message += "\n";
 		TextView tv = tab.output;
 		ScrolledWindow sw = (ScrolledWindow)tv.get_parent();
-		while(is_locked)
-		{
+		while (is_locked) {
 			Thread.usleep(111);
 		}
 		string data = "";
 		int message_offset = -1, offset = -1;
 		TextTag? left_side = null;
 		Gdk.RGBA rgba;
-		switch(message.command)
-		{
+		switch (message.command) {
 			case "PRIVMSG":
 				data =   message.user_name + ": " + message.message;
 				left_side = tv.buffer.create_tag(null);
@@ -237,7 +228,7 @@ public class Kyrc : Object
 				data = message.message;
 				break;
 		}
-		Idle.add( () => {
+		Idle.add ( () => {
 			is_locked = true;
 			int char_count = tv.buffer.get_char_count();
 			TextIter outiter;
@@ -247,8 +238,7 @@ public class Kyrc : Object
 			buf.insert_text(ref outiter, data, data.length);
 			is_locked = false;
 			debug("Parsed message: " + data);
-			if(offset > 0)
-			{
+			if (offset > 0) {
 				TextIter siter;
 				TextIter eiter;
 				tv.buffer.get_iter_at_offset( out siter, char_count );
@@ -269,13 +259,12 @@ public class Kyrc : Object
 		//Sleep for a little bit so the adjustment is updated
 		Thread.usleep(5000);
 		Adjustment position = sw.get_vadjustment();
-		if(!(position is Adjustment))
+		if (!(position is Adjustment))
 			return;
-		if(position.value > position.upper - position.page_size - 350)
-		{
+		if (position.value > position.upper - position.page_size - 350) {
 			Idle.add( () => {
 				position.set_value(position.upper - position.page_size);
-				if(sw is ScrolledWindow)
+				if (sw is ScrolledWindow)
 					sw.set_vadjustment(position);
 				return false;
 			});
@@ -283,13 +272,10 @@ public class Kyrc : Object
 
 	}
 
-	public void send_text_out(string text)
-	{
+	public void send_text_out (string text) {
 		var current = tabs.current;
-		foreach(Gee.Map.Entry<int,ChannelTab> output in outputs.entries)
-		{
-			if(current == output.value.tab)
-			{
+		foreach (Gee.Map.Entry<int,ChannelTab> output in outputs.entries) {
+			if (current == output.value.tab) {
 				output.value.server.send_output(text);
 				var message = new Message();
 				message.user_name = output.value.server.username;
@@ -302,12 +288,10 @@ public class Kyrc : Object
 		}
 	}
 
-	public void refresh_server_list()
-	{
+	public void refresh_server_list () {
 		var root = servers.root;
 		root.clear();
-		foreach(var svr in SqlClient.servers.entries)
-		{
+		foreach (var svr in SqlClient.servers.entries) {
 			var s =  new Granite.Widgets.SourceList.ExpandableItem(svr.value.host);
 			root.add(s);
 			var chn = new Granite.Widgets.SourceList.Item (svr.value.host);
@@ -315,8 +299,7 @@ public class Kyrc : Object
 			chn.set_data<SqlClient.Server>("server", svr.value);
 			chn.activated.connect(item_activated);
 			s.add(chn);
-			foreach(var c in svr.value.channels)
-			{
+			foreach (var c in svr.value.channels) {
 				chn = new Widgets.SourceList.Item (c.channel);
 				chn.set_data<string>("type", "channel");
 				chn.set_data<SqlClient.Channel>("channel", c);
@@ -326,26 +309,20 @@ public class Kyrc : Object
 		}
 	}
 
-	private void item_activated()
-	{
+	private void item_activated () {
 		string type = current_selected_item.get_data<string>("type");
-		if(type == "server")
-		{
+		if (type == "server") {
 			SqlClient.Server svr = current_selected_item.get_data<SqlClient.Server>("server");
-			foreach(var tab in outputs.entries)
-			{
-				if(tab.value.is_server_tab && tab.value.channel_name == svr.host)
-				{
+			foreach (var tab in outputs.entries) {
+				if (tab.value.is_server_tab && tab.value.channel_name == svr.host) {
 					tabs.current = tab.value.tab;
 					return;
 				}
 			}
-		}else{
+		} else {
 			SqlClient.Channel channel = current_selected_item.get_data<SqlClient.Channel>("channel");
-			foreach(var tab in outputs.entries)
-			{
-				if(!tab.value.is_server_tab && tab.value.channel_name == channel.channel)
-				{
+			foreach (var tab in outputs.entries) {
+				if (!tab.value.is_server_tab && tab.value.channel_name == channel.channel) {
 					tabs.current = tab.value.tab;
 					return;
 				}
@@ -355,36 +332,31 @@ public class Kyrc : Object
 	}
 
 
-	public bool slide_panel()
-	{
+	public bool slide_panel () {
 		new Thread<int>("slider_move", move_slider_t);
 		return false;
 	}
 
-	public int move_slider_t()
-	{
+	public int move_slider_t () {
 		int add, end;
 		bool opening;
-		if(pannel.position < 10)
-		{
+		if (pannel.position < 10) {
 			opening = true;
 			add = 1;
 			end = 150;
-		}else{
+		} else {
 			opening = false;
 			add = -1;
 			end = 0;
 		}
-		for(int i = pannel.position; (opening) ? i < end : end < i; i+= add)
-		{
+		for (int i = pannel.position; (opening) ? i < end : end < i; i+= add) {
 			pannel.set_position(i);
 			Thread.usleep(3600);
 		}
 		return 0;
 	}
 
-	public void set_up_add_sever(Gtk.HeaderBar toolbar)
-	{
+	public void set_up_add_sever (Gtk.HeaderBar toolbar) {
 		var add_server_button = new Gtk.Button.from_icon_name("list-add-symbolic", Gtk.IconSize.LARGE_TOOLBAR);
 		add_server_button.tooltip_text = "Add new server";
 
@@ -400,8 +372,7 @@ public class Kyrc : Object
 		toolbar.pack_start(add_server_button);
 	}
 
-	private void remove_tab(Widgets.Tab tab)
-	{
+	private void remove_tab (Widgets.Tab tab) {
 		int index = tabs.get_tab_position(tab);
 		tabs.remove_tab(tabs.get_tab_by_index(index));
 		clients[index].stop();
@@ -410,17 +381,14 @@ public class Kyrc : Object
 	}
 
 	[CCode (instance_pos = -1)]
-	public void on_destroy (Widget window)
-	{
+	public void on_destroy (Widget window) {
 		Gtk.main_quit();
 	}
 
-	public static void handle_log(string? log_domain, LogLevelFlags log_levels, string message)
-	{
+	public static void handle_log (string? log_domain, LogLevelFlags log_levels, string message) {
 		string prefix = "";
 		string suffix = "\x1b[39;49m " ;
-		switch(log_levels)
-		{
+		switch(log_levels) {
 			case LogLevelFlags.LEVEL_DEBUG:
 				prefix = "\x1b[94mDebug: ";
 				break;
@@ -440,28 +408,26 @@ public class Kyrc : Object
 		stdout.printf(prefix + message + suffix + "\n");
 	}
 
-	public static string get_asset_file(string name)
-	{
+	public static string get_asset_file (string name) {
 		string check = Config.PACKAGE_DATA_DIR + name;
 		File file = File.new_for_path (check);
-		if(file.query_exists())
+		if (file.query_exists())
 			return check;
 
 		check = "src/" + name;
 		file = File.new_for_path (check);
-		if(file.query_exists())
+		if (file.query_exists())
 			return check;
 
 		check =  name;
 		file = File.new_for_path (check);
-		if(file.query_exists())
+		if (file.query_exists())
 			return check;
 
 		error("Unable to find UI file.");
 	}
 
-	static int main (string[] args)
-	{
+	static int main (string[] args) {
 		GLib.Log.set_default_handler(handle_log);
 
 		Gtk.init (ref args);

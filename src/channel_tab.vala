@@ -27,8 +27,7 @@ public class ChannelTab : GLib.Object {
 	public TextView output;
 	public bool is_server_tab = false;
 
-	public void add_text(string msg)
-	{
+	public void add_text (string msg) {
 		server.send_output(msg);
 	}
 
@@ -39,8 +38,7 @@ public class ChannelTab : GLib.Object {
 		tab_index = param_tab_index;
 	}
 
-	public void set_tab(Widgets.Tab t, int index)
-	{
+	public void set_tab (Widgets.Tab t, int index) {
 		tab_index = index;
 		tab = t;
 	}

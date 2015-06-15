@@ -24,30 +24,26 @@ public class SqlClient : Object
     public static Sqlite.Database db;
     public static HashMap<int, Server> servers = new HashMap<int, Server>();
 
-    private SqlClient()
-    {
+    private SqlClient () {
         init();
     }
 
-    public static SqlClient get_instance()
-    {
-        if(self == null)
+    public static SqlClient get_instance () {
+        if (self == null)
             self = new SqlClient();
 
         return self;
     }
 
-    public HashMap<int, Server> get_servers()
-    {
+    public HashMap<int, Server> get_servers() {
         return servers;
     }
 
-    private void init()
-    {
+    private void init () {
         string confbase = GLib.Environment.get_user_config_dir() + "/kyrc";
         File dir = File.new_for_path(confbase);
         try{
-            if(!dir.query_exists())
+            if (!dir.query_exists())
                 dir.make_directory();
         }catch(Error e){
             error("Unable to create database. Can not write to " + confbase + ". Program will not function.");
@@ -64,48 +60,40 @@ public class SqlClient : Object
         refresh();
     }
 
-    public void refresh()
-    {
+    public void refresh () {
         servers.clear();
         db.exec("SELECT * from servers", refresh_callback);
         db.exec("SELECT * from channels", refresh_callback_channel);
     }
 
-    public Server? get_server(string name)
-    {
-        foreach(var svr in servers.entries)
-        {
-            if(svr.value.host == name)
+    public Server? get_server (string name) {
+        foreach (var svr in servers.entries) {
+            if (svr.value.host == name)
                 return svr.value;
         }
         return null;
     }
 
-    public Server? get_server_id(int id)
-    {
-        foreach(var svr in servers.entries)
-        {
-            if(svr.value.id == id)
+    public Server? get_server_id (int id) {
+        foreach (var svr in servers.entries) {
+            if (svr.value.id == id)
                 return svr.value;
         }
         return null;
     }
 
-    public static Channel? find_channel(Server current_server,  string name)
-    {
-        foreach(var chan in current_server.channels)
-        {
-            if(chan.server_id == current_server.id && chan.channel == name)
+    public static Channel? find_channel (Server current_server,  string name) {
+        foreach (var chan in current_server.channels) {
+            if (chan.server_id == current_server.id && chan.channel == name)
                 return chan;
         }
         return null;
     }
 
-    public int refresh_callback(int n_columns, string[] values, string[] column_names) {
+    public int refresh_callback (int n_columns, string[] values, string[] column_names) {
         var server = new Server();
         for (int i = 0; i < n_columns; i++) {
-            switch(column_names[i])
-            {
+            switch(column_names[i]) {
                 case "id":
                     server.id = int.parse(values[i]);
                     break;
@@ -145,22 +133,20 @@ public class SqlClient : Object
         return 0;
     }
 
-    public int refresh_callback_channel(int n_columns, string[] values, string[] column_names) {
+    public int refresh_callback_channel (int n_columns, string[] values, string[] column_names) {
         Server svr = null;
         for (int i = 0; i < n_columns; i++) {
-            if(column_names[i] == "server_id")
-            {
+            if (column_names[i] == "server_id") {
                 svr = get_server_id( int.parse(values[i]));
             }
         }
 
-        if(svr == null)
+        if (svr == null)
             return 0;
 
         Channel chn = new Channel();
         for (int i = 0; i < n_columns; i++) {
-            switch(column_names[i])
-            {
+            switch(column_names[i]) {
                 case "id":
                     chn.id = int.parse(values[i]);
                     break;
@@ -179,13 +165,11 @@ public class SqlClient : Object
         return 0;
     }
 
-    public static bool to_bool(string input)
-    {
+    public static bool to_bool (string input) {
         return (input == "1");
     }
 
-    public static int bool_to(bool b)
-    {
+    public static int bool_to (bool b) {
         return b ? 1 : 0;
     }
 
@@ -206,8 +190,7 @@ public class SqlClient : Object
         public bool validate_server = false;
         public ArrayList<Channel> channels = new ArrayList<Channel>();
 
-        public int add_server_empty()
-        {
+        public int add_server_empty () {
             string sql = "INSERT INTO servers (host, port) VALUES('', " + Client.default_port.to_string() + ")";
             db.exec(sql);
             this.id = (int)db.last_insert_rowid ();
@@ -216,16 +199,14 @@ public class SqlClient : Object
             return this.id;
         }
 
-        public int add_server()
-        {
+        public int add_server () {
             this.id = add_server_empty ();
             servers[id]=this;
             update();
             return id;
         }
 
-        public int update()
-        {
+        public int update () {
             var svr = this;
             Sqlite.Statement stmt;
             int ok;
@@ -238,11 +219,9 @@ public class SqlClient : Object
 
 
             string keys = "";
-            foreach(string i in Server.keys)
-            {
+            foreach (string i in Server.keys) {
                 //Skip over ID
-                if(keys == "")
-                {
+                if (keys == "") {
                     keys = " ";
 
                 }
@@ -252,8 +231,7 @@ public class SqlClient : Object
             keys = keys[0:-2];
 
 
-            if(exists)
-            {
+            if (exists) {
                 sql = "UPDATE servers SET " + keys + " WHERE id = " + svr.id.to_string();
 
                 ok = db.prepare_v2(sql, sql.length, out stmt);
@@ -283,8 +261,7 @@ public class SqlClient : Object
             return 0;
         }
 
-        public void remove_server()
-        {
+        public void remove_server () {
             servers.unset(this.id);
             string sql = "DELETE FROM servers WHERE id=" + this.id.to_string();
             db.exec(sql);
@@ -298,28 +275,24 @@ public class SqlClient : Object
         public int server_id;
         public string channel;
 
-        public void delete_channel()
-        {
+        public void delete_channel () {
             string sql = "DELETE FROM channels WHERE server_id=" + this.server_id.to_string() + " AND channel=$NAME";
             channel_query(sql);
-            foreach(Channel chan in servers[server_id].channels)
-            {
-                if(chan.channel == this.channel)
+            foreach (Channel chan in servers[server_id].channels) {
+                if (chan.channel == this.channel)
                     servers[server_id].channels.remove(chan);
             }
         }
 
-        public void add_channel()
-        {
-            if(this.server_id < 0)
+        public void add_channel () {
+            if (this.server_id < 0)
                 return;
             string sql = "INSERT INTO channels (server_id, channel) VALUES(" + this.server_id.to_string() + ", $CHANNEL)";
             channel_query(sql);
             servers[server_id].channels.add(this);
         }
 
-        private void channel_query(string sql)
-        {
+        private void channel_query (string sql) {
             Sqlite.Statement stmt;
             int ok = db.prepare_v2(sql, sql.length, out stmt);
             if (ok == Sqlite.ERROR) {
@@ -332,8 +305,7 @@ public class SqlClient : Object
     }
 
 
-    private void add_tables()
-    {
+    private void add_tables () {
         string sql = """
         CREATE TABLE IF NOT EXISTS "servers" (
         "id" INTEGER PRIMARY KEY AUTOINCREMENT,
