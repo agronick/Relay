@@ -7,9 +7,9 @@ public class Client : Object
 
     public DataInputStream input_stream;
     public DataOutputStream output_stream;
-    public string url = "";  
+    public string url = "";
     public string username = "";
-    public bool exit = false; 
+    public bool exit = false;
     public static const uint16 default_port = 6667;
     private Kyrc backref;
     public ChannelTab server_tab;
@@ -34,7 +34,7 @@ public class Client : Object
 
     public bool connect_to_server(string location)
     {
-        url = location; 
+        url = location;
         server_tab = new ChannelTab(this, url);
         server_tab.is_server_tab = true;
         backref.add_tab(server_tab);
@@ -45,7 +45,7 @@ public class Client : Object
     }
 
     private ChannelTab add_channel_tab(string name)
-    { 
+    {
         if(channel_tabs.has_key(name))
             return channel_tabs[name];
         var newTab = new ChannelTab(this, name);
@@ -55,7 +55,7 @@ public class Client : Object
     }
 
     private ChannelTab find_channel_tab(string name)
-    { 
+    {
         if(channel_tabs.has_key(name))
             return channel_tabs[name];
 
@@ -63,18 +63,18 @@ public class Client : Object
     }
 
     private int do_connect()
-    {   
+    {
         SocketClient client = new SocketClient ();
 
         // Resolve hostname to IP address:
         Resolver resolver = Resolver.get_default ();
         GLib.List<InetAddress> addresses = resolver.lookup_by_name (url, null);
-        InetAddress address = addresses.nth_data (0); 
+        InetAddress address = addresses.nth_data (0);
         SocketConnection conn = client.connect (new InetSocketAddress (address, default_port));
         input_stream = new DataInputStream (conn.input_stream);
-        output_stream = new DataOutputStream (conn.output_stream); 
+        output_stream = new DataOutputStream (conn.output_stream);
 
-        
+
         send_output ("PASS  -p");
         send_output ("NICK " + username);
         send_output("USER " + username + " " + username + " * :" + username);
@@ -97,13 +97,13 @@ public class Client : Object
     }
 
     private void handle_input(string? msg)
-    { 
+    {
         if(msg == null)
         {
             stop();
             return;
-        } 
-        Message message = new Message(msg); 
+        }
+        Message message = new Message(msg);
         if(message.command == "PING")
         {
             handle_ping(ref message);
@@ -112,25 +112,25 @@ public class Client : Object
         {
             info(msg);
             return;
-        } 
-        if(message.command == RPL_TOPIC){ 
+        }
+        if(message.command == RPL_TOPIC){
             set_topic(ref message);
             return;
         }else if(message.command == "PRIVMSG")
-        {  
+        {
             var tab = find_channel_tab(message.parameters[0]);
             new_data(tab, message);
         }else if( message.command == "NOTICE" || message.command == RPL_MOTD || message.command == RPL_MOTDSTART ){
             new_data (server_tab, message);
         }else{
             warning("Unhandled message: " + msg + "\n");
-        } 
+        }
     }
 
     public void set_topic(ref Message msg)
-    { 
-        string channel = msg.parameters[1];   
-        ChannelTab t = add_channel_tab(channel);   
+    {
+        string channel = msg.parameters[1];
+        ChannelTab t = add_channel_tab(channel);
         topic_message = msg;
         topic_tab = t;
         new Thread<int>("Creating topic", set_topic_thread);
@@ -149,22 +149,22 @@ public class Client : Object
 
 
     private void handle_ping(ref Message msg)
-    { 
+    {
         send_output("PONG " + msg.message);
     }
 
     public void stop()
-    { 
-        exit = true; 
+    {
+        exit = true;
         input_stream.clear_pending();
         try{
             input_stream.close();
-        } catch (GLib.IOError e){} 
+        } catch (GLib.IOError e){}
         output_stream.clear_pending();
         try{
             output_stream.flush();
-            output_stream.close(); 
-        } catch (GLib.Error e){} 
+            output_stream.close();
+        } catch (GLib.Error e){}
     }
 
     public void send_output(string output)

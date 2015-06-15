@@ -10,7 +10,7 @@ public class SqlClient : Object
     public static HashMap<int, Server> servers = new HashMap<int, Server>();
 
     private SqlClient()
-    { 
+    {
         init();
     }
 
@@ -42,8 +42,8 @@ public class SqlClient : Object
 
         int ec = Sqlite.Database.open_v2(conffile, out db);
         if (ec != Sqlite.OK) {
-            stderr.printf ("Can't open database: %d: %s\n", db.errcode (), db.errmsg ()); 
-        } 
+            stderr.printf ("Can't open database: %d: %s\n", db.errcode (), db.errmsg ());
+        }
 
         add_tables();
         refresh();
@@ -74,21 +74,21 @@ public class SqlClient : Object
                 return svr.value;
         }
         return null;
-    }  
+    }
 
     public static Channel? find_channel(Server current_server,  string name)
     {
         foreach(var chan in current_server.channels)
         {
             if(chan.server_id == current_server.id && chan.channel == name)
-                return chan; 
+                return chan;
         }
         return null;
     }
 
     public int refresh_callback(int n_columns, string[] values, string[] column_names) {
         var server = new Server();
-        for (int i = 0; i < n_columns; i++) {  
+        for (int i = 0; i < n_columns; i++) {
             switch(column_names[i])
             {
                 case "id":
@@ -105,7 +105,7 @@ public class SqlClient : Object
                     break;
                 case "realname":
                     server.realname = values[i];
-                    break; 
+                    break;
                 case "username":
                     server.username = values[i];
                     break;
@@ -120,19 +120,19 @@ public class SqlClient : Object
                     break;
                 case "validate_server":
                     server.validate_server = to_bool(values[i]);
-                    break; 
+                    break;
                 case "autoconnect":
                     server.autoconnect = to_bool(values[i]);
-                    break; 
+                    break;
             }
-        } 
+        }
         servers[server.id] = server;
         return 0;
     }
 
     public int refresh_callback_channel(int n_columns, string[] values, string[] column_names) {
         Server svr = null;
-        for (int i = 0; i < n_columns; i++) { 
+        for (int i = 0; i < n_columns; i++) {
             if(column_names[i] == "server_id")
             {
                 svr = get_server_id( int.parse(values[i]));
@@ -143,7 +143,7 @@ public class SqlClient : Object
             return 0;
 
         Channel chn = new Channel();
-        for (int i = 0; i < n_columns; i++) { 
+        for (int i = 0; i < n_columns; i++) {
             switch(column_names[i])
             {
                 case "id":
@@ -216,10 +216,10 @@ public class SqlClient : Object
             int ok;
             string sql = "SELECT id FROM servers WHERE id = " + svr.id.to_string();
             bool exists = false;
-            db.exec(sql, (n_columns, values, column_names) => { 
+            db.exec(sql, (n_columns, values, column_names) => {
                 exists = true;
                 return 0;
-            }); 
+            });
 
 
             string keys = "";
@@ -242,7 +242,7 @@ public class SqlClient : Object
                 sql = "UPDATE servers SET " + keys + " WHERE id = " + svr.id.to_string();
 
                 ok = db.prepare_v2(sql, sql.length, out stmt);
-                if (ok != Sqlite.OK) { 
+                if (ok != Sqlite.OK) {
                     critical (db.errmsg ());
                     return -1;
                 }
@@ -253,10 +253,10 @@ public class SqlClient : Object
                 stmt.bind_text(4, svr.realname);
                 stmt.bind_text(5, svr.username);
                 stmt.bind_text(6, svr.password);
-                stmt.bind_text(7, svr.on_connect); 
-                stmt.bind_int(8, bool_to(svr.encryption));  
-                stmt.bind_int(9, bool_to(svr.validate_server)); 
-                stmt.bind_int(10, bool_to(svr.autoconnect)); 
+                stmt.bind_text(7, svr.on_connect);
+                stmt.bind_int(8, bool_to(svr.encryption));
+                stmt.bind_int(9, bool_to(svr.validate_server));
+                stmt.bind_int(10, bool_to(svr.autoconnect));
 
                 stmt.step();
 
@@ -271,9 +271,9 @@ public class SqlClient : Object
         public void remove_server()
         {
             servers.unset(this.id);
-            string sql = "DELETE FROM servers WHERE id=" + this.id.to_string();  
+            string sql = "DELETE FROM servers WHERE id=" + this.id.to_string();
             db.exec(sql);
-            sql = "DELETE FROM channels WHERE server_id=" + this.id.to_string(); 
+            sql = "DELETE FROM channels WHERE server_id=" + this.id.to_string();
             db.exec(sql);
         }
     }
@@ -284,7 +284,7 @@ public class SqlClient : Object
         public string channel;
 
         public void delete_channel()
-        { 
+        {
             string sql = "DELETE FROM channels WHERE server_id=" + this.server_id.to_string() + " AND channel=$NAME";
             channel_query(sql);
             foreach(Channel chan in servers[server_id].channels)
@@ -295,7 +295,7 @@ public class SqlClient : Object
         }
 
         public void add_channel()
-        { 
+        {
             if(this.server_id < 0)
                 return;
             string sql = "INSERT INTO channels (server_id, channel) VALUES(" + this.server_id.to_string() + ", $CHANNEL)";
@@ -307,10 +307,10 @@ public class SqlClient : Object
         {
             Sqlite.Statement stmt;
             int ok = db.prepare_v2(sql, sql.length, out stmt);
-            if (ok == Sqlite.ERROR) { 
+            if (ok == Sqlite.ERROR) {
                 critical (db.errmsg ());
                 return;
-            }	
+            }
             stmt.bind_text(1, this.channel);
             stmt.step();
         }
@@ -338,7 +338,7 @@ public class SqlClient : Object
         "id" INTEGER PRIMARY KEY AUTOINCREMENT,
         "server_id" INTEGER,
         "channel" TEXT
-        ); 
+        );
         """;
 
         db.exec(sql);
