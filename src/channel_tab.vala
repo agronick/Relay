@@ -26,6 +26,11 @@ public class ChannelTab : GLib.Object {
 	public Granite.Widgets.Tab tab;
 	public TextView output;
 	public bool is_server_tab = false;
+	public bool has_subject = false;
+	public string channel_subject = "";
+	public static bool is_locked = false;
+
+	public signal void new_subject(int tab_id, string subject);
 
 	public void add_text (string msg) {
 		server.send_output(msg);
@@ -43,5 +48,82 @@ public class ChannelTab : GLib.Object {
 		tab = t;
 	}
 
+	public void set_subject (string subject) {
+		has_subject = true;
+		channel_subject = subject;
+		new_subject (tab_index, subject);
+	}
+
+	public void display_message (Message message) { 
+		message.message += "\n";
+		TextView tv = output;
+		ScrolledWindow sw = (ScrolledWindow)tv.get_parent();
+		while (is_locked) {
+			Thread.usleep(111);
+		}
+		string data = "";
+		int message_offset = -1, offset = -1;
+		TextTag? left_side = null;
+		Gdk.RGBA rgba = Gdk.RGBA();
+		switch (message.command) {
+			case "PRIVMSG":
+				data =   message.user_name + message.message;
+				left_side = tv.buffer.create_tag(null);
+				rgba.red = 1.0; 
+				rgba.alpha = 1.0; 
+				left_side.foreground_rgba = rgba;
+				left_side.left_margin = 0;
+				offset = message.user_name.length;
+				break;
+			case Client.RPL_TOPIC:
+				set_subject(message.message);
+				return;
+			case "NOTICE":
+			case Client.RPL_MOTD:
+			case Client.RPL_MOTDSTART:
+				data = message.message;
+				break;
+		}
+		Idle.add ( () => {
+			is_locked = true;
+			int char_count = tv.buffer.get_char_count();
+			TextIter outiter;
+			TextBuffer buf = tv.buffer;
+			buf.get_end_iter(out outiter); 
+			buf.insert_text(ref outiter, data, data.length);
+			is_locked = false;
+			debug("Parsed message: " + data);
+			if (offset > 0) {
+				TextIter siter;
+				TextIter eiter;
+				tv.buffer.get_iter_at_offset( out siter, char_count );
+				tv.buffer.get_iter_at_offset( out eiter, char_count + offset);
+				buf.apply_tag(left_side, siter, eiter);
+
+				TextIter m_siter;
+				TextIter m_eiter;
+				tv.buffer.get_iter_at_offset( out m_siter, tv.buffer.get_char_count() - message.message.length);
+				tv.buffer.get_iter_at_offset( out m_eiter, tv.buffer.get_char_count());
+				var right_side = tv.buffer.create_tag(null);
+				right_side.indent = 0; 
+				buf.apply_tag(right_side, m_siter, m_eiter);
+			}
+			return false;
+		});
+
+		//Sleep for a little bit so the adjustment is updated
+		Thread.usleep(5000);
+		Adjustment position = sw.get_vadjustment();
+		if (!(position is Adjustment))
+			return;
+		if (position.value > position.upper - position.page_size - 350) {
+			Idle.add( () => {
+				position.set_value(position.upper - position.page_size);
+				if (sw is ScrolledWindow)
+					sw.set_vadjustment(position);
+				return false;
+			});
+		}
+	}
 }
 

@@ -30,8 +30,7 @@ public class Client : Object
     public ChannelTab server_tab;
     public HashMap<string, ChannelTab> channel_tabs = new HashMap<string, ChannelTab>();
     public ArrayList<string> channel_autoconnect = new ArrayList<string>();
-
-    public signal void new_data(ChannelTab tab, Message data);
+ 
     public signal void new_topic(ChannelTab tab, string topic);
 
     public const string RPL_TOPIC = "332";
@@ -109,7 +108,8 @@ public class Client : Object
         if (msg == null) {
             stop();
             return;
-        }
+        } 
+        
         Message message = new Message (msg);
         if (message.command == "PING") {
             handle_ping(ref message);
@@ -172,6 +172,10 @@ public class Client : Object
         try{
             output_stream.put_string(output + "\r\n");
         }catch(GLib.Error e){}
+    }
+
+    private void new_data (ChannelTab tab, Message msg) {
+        tab.display_message(msg);
     }
 
 }
