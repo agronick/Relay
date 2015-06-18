@@ -22,76 +22,76 @@ using Pango;
 public class Kyrc : Object
 {
 
-	/*
-	 * Uncomment this line when you are done testing and building a tarball
-	 * or installing
-	 */
-	//const string UI_FILE = Config.PACKAGE_DATA_DIR + "/ui/" + "kyrc.ui";
-	public const string UI_FILE = "ui/kyrc.ui";
-	public const string UI_FILE_SERVERS = "ui/server_window.ui";
+    /*
+     * Uncomment this line when you are done testing and building a tarball
+     * or installing
+     */
+    //const string UI_FILE = Config.PACKAGE_DATA_DIR + "/ui/" + "kyrc.ui";
+    public const string UI_FILE = "ui/kyrc.ui";
+    public const string UI_FILE_SERVERS = "ui/server_window.ui";
 
-	/* ANJUTA: Widgets declaration for kyrc.ui - DO NOT REMOVE */
+    /* ANJUTA: Widgets declaration for kyrc.ui - DO NOT REMOVE */
 
-	Granite.Widgets.DynamicNotebook tabs;
-	Window window;
-	Entry input;
-	Paned pannel;
+    Granite.Widgets.DynamicNotebook tabs;
+    Window window;
+    Entry input;
+    Paned pannel;
     Button channel_subject;
     TextView subject_text;
     Button add_server_button;
 
-	Gee.HashMap<int, ChannelTab> outputs = new Gee.HashMap<int, ChannelTab> ();
-	Gee.HashMap<int, Connection> clients = new Gee.HashMap<int, Connection> (); 
-	Granite.Widgets.SourceList servers = new Granite.Widgets.SourceList();
+    Gee.HashMap<int, ChannelTab> outputs = new Gee.HashMap<int, ChannelTab> ();
+    Gee.HashMap<int, Connection> clients = new Gee.HashMap<int, Connection> (); 
+    Granite.Widgets.SourceList servers = new Granite.Widgets.SourceList();
 
     public static bool on_elementary = false;
     public static int current_tab = -1;
 
-	public Kyrc () {
+    public Kyrc () {
 
-		try
-		{
-			Gtk.Settings.get_default().set("gtk-application-prefer-dark-theme", true);
+        try
+        {
+            Gtk.Settings.get_default().set("gtk-application-prefer-dark-theme", true);
             check_elementary();
 
-			var builder = new Builder ();
-			builder.add_from_file (get_asset_file(UI_FILE));
-			builder.connect_signals (this);
+            var builder = new Builder ();
+            builder.add_from_file (get_asset_file(UI_FILE));
+            builder.connect_signals (this);
 
-			var toolbar = new Gtk.HeaderBar (); 
-			tabs = new Granite.Widgets.DynamicNotebook();
-			tabs.allow_drag = true;
+            var toolbar = new Gtk.HeaderBar (); 
+            tabs = new Granite.Widgets.DynamicNotebook();
+            tabs.allow_drag = true;
 
-			window = builder.get_object ("window") as Window;
+            window = builder.get_object ("window") as Window;
             window.destroy.connect(kyrc_close_program);
-			var nb_wrapper = builder.get_object("notebook_wrapper") as Box;
-			nb_wrapper.pack_start(tabs, true, true, 0); 
+            var nb_wrapper = builder.get_object("notebook_wrapper") as Box;
+            nb_wrapper.pack_start(tabs, true, true, 0); 
             tabs.set_size_request(500, 20);
             tabs.show_all();
 
-			pannel = builder.get_object("pannel") as Paned;
-			var server_list_container = builder.get_object("server_list_container") as Box;
-			server_list_container.pack_start(servers, true, true, 0);
+            pannel = builder.get_object("pannel") as Paned;
+            var server_list_container = builder.get_object("server_list_container") as Box;
+            server_list_container.pack_start(servers, true, true, 0);
 
-			Image icon = new Image.from_file("src/assets/server_run.png");
-			var select_channel = new Gtk.Button();
-			select_channel.image = icon;
-			select_channel.tooltip_text = "Open server/channel view";
-			toolbar.pack_start(select_channel);
-			select_channel.button_release_event.connect(slide_panel);
-			pannel.position = 1;
+            Image icon = new Image.from_file("src/assets/server_run.png");
+            var select_channel = new Gtk.Button();
+            select_channel.image = icon;
+            select_channel.tooltip_text = "Open server/channel view";
+            toolbar.pack_start(select_channel);
+            select_channel.button_release_event.connect(slide_panel);
+            pannel.position = 1;
 
-			input = builder.get_object("input") as Entry;
+            input = builder.get_object("input") as Entry;
 
-			input.activate.connect (() => {
-				send_text_out(input.get_text ());
-				input.set_text("");
-			});
+            input.activate.connect (() => {
+                send_text_out(input.get_text ());
+                input.set_text("");
+            });
 
             if(on_elementary)
-            	channel_subject = new Gtk.Button.from_icon_name("help-info-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
-	        else
-     		    channel_subject = new Gtk.Button.from_icon_name("text-x-generic", Gtk.IconSize.SMALL_TOOLBAR);
+                channel_subject = new Gtk.Button.from_icon_name("help-info-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
+            else
+                channel_subject = new Gtk.Button.from_icon_name("text-x-generic", Gtk.IconSize.SMALL_TOOLBAR);
             channel_subject.tooltip_text = "Channel subject";
             var subject_popover = new Gtk.Popover(channel_subject);
             channel_subject.clicked.connect(() => {
@@ -99,58 +99,58 @@ public class Kyrc : Object
             });  
             channel_subject.set_no_show_all(true);
             channel_subject.hide();
-		  	var scrolled = new Gtk.ScrolledWindow(null, null);
-		  	subject_text = new Gtk.TextView();
-		  	subject_text.set_wrap_mode(Gtk.WrapMode.WORD);
-		  	subject_text.buffer.text = "";
-		  	subject_text.cursor_visible = false;
-		  	subject_text.editable = false;
-		  	subject_text.margin = 10;
-		  	scrolled.set_size_request(320, 110);
-		  	scrolled.add(subject_text);
-		  	subject_popover.add(scrolled);
+            var scrolled = new Gtk.ScrolledWindow(null, null);
+            subject_text = new Gtk.TextView();
+            subject_text.set_wrap_mode(Gtk.WrapMode.WORD);
+            subject_text.buffer.text = "";
+            subject_text.cursor_visible = false;
+            subject_text.editable = false;
+            subject_text.margin = 10;
+            scrolled.set_size_request(320, 110);
+            scrolled.add(subject_text);
+            subject_popover.add(scrolled);
             
 
             toolbar.pack_end(channel_subject);
 
-			servers.item_selected.connect(set_item_selected);
+            servers.item_selected.connect(set_item_selected);
 
-			set_up_add_sever(toolbar);
+            set_up_add_sever(toolbar);
 
-			toolbar.set_title("Kyrc");
-			toolbar.show_all();
+            toolbar.set_title("Kyrc");
+            toolbar.show_all();
 
-			toolbar.show_close_button = true;
-			window.set_titlebar(toolbar);
-			/* ANJUTA: Widgets initialization for kyrc.ui - DO NOT REMOVE */
-			window.show_all ();
+            toolbar.show_close_button = true;
+            window.set_titlebar(toolbar);
+            /* ANJUTA: Widgets initialization for kyrc.ui - DO NOT REMOVE */
+            window.show_all ();
  
-			tabs.new_tab_requested.connect(new_tab_requested);
+            tabs.new_tab_requested.connect(new_tab_requested);
             
-			tabs.tab_removed.connect(remove_tab);
+            tabs.tab_removed.connect(remove_tab);
             tabs.tab_switched.connect(tab_switch); 
 
             SqlClient.get_instance();
             show_welcome_screen();  
             
-			refresh_server_list(); 
-		}
-		catch (Error e) {
-			error("Could not load UI: %s\n", e.message);
-		}
+            refresh_server_list(); 
+        }
+        catch (Error e) {
+            error("Could not load UI: %s\n", e.message);
+        }
 
-	}
+    }
 
-	private static Granite.Widgets.SourceList.Item current_selected_item;
-	private void set_item_selected (Granite.Widgets.SourceList.Item? item) {
-		current_selected_item = item;
-	}
+    private static Granite.Widgets.SourceList.Item current_selected_item;
+    private void set_item_selected (Granite.Widgets.SourceList.Item? item) {
+        current_selected_item = item;
+    }
 
-	public static int index = 0;
-	public void add_tab (ChannelTab newTab) {
+    public static int index = 0;
+    public void add_tab (ChannelTab newTab) {
 
         
-		Idle.add( () => { 
+        Idle.add( () => { 
             newTab.tab = new Granite.Widgets.Tab(); 
             TextView output = new TextView(); 
             output.set_editable(false);
@@ -163,25 +163,25 @@ public class Kyrc : Object
             scrolled.margin = 3;
             scrolled.add(output);
 
-			var ptabs = new Pango.TabArray(1, true);
-    		ptabs.set_tab(0, Pango.TabAlign.LEFT, 100);
-    		output.tabs = ptabs;
-			output.indent = -100;
-			output.left_margin = 100; 
+            var ptabs = new Pango.TabArray(1, true);
+            ptabs.set_tab(0, Pango.TabAlign.LEFT, 100);
+            output.tabs = ptabs;
+            output.indent = -100;
+            output.left_margin = 100; 
 
-			newTab.tab.label = newTab.channel_name; 
-			newTab.tab.page = scrolled;
+            newTab.tab.label = newTab.channel_name; 
+            newTab.tab.page = scrolled;
             newTab.new_subject.connect(new_subject);
-			tabs.insert_tab(newTab.tab, -1); 
+            tabs.insert_tab(newTab.tab, -1); 
             
             debug("Setting index " + newTab.channel_name + ":" + index.to_string()); 
 
-			newTab.set_output(output);
-			outputs.set(index, newTab); 
+            newTab.set_output(output);
+            outputs.set(index, newTab); 
 
-			tabs.show_all();
+            tabs.show_all();
             
-		    newTab.tab_index = index;
+            newTab.tab_index = index;
 
             if (index == 0) {
                 tab_switch (null, newTab.tab);
@@ -190,51 +190,51 @@ public class Kyrc : Object
             index++;
 
             
-			return false;
-		});
-	}
-
-    public void new_tab_requested () {
-				var dialog = new Dialog.with_buttons("New Connection", window,
-				                                     DialogFlags.DESTROY_WITH_PARENT,
-				                                     "Connect", Gtk.ResponseType.ACCEPT,
-				                                     "Cancel", Gtk.ResponseType.CANCEL);
-				Gtk.Box content = dialog.get_content_area() as Gtk.Box;
-				content.pack_start(new Label("Server address"), false, false, 5);
-				var server_name = new Entry();
-				server_name.activate.connect(() => {
-					dialog.response(Gtk.ResponseType.ACCEPT);
-				});
-				content.pack_start(server_name, false, false, 5);
-				dialog.show_all();
-				dialog.response.connect((id) => {
-					switch (id){
-						case Gtk.ResponseType.ACCEPT:
-							string name = server_name.get_text().strip();
-							if (name.length > 2) {
-							add_server(name);
-							dialog.close();
-						}
-							break;
-						case Gtk.ResponseType.CANCEL:
-							dialog.close();
-							break;
-					}
-				});
+            return false;
+        });
     }
 
-	public void add_server (string url) {
-		var client = new Connection(this);
-		client.username = "kyle123456";
-		clients.set(index, client); 
-		client.connect_to_server(url);
-	}
+    public void new_tab_requested () {
+                var dialog = new Dialog.with_buttons("New Connection", window,
+                                                     DialogFlags.DESTROY_WITH_PARENT,
+                                                     "Connect", Gtk.ResponseType.ACCEPT,
+                                                     "Cancel", Gtk.ResponseType.CANCEL);
+                Gtk.Box content = dialog.get_content_area() as Gtk.Box;
+                content.pack_start(new Label("Server address"), false, false, 5);
+                var server_name = new Entry();
+                server_name.activate.connect(() => {
+                    dialog.response(Gtk.ResponseType.ACCEPT);
+                });
+                content.pack_start(server_name, false, false, 5);
+                dialog.show_all();
+                dialog.response.connect((id) => {
+                    switch (id){
+                        case Gtk.ResponseType.ACCEPT:
+                            string name = server_name.get_text().strip();
+                            if (name.length > 2) {
+                            add_server(name);
+                            dialog.close();
+                        }
+                            break;
+                        case Gtk.ResponseType.CANCEL:
+                            dialog.close();
+                            break;
+                    }
+                });
+    }
 
-	public void add_text (ChannelTab tab, Message message) {
+    public void add_server (string url) {
+        var client = new Connection(this);
+        client.username = "kyle123456";
+        clients.set(index, client); 
+        client.connect_to_server(url);
+    }
+
+    public void add_text (ChannelTab tab, Message message) {
         tab.display_message(message);
-	}
+    }
 
-	public void send_text_out (string text) {
+    public void send_text_out (string text) {
         if(current_tab == -1 || !outputs.has_key(current_tab))
             return;
         var output = outputs[current_tab];  
@@ -251,91 +251,91 @@ public class Kyrc : Object
         return; 
     }
 
-	public void refresh_server_list () {
-		var root = servers.root;
-		root.clear();
-		foreach (var svr in SqlClient.servers.entries) {
-			var s =  new Granite.Widgets.SourceList.ExpandableItem(svr.value.host);
-			root.add(s);
-			var chn = new Granite.Widgets.SourceList.Item (svr.value.host);
-			chn.set_data<string>("type", "server");
-			chn.set_data<SqlClient.Server>("server", svr.value);
-			chn.activated.connect(item_activated);
-			s.add(chn);
-			foreach (var c in svr.value.channels) {
-				chn = new Widgets.SourceList.Item (c.channel);
-				chn.set_data<string>("type", "channel");
-				chn.set_data<SqlClient.Channel>("channel", c);
-				chn.activated.connect(item_activated);
-				s.add(chn);
-			}
-		}
-	}
+    public void refresh_server_list () {
+        var root = servers.root;
+        root.clear();
+        foreach (var svr in SqlClient.servers.entries) {
+            var s =  new Granite.Widgets.SourceList.ExpandableItem(svr.value.host);
+            root.add(s);
+            var chn = new Granite.Widgets.SourceList.Item (svr.value.host);
+            chn.set_data<string>("type", "server");
+            chn.set_data<SqlClient.Server>("server", svr.value);
+            chn.activated.connect(item_activated);
+            s.add(chn);
+            foreach (var c in svr.value.channels) {
+                chn = new Widgets.SourceList.Item (c.channel);
+                chn.set_data<string>("type", "channel");
+                chn.set_data<SqlClient.Channel>("channel", c);
+                chn.activated.connect(item_activated);
+                s.add(chn);
+            }
+        }
+    }
 
-	private void item_activated () {
-		string type = current_selected_item.get_data<string>("type");
-		if (type == "server") {
-			SqlClient.Server svr = current_selected_item.get_data<SqlClient.Server>("server");
-			foreach (var tab in outputs.entries) {
-				if (tab.value.is_server_tab && tab.value.channel_name == svr.host) {
-					tabs.current = tab.value.tab;
-					return;
-				}
-			}
-		} else {
-			SqlClient.Channel channel = current_selected_item.get_data<SqlClient.Channel>("channel");
-			foreach (var tab in outputs.entries) {
-				if (!tab.value.is_server_tab && tab.value.channel_name == channel.channel) {
-					tabs.current = tab.value.tab;
-					return;
-				}
-			}
-		}
+    private void item_activated () {
+        string type = current_selected_item.get_data<string>("type");
+        if (type == "server") {
+            SqlClient.Server svr = current_selected_item.get_data<SqlClient.Server>("server");
+            foreach (var tab in outputs.entries) {
+                if (tab.value.is_server_tab && tab.value.channel_name == svr.host) {
+                    tabs.current = tab.value.tab;
+                    return;
+                }
+            }
+        } else {
+            SqlClient.Channel channel = current_selected_item.get_data<SqlClient.Channel>("channel");
+            foreach (var tab in outputs.entries) {
+                if (!tab.value.is_server_tab && tab.value.channel_name == channel.channel) {
+                    tabs.current = tab.value.tab;
+                    return;
+                }
+            }
+        }
 
-	} 
+    } 
 
-	public bool slide_panel () {
-		new Thread<int>("slider_move", move_slider_t);
-		return false;
-	}
+    public bool slide_panel () {
+        new Thread<int>("slider_move", move_slider_t);
+        return false;
+    }
 
-	public int move_slider_t () {
-		int add, end;
-		bool opening;
-		if (pannel.position < 10) {
-			opening = true;
-			add = 1;
-			end = 150;
-		} else {
-			opening = false;
-			add = -1;
-			end = 0;
-		}
-		for (int i = pannel.position; (opening) ? i < end : end < i; i+= add) {
-			pannel.set_position(i);
-			Thread.usleep(3600);
-		}
-		return 0;
-	}
+    public int move_slider_t () {
+        int add, end;
+        bool opening;
+        if (pannel.position < 10) {
+            opening = true;
+            add = 1;
+            end = 150;
+        } else {
+            opening = false;
+            add = -1;
+            end = 0;
+        }
+        for (int i = pannel.position; (opening) ? i < end : end < i; i+= add) {
+            pannel.set_position(i);
+            Thread.usleep(3600);
+        }
+        return 0;
+    }
 
-	public void set_up_add_sever (Gtk.HeaderBar toolbar) {
-		add_server_button = new Gtk.Button.from_icon_name("list-add-symbolic", Gtk.IconSize.LARGE_TOOLBAR);
-		add_server_button.tooltip_text = "Add new server";
+    public void set_up_add_sever (Gtk.HeaderBar toolbar) {
+        add_server_button = new Gtk.Button.from_icon_name("list-add-symbolic", Gtk.IconSize.LARGE_TOOLBAR);
+        add_server_button.tooltip_text = "Add new server";
 
-		var sm = new ServerManager();
-		add_server_button.button_release_event.connect( (event) => {
-			sm.open_window();
-			sm.window.destroy.connect( () => {
-				refresh_server_list ();
-			});
-			return false;
-		});
+        var sm = new ServerManager();
+        add_server_button.button_release_event.connect( (event) => {
+            sm.open_window();
+            sm.window.destroy.connect( () => {
+                refresh_server_list ();
+            });
+            return false;
+        });
 
-		toolbar.pack_start(add_server_button);
-	}
+        toolbar.pack_start(add_server_button);
+    }
 
     
-	private void remove_tab (Widgets.Tab tab) {  
+    private void remove_tab (Widgets.Tab tab) {  
         if(tab.label == "Welcome")
             return;
         
@@ -353,7 +353,7 @@ public class Kyrc : Object
 
         if (tabs.n_tabs == 0)
             show_welcome_screen();
-	}
+    }
 
     public int lookup_channel_id (Widgets.Tab tab) {
         foreach (ChannelTab output in outputs) { 
@@ -389,60 +389,60 @@ public class Kyrc : Object
         }
     }
 
-	[CCode (instance_pos = -1)]
-	public void on_destroy (Widget window) {
-		Gtk.main_quit();
-	}
+    [CCode (instance_pos = -1)]
+    public void on_destroy (Widget window) {
+        Gtk.main_quit();
+    }
 
-	public static void handle_log (string? log_domain, LogLevelFlags log_levels, string message) {
-		string prefix = "";
-		string suffix = "\x1b[39;49m " ;
-		switch(log_levels) {
-			case LogLevelFlags.LEVEL_DEBUG:
-				prefix = "\x1b[94mDebug: ";
-				break;
-			case LogLevelFlags.LEVEL_INFO:
-				prefix = "\x1b[92mInfo: ";
-				break;
-			case LogLevelFlags.LEVEL_WARNING:
-				prefix = "\x1b[93mWarning: ";
-				break;
-			case LogLevelFlags.LEVEL_ERROR:
-				prefix = "\x1b[91mError: ";
-				break;
-			default:
-				prefix = message;
-				break;
-		}
-		stdout.printf(prefix + message + suffix + "\n");
-	}
+    public static void handle_log (string? log_domain, LogLevelFlags log_levels, string message) {
+        string prefix = "";
+        string suffix = "\x1b[39;49m " ;
+        switch(log_levels) {
+            case LogLevelFlags.LEVEL_DEBUG:
+                prefix = "\x1b[94mDebug: ";
+                break;
+            case LogLevelFlags.LEVEL_INFO:
+                prefix = "\x1b[92mInfo: ";
+                break;
+            case LogLevelFlags.LEVEL_WARNING:
+                prefix = "\x1b[93mWarning: ";
+                break;
+            case LogLevelFlags.LEVEL_ERROR:
+                prefix = "\x1b[91mError: ";
+                break;
+            default:
+                prefix = message;
+                break;
+        }
+        stdout.printf(prefix + message + suffix + "\n");
+    }
 
-	public static string get_asset_file (string name) {
-		string check = Config.PACKAGE_DATA_DIR + name;
-		File file = File.new_for_path (check);
-		if (file.query_exists())
-			return check;
+    public static string get_asset_file (string name) {
+        string check = Config.PACKAGE_DATA_DIR + name;
+        File file = File.new_for_path (check);
+        if (file.query_exists())
+            return check;
 
-		check = "src/" + name;
-		file = File.new_for_path (check);
-		if (file.query_exists())
-			return check;
+        check = "src/" + name;
+        file = File.new_for_path (check);
+        if (file.query_exists())
+            return check;
 
-		check =  name;
-		file = File.new_for_path (check);
-		if (file.query_exists())
-			return check;
+        check =  name;
+        file = File.new_for_path (check);
+        if (file.query_exists())
+            return check;
 
-		error("Unable to find UI file.");
-	}
+        error("Unable to find UI file.");
+    }
 
-	static int main (string[] args) {
-		GLib.Log.set_default_handler(handle_log);
+    static int main (string[] args) {
+        GLib.Log.set_default_handler(handle_log);
 
-		Gtk.init (ref args);
-		var app = new Kyrc ();
+        Gtk.init (ref args);
+        var app = new Kyrc ();
 
-		Gtk.main ();
+        Gtk.main ();
 
         return 0;
     }
@@ -465,9 +465,9 @@ public class Kyrc : Object
             switch (index) {
                 case 0:
                     sm.open_window();
-			        sm.window.destroy.connect( () => {
-				        refresh_server_list ();
-			        });
+                    sm.window.destroy.connect( () => {
+                        refresh_server_list ();
+                    });
                     return;
                 case 1:
                     tabs.new_tab_requested();
