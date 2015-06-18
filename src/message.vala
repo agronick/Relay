@@ -21,6 +21,7 @@ public class Message : GLib.Object {
 	public string command { get; set; }
 	public string[] parameters { get; set; }
 	public string user_name = "";
+    public bool internal = false;
 	private static Regex? regex = null;
 
 	private static const string regex_string = """^(:(?<prefix>\S+) )?(?<command>\S+)( (?!:)(?<params>.+?))?( :(?<trail>.+))?$""";

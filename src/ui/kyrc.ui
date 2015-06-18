@@ -8,7 +8,6 @@
     <property name="title" translatable="yes">window</property>
     <property name="default_width">800</property>
     <property name="default_height">600</property>
-    <signal name="destroy" handler="gtk_main_quit" swapped="no"/>
     <child>
       <object class="GtkPaned" id="pannel">
         <property name="visible">True</property>

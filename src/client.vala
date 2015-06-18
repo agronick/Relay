@@ -47,18 +47,19 @@ public class Client : Object
 
     public bool connect_to_server (string location) {
         url = location;
-        server_tab = new ChannelTab(this, url);
-        server_tab.is_server_tab = true;
-        backref.add_tab(server_tab);
+        server_tab = add_channel_tab(url);
+        server_tab.is_server_tab = true; 
 
         new Thread<int>("Connection " + location, do_connect);
 
         return true;
     }
 
-    private ChannelTab add_channel_tab (string name) {
+    private ChannelTab? add_channel_tab (string name) {
         if (channel_tabs.has_key(name))
             return channel_tabs[name];
+        if (name.strip() == "")
+            return null;
         var newTab = new ChannelTab(this, name);
         backref.add_tab(newTab);
         channel_tabs[name] = newTab;
@@ -108,27 +109,34 @@ public class Client : Object
         if (msg == null) {
             stop();
             return;
-        } 
+        }  
         
         Message message = new Message (msg);
-        if (message.command == "PING") {
-            handle_ping(ref message);
-            return;
-        }if (message.command == "PONG") {
-            info(msg);
-            return;
-        }
-        if (message.command == RPL_TOPIC){
-            set_topic(ref message);
-            return;
-        }else if (message.command == "PRIVMSG") {
-            var tab = find_channel_tab(message.parameters[0]);
-            new_data(tab, message);
-        }else if ( message.command == "NOTICE" || message.command == RPL_MOTD || message.command == RPL_MOTDSTART ){
-            new_data (server_tab, message);
-        } else {
-            warning("Unhandled message: " + msg + "\n");
-        }
+        switch (message.command) {
+            case "PING":
+                handle_ping(ref message);
+                return;
+            case "PONG":
+                info(msg);
+                return;
+            case RPL_TOPIC:
+                set_topic(ref message);
+                return;
+            case "PRIVMSG": 
+                new_data(find_channel_tab(message.parameters[0]), message);
+                return;
+            case "JOIN": 
+                add_channel_tab(message.message); 
+                return;
+            case "NOTICE":
+            case RPL_MOTD:
+            case RPL_MOTDSTART:
+                new_data (server_tab, message);
+                return;
+            default:
+                warning("Unhandled message: " + msg);
+                return;
+        } 
     }
 
     public void set_topic (ref Message msg) {
@@ -176,6 +184,13 @@ public class Client : Object
 
     private void new_data (ChannelTab tab, Message msg) {
         tab.display_message(msg);
+    }
+
+    public void do_exit () {
+        exit = true;  
+        input_stream.clear_pending();
+        input_stream.close();
+        output_stream.close();
     }
 
 }

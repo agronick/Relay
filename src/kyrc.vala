@@ -62,8 +62,11 @@ public class Kyrc : Object
 			tabs.allow_drag = true;
 
 			window = builder.get_object ("window") as Window;
+            window.destroy.connect(kyrc_close_program);
 			var nb_wrapper = builder.get_object("notebook_wrapper") as Box;
-			nb_wrapper.pack_start(tabs, true, true, 1);
+			nb_wrapper.pack_start(tabs, true, true, 0); 
+            tabs.set_size_request(500, 20);
+            tabs.show_all();
 
 			var provider = new Gtk.CssProvider();
 			provider.load_from_path(get_asset_file("assets/style.css"));
@@ -123,9 +126,7 @@ public class Kyrc : Object
 			window.set_titlebar(toolbar);
 			/* ANJUTA: Widgets initialization for kyrc.ui - DO NOT REMOVE */
 			window.show_all ();
-
-			add_server("irc.freenode.net");
-
+ 
 			tabs.new_tab_requested.connect(() => {
 				var dialog = new Dialog.with_buttons("New Connection", window,
 				                                     DialogFlags.DESTROY_WITH_PARENT,
@@ -159,6 +160,8 @@ public class Kyrc : Object
             tabs.tab_switched.connect(tab_switch);
             
 			refresh_server_list();
+
+            add_server ("irc.geekshed.net");
 		}
 		catch (Error e) {
 			error("Could not load UI: %s\n", e.message);
@@ -174,16 +177,17 @@ public class Kyrc : Object
 	public static int index = 0;
 	public void add_tab (ChannelTab newTab) {
 		Idle.add( () => {
-			TextView output = new TextView();
-			ScrolledWindow scrolled = new Gtk.ScrolledWindow (null, null);
-			scrolled.shadow_type = ShadowType.IN;
-			scrolled.add(output);
+			TextView output = new TextView(); 
 			output.set_editable(false);
 			output.set_cursor_visible(false);
 			output.set_wrap_mode (Gtk.WrapMode.WORD);
 			output.set_left_margin(100);
-			var font = FontDescription.from_string("Inconsolata 9"); 
-			output.modify_font(font);
+			output.modify_font(FontDescription.from_string("Inconsolata 9"));
+            
+			ScrolledWindow scrolled = new Gtk.ScrolledWindow (null, null);
+			scrolled.shadow_type = ShadowType.IN;
+			scrolled.add(output);
+            scrolled.margin = 3;
 
 			var ptabs = new Pango.TabArray(1, true);
     		ptabs.set_tab(0, Pango.TabAlign.LEFT, 100);
@@ -197,11 +201,12 @@ public class Kyrc : Object
 			tab.page = scrolled;
 			tabs.insert_tab(tab, index);
 			index = tabs.get_tab_position(tab);
+            tab.set_data("id", index);
 			newTab.tab = tab;
             newTab.new_subject.connect(new_subject);
 
-			newTab.output = output;
-			outputs.set(index, newTab);
+			newTab.set_output(output);
+			outputs.set(index, newTab); 
 
 			tabs.show_all();
 			return false;
@@ -224,19 +229,21 @@ public class Kyrc : Object
 	}
 
 	public void send_text_out (string text) {
-		var current = tabs.current;
-		foreach (Gee.Map.Entry<int,ChannelTab> output in outputs.entries) {
-			if (current == output.value.tab) {
-				output.value.server.send_output(text);
-				var message = new Message();
-				message.user_name_set(output.value.server.username);
-				message.message = text;
-				message.command = "PRIVMSG";
-				add_text(output.value, message); 
-				return;
-			}
-		}
-	}
+        if(current_tab == -1 || !outputs.has_key(current_tab))
+            return;
+        var output = outputs[current_tab];  
+        output.send_text_out(text);
+        
+        var message = new Message();
+
+        //Append message to screen
+        message.user_name_set(output.server.username);
+        message.message = text;
+        message.command = "PRIVMSG";
+        message.internal = true;
+        add_text(output, message); 
+        return; 
+    }
 
 	public void refresh_server_list () {
 		var root = servers.root;
@@ -323,11 +330,16 @@ public class Kyrc : Object
 	}
 
 	private void remove_tab (Widgets.Tab tab) {
-		int index = tabs.get_tab_position(tab);
-		tabs.remove_tab(tabs.get_tab_by_index(index));
-		clients[index].stop();
-		clients.unset(index);
-		outputs.unset(index);
+		int index = tabs.get_data<int>("id"); 
+        if (outputs.has_key(index) && outputs[index].server.channel_tabs.has_key(outputs[index].channel_name))
+		    outputs[index].server.channel_tabs.unset(outputs[index].channel_name);
+        
+        if (outputs[index].server.channel_tabs.size < 1) {
+            outputs[index].server.do_exit();
+        }
+        
+        outputs.unset(index);
+        clients.unset(index);
 	}
 
     private void new_subject (int tab_id, string message) {
@@ -336,7 +348,7 @@ public class Kyrc : Object
             channel_subject.hide();
             return;
         }
-        debug("NEW SUBJECT " + message);
+        
         subject_text.buffer.set_text(message);
         channel_subject.set_no_show_all(false); 
         channel_subject.show_all(); 
@@ -417,6 +429,13 @@ public class Kyrc : Object
         if (output != null && output.contains ("Pantheon")) {  
             on_elementary = true;
         }
+    }
+
+    public void kyrc_close_program () { 
+        foreach(Client client in clients) {
+            client.do_exit();
+        }
+        GLib.Process.exit(0);
     }
 }
 

@@ -24,11 +24,11 @@ public class ChannelTab : GLib.Object {
 	public Client server { get; set; }
 	public string channel_name { get; set; }
 	public Granite.Widgets.Tab tab;
-	public TextView output;
 	public bool is_server_tab = false;
 	public bool has_subject = false;
 	public string channel_subject = "";
 	public static bool is_locked = false;
+	private TextView output;
 
 	public signal void new_subject(int tab_id, string subject);
 
@@ -41,9 +41,9 @@ public class ChannelTab : GLib.Object {
 		server = param_server;
 		channel_name = param_channel_name;
 		tab_index = param_tab_index;
-	}
+	}  
 
-	public void set_tab (Widgets.Tab t, int index) {
+	public void set_tab (Widgets.Tab t, int index) { 
 		tab_index = index;
 		tab = t;
 	}
@@ -54,26 +54,53 @@ public class ChannelTab : GLib.Object {
 		new_subject (tab_index, subject);
 	}
 
-	public void display_message (Message message) { 
-		message.message += "\n";
-		TextView tv = output;
-		ScrolledWindow sw = (ScrolledWindow)tv.get_parent();
-		while (is_locked) {
-			Thread.usleep(111);
+	public void set_output(TextView _output) {
+		output = _output;
+		update_tag_table();
+	}
+
+	public TextView get_output () {
+		return output;
+	}
+
+	public void send_text_out (string message) {
+		string formatted_message = "";
+		if (is_server_tab) {
+			formatted_message = format_server_msg(message);
+		} else {
+			formatted_message = format_channel_msg(message);
 		}
-		string data = "";
-		int message_offset = -1, offset = -1;
-		TextTag? left_side = null;
-		Gdk.RGBA rgba = Gdk.RGBA();
+		if(formatted_message.strip().length == 0)
+			return;
+		debug("Sending out " + formatted_message);
+		server.send_output(formatted_message);
+	}
+
+	public string format_channel_msg (string message) { 
+		return "PRIVMSG " + channel_name + " :" + message.escape("");
+	}
+
+	public string format_server_msg (string message) {
+		//TODO: format better;
+		if(message[0] != '/')
+			return "";
+		return message.substring(1); 
+	}
+ 
+	public void display_message (Message message) {    
+		
+		var tag_table = output.buffer.get_tag_table();
+		var user_other_tag = tag_table.lookup("user_other");
+		var user_self_tag = tag_table.lookup("user_self");
+		var std_message_tag = tag_table.lookup("std_message");
+		var full_width = tag_table.lookup("full_width");
+
+		message.message += "\n";
+		
 		switch (message.command) {
-			case "PRIVMSG":
-				data =   message.user_name + message.message;
-				left_side = tv.buffer.create_tag(null);
-				rgba.red = 1.0; 
-				rgba.alpha = 1.0; 
-				left_side.foreground_rgba = rgba;
-				left_side.left_margin = 0;
-				offset = message.user_name.length;
+			case "PRIVMSG": 
+				add_with_tag(message.user_name, message.internal ? user_self_tag : user_other_tag);
+				add_with_tag(message.message, std_message_tag);
 				break;
 			case Client.RPL_TOPIC:
 				set_subject(message.message);
@@ -81,36 +108,14 @@ public class ChannelTab : GLib.Object {
 			case "NOTICE":
 			case Client.RPL_MOTD:
 			case Client.RPL_MOTDSTART:
-				data = message.message;
+				add_with_tag(message.message, full_width);
 				break;
-		}
-		Idle.add ( () => {
-			is_locked = true;
-			int char_count = tv.buffer.get_char_count();
-			TextIter outiter;
-			TextBuffer buf = tv.buffer;
-			buf.get_end_iter(out outiter); 
-			buf.insert_text(ref outiter, data, data.length);
-			is_locked = false;
-			debug("Parsed message: " + data);
-			if (offset > 0) {
-				TextIter siter;
-				TextIter eiter;
-				tv.buffer.get_iter_at_offset( out siter, char_count );
-				tv.buffer.get_iter_at_offset( out eiter, char_count + offset);
-				buf.apply_tag(left_side, siter, eiter);
+		} 
 
-				TextIter m_siter;
-				TextIter m_eiter;
-				tv.buffer.get_iter_at_offset( out m_siter, tv.buffer.get_char_count() - message.message.length);
-				tv.buffer.get_iter_at_offset( out m_eiter, tv.buffer.get_char_count());
-				var right_side = tv.buffer.create_tag(null);
-				right_side.indent = 0; 
-				buf.apply_tag(right_side, m_siter, m_eiter);
-			}
-			return false;
-		});
+		 
 
+		ScrolledWindow sw = (ScrolledWindow) output.get_parent(); 
+		
 		//Sleep for a little bit so the adjustment is updated
 		Thread.usleep(5000);
 		Adjustment position = sw.get_vadjustment();
@@ -124,6 +129,42 @@ public class ChannelTab : GLib.Object {
 				return false;
 			});
 		}
+	}
+
+	private void add_with_tag (string text, TextTag tag) {
+		while (is_locked) {
+			Thread.usleep(111);
+		} 
+		is_locked = true;
+		Idle.add( () => {
+			TextIter end;
+			output.buffer.get_end_iter(out end);
+			output.buffer.insert_with_tags(end, text, text.length, tag, null);
+			return false;
+		});
+		is_locked = false;
+	}
+
+	private void update_tag_table () { 
+		var user_other = output.buffer.create_tag("user_other");
+		var user_self = output.buffer.create_tag("user_self");
+		var std_message = output.buffer.create_tag("std_message");
+		var full_width = output.buffer.create_tag("full_width");
+
+		var color = new Gdk.RGBA();
+		color.parse("#4EC9DE");
+		user_other.foreground_rgba = color;
+		user_other.left_margin = 0;
+		
+		color.parse("#AE81FF");
+		user_self.foreground_rgba = color;
+		user_self.left_margin = 0;
+
+		color.parse("#F8F8F2");
+		std_message.foreground_rgba = color;
+		std_message.indent = 0;  
+
+		full_width.left_margin = 0;
 	}
 }
 
