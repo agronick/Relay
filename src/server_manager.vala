@@ -42,7 +42,7 @@ public class ServerManager : Object
 
 
 
-    public bool open_window (Gdk.EventButton event) {
+    public bool open_window () {
         current_server = null;
         var builder = new Builder();
         try{

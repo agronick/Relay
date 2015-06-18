@@ -157,11 +157,12 @@ public class Kyrc : Object
 			});
             
 			tabs.tab_removed.connect(remove_tab);
-            tabs.tab_switched.connect(tab_switch);
-            
-			refresh_server_list();
+            tabs.tab_switched.connect(tab_switch); 
 
-            add_server ("irc.geekshed.net");
+            SqlClient.get_instance();
+            show_welcome_screen();  
+            
+			refresh_server_list(); 
 		}
 		catch (Error e) {
 			error("Could not load UI: %s\n", e.message);
@@ -320,22 +321,27 @@ public class Kyrc : Object
 
 	public void set_up_add_sever (Gtk.HeaderBar toolbar) {
 		var add_server_button = new Gtk.Button.from_icon_name("list-add-symbolic", Gtk.IconSize.LARGE_TOOLBAR);
-		add_server_button.tooltip_text = "Add new server";
-
-		var sm = new ServerManager();
+		add_server_button.tooltip_text = "Add new server"; 
 		add_server_button.button_release_event.connect( (event) => {
-			sm.open_window(event);
-			sm.window.destroy.connect( () => {
-				refresh_server_list ();
-			});
+            show_server_view();
 			return false;
 		});
 
 		toolbar.pack_start(add_server_button);
 	}
 
-    //TODO: FIX THIS
+    public void show_server_view () {
+            var sm = new ServerManager();
+			sm.open_window();
+			sm.window.destroy.connect( () => {
+				refresh_server_list ();
+			}); 
+    }
+    
 	private void remove_tab (Widgets.Tab tab) {  
+        if(tab.label == "Welcome")
+            return;
+        
         int id = lookup_channel_id(tab);
         var tab_server = outputs[id].server; 
         tab_server.channel_tabs.unset(tab.label);
@@ -347,6 +353,9 @@ public class Kyrc : Object
         
         outputs.unset(index);
         clients.unset(index);
+
+        if (tabs.n_tabs == 0)
+            show_welcome_screen();
 	}
 
     public int lookup_channel_id (Widgets.Tab tab) {
@@ -441,7 +450,35 @@ public class Kyrc : Object
         return 0;
     }
 
-    private void check_elementary() {
+    private void show_welcome_screen () {
+        var title = "Welcome to Kyrc";
+        var message =  "Lets get started";
+        var welcome = new Widgets.Welcome(title, message);
+        welcome.append("network-server", "Manage", "Manage the servers you use");
+        welcome.append("list-add", "Connect", "Connect to a single server");
+        welcome.append("network-wired", "Saved", "Connect to a saved server");
+
+        var tab = new Widgets.Tab();
+        tab.label = "Welcome";
+        tab.page = welcome;
+        tabs.insert_tab(tab, -1);
+
+        welcome.activated.connect( (index) => {
+            switch (index) {
+                case 0:
+                    show_server_view();
+                    return;
+                case 1:
+                    tabs.new_tab_requested();
+                    return;
+                case 2:
+                    slide_panel();
+                    return;
+            }
+        });
+    }
+
+    private void check_elementary () {
         string output;
         output = GLib.Environment.get_variable("XDG_CURRENT_DESKTOP");
 
