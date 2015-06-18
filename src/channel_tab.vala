@@ -21,7 +21,7 @@ using Gtk;
 
 public class ChannelTab : GLib.Object {
 	public int tab_index { get; set; }
-	public Client server { get; set; }
+	public Connection server { get; set; }
 	public string channel_name { get; set; }
 	public Granite.Widgets.Tab tab;
 	public bool is_server_tab = false;
@@ -37,7 +37,7 @@ public class ChannelTab : GLib.Object {
 	}
 
 	// Constructor
-	public ChannelTab (Client? param_server = null, string param_channel_name = "", int param_tab_index = -1) {
+	public ChannelTab (Connection? param_server = null, string param_channel_name = "", int param_tab_index = -1) {
 		server = param_server;
 		channel_name = param_channel_name;
 		tab_index = param_tab_index;
@@ -102,12 +102,12 @@ public class ChannelTab : GLib.Object {
 				add_with_tag(message.user_name, message.internal ? user_self_tag : user_other_tag);
 				add_with_tag(message.message, std_message_tag);
 				break;
-			case Client.RPL_TOPIC:
+			case Connection.RPL_TOPIC:
 				set_subject(message.message);
 				return;
 			case "NOTICE":
-			case Client.RPL_MOTD:
-			case Client.RPL_MOTDSTART:
+			case Connection.RPL_MOTD:
+			case Connection.RPL_MOTDSTART:
 				add_with_tag(message.message, full_width);
 				break;
 		} 

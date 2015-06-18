@@ -191,7 +191,7 @@ public class SqlClient : Object
         public ArrayList<Channel> channels = new ArrayList<Channel>();
 
         public int add_server_empty () {
-            string sql = "INSERT INTO servers (host, port) VALUES('', " + Client.default_port.to_string() + ")";
+            string sql = "INSERT INTO servers (host, port) VALUES('', " + Connection.default_port.to_string() + ")";
             db.exec(sql);
             this.id = (int)db.last_insert_rowid ();
             stderr.printf("new server id " + this.id.to_string());

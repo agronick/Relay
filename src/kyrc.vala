@@ -40,7 +40,7 @@ public class Kyrc : Object
     TextView subject_text;
 
 	Gee.HashMap<int, ChannelTab> outputs = new Gee.HashMap<int, ChannelTab> ();
-	Gee.HashMap<int, Client> clients = new Gee.HashMap<int, Client> ();
+	Gee.HashMap<int, Connection> clients = new Gee.HashMap<int, Connection> (); 
 	Granite.Widgets.SourceList servers = new Granite.Widgets.SourceList();
 
     public static bool on_elementary = false;
@@ -176,18 +176,20 @@ public class Kyrc : Object
 
 	public static int index = 0;
 	public void add_tab (ChannelTab newTab) {
-		Idle.add( () => {
-			TextView output = new TextView(); 
-			output.set_editable(false);
-			output.set_cursor_visible(false);
-			output.set_wrap_mode (Gtk.WrapMode.WORD);
-			output.set_left_margin(100);
-			output.modify_font(FontDescription.from_string("Inconsolata 9"));
-            
-			ScrolledWindow scrolled = new Gtk.ScrolledWindow (null, null);
-			scrolled.shadow_type = ShadowType.IN;
-			scrolled.add(output);
+
+        
+		Idle.add( () => { 
+            newTab.tab = new Granite.Widgets.Tab(); 
+            TextView output = new TextView(); 
+            output.set_editable(false);
+            output.set_cursor_visible(false);
+            output.set_wrap_mode (Gtk.WrapMode.WORD);
+            output.set_left_margin(100);
+            output.modify_font(FontDescription.from_string("Inconsolata 9"));
+            ScrolledWindow scrolled = new Gtk.ScrolledWindow (null, null);
+            scrolled.shadow_type = ShadowType.IN;
             scrolled.margin = 3;
+            scrolled.add(output);
 
 			var ptabs = new Pango.TabArray(1, true);
     		ptabs.set_tab(0, Pango.TabAlign.LEFT, 100);
@@ -195,30 +197,34 @@ public class Kyrc : Object
 			output.indent = -100;
 			output.left_margin = 100; 
 
-			var tab = new Granite.Widgets.Tab();
-			tab.label = newTab.channel_name;
-
-			tab.page = scrolled;
-			tabs.insert_tab(tab, index);
-			index = tabs.get_tab_position(tab);
-            tab.set_data("id", index);
-			newTab.tab = tab;
+			newTab.tab.label = newTab.channel_name; 
+			newTab.tab.page = scrolled;
             newTab.new_subject.connect(new_subject);
+			tabs.insert_tab(newTab.tab, -1); 
+            
+            debug("Setting index " + newTab.channel_name + ":" + index.to_string()); 
 
 			newTab.set_output(output);
 			outputs.set(index, newTab); 
 
 			tabs.show_all();
+            
+		    newTab.tab_index = index;
+
+            if (index == 0) {
+                tab_switch (null, newTab.tab);
+            }
+            
+            index++;
+
+            
 			return false;
 		});
-		newTab.tab_index = index;
-
-		index++;
 	}
 
 
 	public void add_server (string url) {
-		var client = new Client(this);
+		var client = new Connection(this);
 		client.username = "kyle123456";
 		clients.set(index, client); 
 		client.connect_to_server(url);
@@ -286,8 +292,7 @@ public class Kyrc : Object
 			}
 		}
 
-	}
-
+	} 
 
 	public bool slide_panel () {
 		new Thread<int>("slider_move", move_slider_t);
@@ -329,18 +334,29 @@ public class Kyrc : Object
 		toolbar.pack_start(add_server_button);
 	}
 
-	private void remove_tab (Widgets.Tab tab) {
-		int index = tabs.get_data<int>("id"); 
-        if (outputs.has_key(index) && outputs[index].server.channel_tabs.has_key(outputs[index].channel_name))
-		    outputs[index].server.channel_tabs.unset(outputs[index].channel_name);
+    //TODO: FIX THIS
+	private void remove_tab (Widgets.Tab tab) {  
+        int id = lookup_channel_id(tab);
+        var tab_server = outputs[id].server; 
+        tab_server.channel_tabs.unset(tab.label);
         
-        if (outputs[index].server.channel_tabs.size < 1) {
-            outputs[index].server.do_exit();
+        if (tab_server.channel_tabs.size < 1) {
+            debug("Closing server");
+            tab_server.do_exit();
         }
         
         outputs.unset(index);
         clients.unset(index);
 	}
+
+    public int lookup_channel_id (Widgets.Tab tab) {
+        foreach (ChannelTab output in outputs) { 
+            if (output.tab == tab) {
+                return output.tab_index;
+            }
+        }
+        return -1;
+    }
 
     private void new_subject (int tab_id, string message) {
         if (tab_id != current_tab || message.strip().length == 0) {
@@ -355,12 +371,15 @@ public class Kyrc : Object
     }
 
     private void tab_switch (Granite.Widgets.Tab? old_tab, Granite.Widgets.Tab new_tab) {
-        current_tab = tabs.get_tab_position(new_tab); 
+        current_tab = lookup_channel_id(new_tab);
+        debug("Current tab is " + current_tab.to_string());
         if (!outputs.has_key(current_tab))
             return;
         var using_tab = outputs[current_tab];
         if (using_tab.has_subject) { 
             new_subject (current_tab, using_tab.channel_subject);
+        } else {
+            channel_subject.hide();
         }
     }
 
@@ -432,7 +451,7 @@ public class Kyrc : Object
     }
 
     public void kyrc_close_program () { 
-        foreach(Client client in clients) {
+        foreach(Connection client in clients) {
             client.do_exit();
         }
         GLib.Process.exit(0);

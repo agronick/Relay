@@ -17,7 +17,7 @@ using GLib;
 using Gtk;
 using Gee;
 
-public class Client : Object
+public class Connection : Object
 {
 
     public DataInputStream input_stream;
@@ -41,7 +41,7 @@ public class Client : Object
     public const string RPL_ENDOFMOTD = "376";
     //End server messages
 
-    public Client(Kyrc back) {
+    public Connection(Kyrc back) {
         backref = back;
     }
 
@@ -61,7 +61,7 @@ public class Client : Object
         if (name.strip() == "")
             return null;
         var newTab = new ChannelTab(this, name);
-        backref.add_tab(newTab);
+        backref.add_tab(newTab); 
         channel_tabs[name] = newTab;
         return newTab;
     }
