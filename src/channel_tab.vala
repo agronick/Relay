@@ -161,9 +161,7 @@ public class ChannelTab : GLib.Object {
 
 		color.parse("#F8F8F2");
 		std_message.foreground_rgba = color;
-		std_message.indent = 0;   
-		std_message.pixels_below_lines_set = std_message.pixels_above_lines_set = true;
-		std_message.pixels_below_lines = std_message.pixels_above_lines = 15;
+		std_message.indent = 0;    
 
 		full_width.left_margin = 0;
 	}

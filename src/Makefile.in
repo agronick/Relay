@@ -334,6 +334,7 @@ AM_CPPFLAGS = \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-DPACKAGE_SRC_DIR=\""$(srcdir)"\" \
 	-DPACKAGE_DATA_DIR=\""$(pkgdatadir)"\" \
+    -DGETTEXT_PACKAGE=\""kyrc"\"\
 	$(KYRC_CFLAGS)
 
 AM_CFLAGS = \
@@ -341,7 +342,7 @@ AM_CFLAGS = \
 	 -g
 
 kyrc_SOURCES = \
-	kyrc.vala config.vapi connection.vala sqlclient.vala server_manager.vala channel_tab.vala message.vala
+	config.vapi kyrc.vala connection.vala sqlclient.vala server_manager.vala channel_tab.vala message.vala
 
 kyrc_VALAFLAGS = \
 	--pkg gtk+-3.0 --pkg glib-2.0 --pkg gee-0.8 --pkg granite --pkg sqlite3 --target-glib 2.32  -g --save-temps --Xcc=-X --Xcc=-w
@@ -507,9 +508,9 @@ $(srcdir)/--save-temps: $(srcdir)/kyrc_vala.stamp
 	@if test -f $@; then :; else \
 	  $(MAKE) $(AM_MAKEFLAGS) $(srcdir)/kyrc_vala.stamp; \
 	fi
-$(srcdir)/kyrc_vala.stamp: kyrc.vala config.vapi connection.vala sqlclient.vala server_manager.vala channel_tab.vala message.vala
+$(srcdir)/kyrc_vala.stamp: config.vapi kyrc.vala connection.vala sqlclient.vala server_manager.vala channel_tab.vala message.vala
 	$(AM_V_at)rm -f $@ && echo stamp > $@-t
-	$(AM_V_VALAC)$(am__cd) $(srcdir) && $(VALAC) $(kyrc_VALAFLAGS) $(VALAFLAGS) -C kyrc.vala config.vapi connection.vala sqlclient.vala server_manager.vala channel_tab.vala message.vala
+	$(AM_V_VALAC)$(am__cd) $(srcdir) && $(VALAC) $(kyrc_VALAFLAGS) $(VALAFLAGS) -C config.vapi kyrc.vala connection.vala sqlclient.vala server_manager.vala channel_tab.vala message.vala
 	$(AM_V_at)mv -f $@-t $@
 
 mostlyclean-libtool:

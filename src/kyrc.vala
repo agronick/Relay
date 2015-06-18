@@ -17,11 +17,15 @@ using GLib;
 using Gtk;
 using Gee;
 using Granite;
-using Pango;
+using Pango; 
+using Config;
+ 
+ 
 
 public class Kyrc : Object
-{
+{ 
 
+    
 	/*
 	 * Uncomment this line when you are done testing and building a tarball
 	 * or installing
@@ -46,8 +50,8 @@ public class Kyrc : Object
     public static bool on_elementary = false;
     public static int current_tab = -1;
 
-	public Kyrc () {
 
+	public Kyrc () {
 		try
 		{
 			Gtk.Settings.get_default().set("gtk-application-prefer-dark-theme", true);
@@ -62,14 +66,10 @@ public class Kyrc : Object
 			tabs.allow_drag = true;
 
 			window = builder.get_object ("window") as Window;
-            window.destroy.connect(kyrc_close_program);
 			var nb_wrapper = builder.get_object("notebook_wrapper") as Box;
 			nb_wrapper.pack_start(tabs, true, true, 0); 
             tabs.set_size_request(500, 20);
-            tabs.show_all();
-
-			var provider = new Gtk.CssProvider();
-			provider.load_from_path(get_asset_file("assets/style.css"));
+            tabs.show_all(); 
 
 			pannel = builder.get_object("pannel") as Paned;
 			var server_list_container = builder.get_object("server_list_container") as Box;
@@ -78,13 +78,10 @@ public class Kyrc : Object
 			Image icon = new Image.from_file("src/assets/server_run.png");
 			var select_channel = new Gtk.Button();
 			select_channel.image = icon;
-			select_channel.tooltip_text = "Open server/channel view";
-			toolbar.pack_start(select_channel);
-			select_channel.button_release_event.connect(slide_panel);
+			select_channel.tooltip_text = _("Open server/channel view");
 			pannel.position = 1;
 
-			input = builder.get_object("input") as Entry;
-
+			input = builder.get_object("input") as Entry; 
 			input.activate.connect (() => {
 				send_text_out(input.get_text ());
 				input.set_text("");
@@ -94,11 +91,11 @@ public class Kyrc : Object
             	channel_subject = new Gtk.Button.from_icon_name("help-info-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
 	        else
      		    channel_subject = new Gtk.Button.from_icon_name("text-x-generic", Gtk.IconSize.SMALL_TOOLBAR);
-            channel_subject.tooltip_text = "Channel subject";
+            channel_subject.tooltip_text = _("Channel subject");
             var subject_popover = new Gtk.Popover(channel_subject);
             channel_subject.clicked.connect(() => {
                 subject_popover.show_all();
-            });  
+            });
             channel_subject.set_no_show_all(true);
             channel_subject.hide();
 		  	var scrolled = new Gtk.ScrolledWindow(null, null);
@@ -110,59 +107,32 @@ public class Kyrc : Object
 		  	subject_text.margin = 10;
 		  	scrolled.set_size_request(320, 110);
 		  	scrolled.add(subject_text);
-		  	subject_popover.add(scrolled);
-            
+		  	subject_popover.add(scrolled); 
 
-            toolbar.pack_end(channel_subject);
-
-			servers.item_selected.connect(set_item_selected);
-
-			set_up_add_sever(toolbar);
-
-			toolbar.set_title("Kyrc");
-			toolbar.show_all();
-
+			toolbar.pack_start(select_channel);
+            toolbar.pack_end(channel_subject); 
 			toolbar.show_close_button = true;
+			toolbar.set_title("Kyrc");
+			toolbar.show_all(); 
+			set_up_add_sever(toolbar);
 			window.set_titlebar(toolbar);
+
+
 			/* ANJUTA: Widgets initialization for kyrc.ui - DO NOT REMOVE */
 			window.show_all ();
  
-			tabs.new_tab_requested.connect(() => {
-				var dialog = new Dialog.with_buttons("New Connection", window,
-				                                     DialogFlags.DESTROY_WITH_PARENT,
-				                                     "Connect", Gtk.ResponseType.ACCEPT,
-				                                     "Cancel", Gtk.ResponseType.CANCEL);
-				Gtk.Box content = dialog.get_content_area() as Gtk.Box;
-				content.pack_start(new Label("Server address"), false, false, 5);
-				var server_name = new Entry();
-				server_name.activate.connect(() => {
-					dialog.response(Gtk.ResponseType.ACCEPT);
-				});
-				content.pack_start(server_name, false, false, 5);
-				dialog.show_all();
-				dialog.response.connect((id) => {
-					switch (id){
-						case Gtk.ResponseType.ACCEPT:
-							string name = server_name.get_text().strip();
-							if (name.length > 2) {
-							add_server(name);
-							dialog.close();
-						}
-							break;
-						case Gtk.ResponseType.CANCEL:
-							dialog.close();
-							break;
-					}
-				});
-			});
-            
+			tabs.new_tab_requested.connect(new_channel); 
 			tabs.tab_removed.connect(remove_tab);
             tabs.tab_switched.connect(tab_switch); 
+			servers.item_selected.connect(set_item_selected);
+            window.destroy.connect(kyrc_close_program);
+			select_channel.button_release_event.connect(slide_panel);
 
             SqlClient.get_instance();
             show_welcome_screen();  
             
 			refresh_server_list(); 
+ 
 		}
 		catch (Error e) {
 			error("Could not load UI: %s\n", e.message);
@@ -339,7 +309,7 @@ public class Kyrc : Object
     }
     
 	private void remove_tab (Widgets.Tab tab) {  
-        if(tab.label == "Welcome")
+        if(tab.label == _("Welcome"))
             return;
         
         int id = lookup_channel_id(tab);
@@ -380,9 +350,8 @@ public class Kyrc : Object
     }
 
     private void tab_switch (Granite.Widgets.Tab? old_tab, Granite.Widgets.Tab new_tab) {
-        current_tab = lookup_channel_id(new_tab);
-        debug("Current tab is " + current_tab.to_string());
-        if (!outputs.has_key(current_tab))
+        current_tab = lookup_channel_id(new_tab); 
+        if (current_tab == -1)
             return;
         var using_tab = outputs[current_tab];
         if (using_tab.has_subject) { 
@@ -390,6 +359,35 @@ public class Kyrc : Object
         } else {
             channel_subject.hide();
         }
+    }
+
+    public void new_channel () {
+        var dialog = new Dialog.with_buttons(_("New Connection"), window,
+                                             DialogFlags.DESTROY_WITH_PARENT,
+                                             _("Connect"), Gtk.ResponseType.ACCEPT,
+                                             _("Cancel"), Gtk.ResponseType.CANCEL);
+        Gtk.Box content = dialog.get_content_area() as Gtk.Box;
+        content.pack_start(new Label(_("Server address")), false, false, 5);
+        var server_name = new Entry();
+        server_name.activate.connect(() => {
+            dialog.response(Gtk.ResponseType.ACCEPT);
+        });
+        content.pack_start(server_name, false, false, 5);
+        dialog.show_all();
+        dialog.response.connect((id) => {
+            switch (id){
+                case Gtk.ResponseType.ACCEPT:
+                    string name = server_name.get_text().strip();
+                    if (name.length > 2) {
+                        add_server(name);
+                        dialog.close();
+                    }
+                    break;
+                case Gtk.ResponseType.CANCEL:
+                    dialog.close();
+                    break;
+            }
+        });
     }
 
 	[CCode (instance_pos = -1)]
@@ -441,11 +439,20 @@ public class Kyrc : Object
 
 	static int main (string[] args) {
 		GLib.Log.set_default_handler(handle_log);
+        debug(Config.PACKAGE_LOCALE_DIR);
+        return 0;
+        
+        Intl.setlocale(LocaleCategory.MESSAGES, "");
+        Intl.bind_textdomain_codeset(Config.GETTEXT_PACKAGE, "utf-8");  
+        Intl.bindtextdomain (Config.GETTEXT_PACKAGE, Config.PACKAGE_LOCALE_DIR);
+        Intl.textdomain (Config.GETTEXT_PACKAGE);
+        
 
 		Gtk.init (ref args);
 		var app = new Kyrc ();
 
 		Gtk.main ();
+        
 
         return 0;
     }
