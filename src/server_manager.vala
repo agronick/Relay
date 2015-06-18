@@ -42,7 +42,7 @@ public class ServerManager : Object
 
 
 
-    public bool open_window (Gdk.EventButton event) {
+    public bool open_window () {
         current_server = null;
         var builder = new Builder();
         try{
@@ -303,7 +303,7 @@ public class ServerManager : Object
         servers.show_all();
         populate_fields (lbr);
         host.grab_focus();
-        port.set_value((int) Client.default_port);
+        port.set_value((int) Connection.default_port);
 
         return false;
     }

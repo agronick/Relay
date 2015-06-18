@@ -20,13 +20,16 @@ public class Message : GLib.Object {
 	public string prefix { get; set; }
 	public string command { get; set; }
 	public string[] parameters { get; set; }
-	public string user_name;
+	public string user_name = "";
+    public bool internal = false;
 	private static Regex? regex = null;
 
 	private static const string regex_string = """^(:(?<prefix>\S+) )?(?<command>\S+)( (?!:)(?<params>.+?))?( :(?<trail>.+))?$""";
 
 	public Message (string _message = "") {
 		message = _message;
+		message = message.replace("\002", " ");
+		message = message.escape("\b\f\n\r\t");
 		if (message == "")
 			return;
 		if (regex == null) {
@@ -40,6 +43,11 @@ public class Message : GLib.Object {
 		parse_regex();
 	}
 
+	public void user_name_set (string name) {
+		int length = 14 - name.length;
+		user_name = name + string.nfill(length, ' ');
+	}
+
 
 	public void parse_regex () {
 		try{
@@ -47,9 +55,9 @@ public class Message : GLib.Object {
 				prefix = mi.fetch_named ("prefix");
 				command = mi.fetch_named ("command");
 				parameters = mi.fetch_named ("params").split(" ") ;
-				message = mi.fetch_named ("trail");
+				message = mi.fetch_named ("trail").replace("\t", "");
 				if(command == "PRIVMSG")
-					user_name = prefix.split("!")[0];
+					user_name_set(prefix.split("!")[0]);
 				return false;
 			});
 		}catch (RegexError e){

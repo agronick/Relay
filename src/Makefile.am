@@ -13,6 +13,7 @@ AM_CPPFLAGS = \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-DPACKAGE_SRC_DIR=\""$(srcdir)"\" \
 	-DPACKAGE_DATA_DIR=\""$(pkgdatadir)"\" \
+    -DGETTEXT_PACKAGE=\""kyrc"\"\
 	$(KYRC_CFLAGS)
 
 AM_CFLAGS =\
@@ -22,10 +23,11 @@ AM_CFLAGS =\
 bin_PROGRAMS = kyrc
 
 kyrc_SOURCES = \
-	kyrc.vala config.vapi client.vala sqlclient.vala server_manager.vala channel_item.vala channel_tab.vala message.vala 
+	config.vapi kyrc.vala connection.vala sqlclient.vala server_manager.vala channel_tab.vala message.vala
 
 kyrc_VALAFLAGS =  \
 	--pkg gtk+-3.0 --pkg glib-2.0 --pkg gee-0.8 --pkg granite --pkg sqlite3 --target-glib 2.32  -g --save-temps --Xcc=-X --Xcc=-w
+
 
 kyrc_LDFLAGS = \
 	-Wl,--export-dynamic
