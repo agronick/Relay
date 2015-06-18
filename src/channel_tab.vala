@@ -56,6 +56,7 @@ public class ChannelTab : GLib.Object {
 
 	public void set_output(TextView _output) {
 		output = _output;
+		output.buffer.changed.connect(do_autoscroll);
 		update_tag_table();
 	}
 
@@ -110,14 +111,12 @@ public class ChannelTab : GLib.Object {
 			case Connection.RPL_MOTDSTART:
 				add_with_tag(message.message, full_width);
 				break;
-		} 
+		}  
 
-		 
-
-		ScrolledWindow sw = (ScrolledWindow) output.get_parent(); 
-		
-		//Sleep for a little bit so the adjustment is updated
-		Thread.usleep(5000);
+	}
+	
+	public void do_autoscroll () {
+		ScrolledWindow sw = (ScrolledWindow) output.get_parent();
 		Adjustment position = sw.get_vadjustment();
 		if (!(position is Adjustment))
 			return;
@@ -129,8 +128,8 @@ public class ChannelTab : GLib.Object {
 				return false;
 			});
 		}
-	}
-
+	}		
+ 
 	private void add_with_tag (string text, TextTag tag) {
 		while (is_locked) {
 			Thread.usleep(111);
@@ -162,7 +161,9 @@ public class ChannelTab : GLib.Object {
 
 		color.parse("#F8F8F2");
 		std_message.foreground_rgba = color;
-		std_message.indent = 0;  
+		std_message.indent = 0;   
+		std_message.pixels_below_lines_set = std_message.pixels_above_lines_set = true;
+		std_message.pixels_below_lines = std_message.pixels_above_lines = 15;
 
 		full_width.left_margin = 0;
 	}
