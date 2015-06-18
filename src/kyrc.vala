@@ -81,7 +81,7 @@ public class Kyrc : Object
 			select_channel.tooltip_text = _("Open server/channel view");
 			pannel.position = 1;
 
-			input = builder.get_object("input") as Entry; 
+			input = builder.get_object("input") as Entry;
 			input.activate.connect (() => {
 				send_text_out(input.get_text ());
 				input.set_text("");
@@ -128,11 +128,14 @@ public class Kyrc : Object
             window.destroy.connect(kyrc_close_program);
 			select_channel.button_release_event.connect(slide_panel);
 
+            //This will make the server list set
             SqlClient.get_instance();
-            show_welcome_screen();  
             
 			refresh_server_list(); 
- 
+            load_autoconnect();
+
+            if (tabs.n_tabs == 0)
+                show_welcome_screen();  
 		}
 		catch (Error e) {
 			error("Could not load UI: %s\n", e.message);
@@ -194,11 +197,19 @@ public class Kyrc : Object
 	}
 
 
-	public void add_server (string url) {
+	public void add_server (SqlClient.Server server, bool do_autoconnect = false) {
 		var client = new Connection(this);
-		client.username = "kyle123456";
+		client.username = server.username;
 		clients.set(index, client); 
-		client.connect_to_server(url);
+
+        //TODO: Make autoconnect or a per channel basis
+        if (do_autoconnect) {
+            foreach (var channel in server.channels) {
+                client.channel_autoconnect.add(channel.channel);
+            }
+        }
+
+		client.connect_to_server(server.host);
 	}
 
 	public void add_text (ChannelTab tab, Message message) {
@@ -242,6 +253,17 @@ public class Kyrc : Object
 			}
 		}
 	}
+
+    public void load_autoconnect () {
+        foreach (var server in SqlClient.servers.entries) {
+            if (server != null) {
+                if(server.value.autoconnect)
+                    add_server(server.value, true);
+            } else {
+                warning("Was null");
+            }
+        }
+    }
 
 	private void item_activated () {
 		string type = current_selected_item.get_data<string>("type");
@@ -379,7 +401,9 @@ public class Kyrc : Object
                 case Gtk.ResponseType.ACCEPT:
                     string name = server_name.get_text().strip();
                     if (name.length > 2) {
-                        add_server(name);
+                        SqlClient.Server server = new SqlClient.Server();
+                        server.host = name;
+                        add_server(server);
                         dialog.close();
                     }
                     break;
@@ -438,9 +462,7 @@ public class Kyrc : Object
 	}
 
 	static int main (string[] args) {
-		GLib.Log.set_default_handler(handle_log);
-        debug(Config.PACKAGE_LOCALE_DIR);
-        return 0;
+        debug(Config.PACKAGE_LOCALE_DIR); 
         
         Intl.setlocale(LocaleCategory.MESSAGES, "");
         Intl.bind_textdomain_codeset(Config.GETTEXT_PACKAGE, "utf-8");  

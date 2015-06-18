@@ -179,7 +179,7 @@ public class SqlClient : Object
 
         public int id = -1;
         public string host = "";
-        public int port = 6667;
+        public int port = Connection.DEFAULT_PORT;
         public string nickname = "";
         public string realname = "";
         public string username = "";
@@ -191,7 +191,7 @@ public class SqlClient : Object
         public ArrayList<Channel> channels = new ArrayList<Channel>();
 
         public int add_server_empty () {
-            string sql = "INSERT INTO servers (host, port) VALUES('', " + Connection.default_port.to_string() + ")";
+            string sql = "INSERT INTO servers (host, port) VALUES('', " + Connection.DEFAULT_PORT.to_string() + ")";
             db.exec(sql);
             this.id = (int)db.last_insert_rowid ();
             stderr.printf("new server id " + this.id.to_string());

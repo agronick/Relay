@@ -303,7 +303,7 @@ public class ServerManager : Object
         servers.show_all();
         populate_fields (lbr);
         host.grab_focus();
-        port.set_value((int) Connection.default_port);
+        port.set_value((int) Connection.DEFAULT_PORT);
 
         return false;
     }

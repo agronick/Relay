@@ -20,12 +20,12 @@ using Gee;
 public class Connection : Object
 {
 
+    public static const uint16 DEFAULT_PORT = 6667;
     public DataInputStream input_stream;
     public DataOutputStream output_stream;
     public string url = "";
     public string username = "";
     public bool exit = false;
-    public static const uint16 default_port = 6667;
     private Kyrc backref;
     public ChannelTab server_tab;
     public HashMap<string, ChannelTab> channel_tabs = new HashMap<string, ChannelTab>();
@@ -80,7 +80,7 @@ public class Connection : Object
         Resolver resolver = Resolver.get_default ();
         GLib.List<InetAddress> addresses = resolver.lookup_by_name (url, null);
         InetAddress address = addresses.nth_data (0);
-        SocketConnection conn = client.connect (new InetSocketAddress (address, default_port));
+        SocketConnection conn = client.connect (new InetSocketAddress (address, DEFAULT_PORT));
         input_stream = new DataInputStream (conn.input_stream);
         output_stream = new DataOutputStream (conn.output_stream);
 
