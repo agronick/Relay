@@ -111,6 +111,9 @@ public class ChannelTab : GLib.Object {
             case Connection.RPL_MOTDSTART:
                 add_with_tag(message.message, full_width);
                 break;
+			default: 
+				add_with_tag(message.message, full_width);
+				break;
         }  
 
     }
@@ -123,14 +126,16 @@ public class ChannelTab : GLib.Object {
         if (position.value > position.upper - position.page_size - 350) {
             Idle.add( () => {
                 position.set_value(position.upper - position.page_size);
-                if (sw is ScrolledWindow)
-                    sw.set_vadjustment(position);
+                sw.set_vadjustment(position);
                 return false;
             });
         }
     }       
  
-    private void add_with_tag (string text, TextTag tag) {
+    private void add_with_tag (string? text, TextTag tag) {
+		if(text == null || text.strip() == "")
+			return;
+		
         while (is_locked) {
             Thread.usleep(111);
         } 
@@ -162,8 +167,6 @@ public class ChannelTab : GLib.Object {
         color.parse("#F8F8F2");
         std_message.foreground_rgba = color;
         std_message.indent = 0;   
-        std_message.pixels_below_lines_set = std_message.pixels_above_lines_set = true;
-        std_message.pixels_below_lines = std_message.pixels_above_lines = 15;
 
         full_width.left_margin = 0;
     }

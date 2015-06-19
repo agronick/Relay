@@ -92,7 +92,7 @@ public class Kyrc : Object
                 channel_subject = new Gtk.Button.from_icon_name("help-info-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
             else
                 channel_subject = new Gtk.Button.from_icon_name("text-x-generic", Gtk.IconSize.SMALL_TOOLBAR);
-            channel_subject.tooltip_text = "Channel subject";
+            channel_subject.tooltip_text = _("Channel subject");
             var subject_popover = new Gtk.Popover(channel_subject);
             channel_subject.clicked.connect(() => {
                 subject_popover.show_all();
@@ -126,14 +126,14 @@ public class Kyrc : Object
             window.show_all ();
  
             tabs.new_tab_requested.connect(new_tab_requested);
-            
             tabs.tab_removed.connect(remove_tab);
             tabs.tab_switched.connect(tab_switch); 
 
             SqlClient.get_instance();
-            show_welcome_screen();  
             
             refresh_server_list(); 
+
+            load_autoconnect();
         }
         catch (Error e) {
             error("Could not load UI: %s\n", e.message);
@@ -148,8 +148,6 @@ public class Kyrc : Object
 
     public static int index = 0;
     public void add_tab (ChannelTab newTab) {
-
-        
         Idle.add( () => { 
             newTab.tab = new Granite.Widgets.Tab(); 
             TextView output = new TextView(); 
@@ -183,7 +181,7 @@ public class Kyrc : Object
             
             newTab.tab_index = index;
 
-            if (index == 0) {
+            if (tabs.n_tabs == 0) {
                 tab_switch (null, newTab.tab);
             }
             
@@ -193,14 +191,43 @@ public class Kyrc : Object
             return false;
         });
     }
+    
+    private void remove_tab (Widgets.Tab tab) {  
+        if(tab.label == _("Welcome"))
+            return;
+        
+        int id = lookup_channel_id(tab);
+        var tab_server = outputs[id].server; 
+        
+        if (!outputs[id].is_server_tab)
+            tab_server.send_output("LEAVE " + outputs[id].channel_name);
+        
+        tab_server.channel_tabs.unset(tab.label);
+        
+        if (tab_server.channel_tabs.size < 1) {
+            debug("Closing server");
+            tab_server.do_exit();
+            clients.unset(index);
+        }
+        
+        foreach (var item in outputs.entries) {
+            if (item.value.tab == tab) {
+                outputs.unset(item.key);
+                break;
+            }
+        }
+
+        if (tabs.n_tabs == 0)
+            show_welcome_screen();
+    }
 
     public void new_tab_requested () {
-                var dialog = new Dialog.with_buttons("New Connection", window,
+                var dialog = new Dialog.with_buttons(_("New Connection"), window,
                                                      DialogFlags.DESTROY_WITH_PARENT,
                                                      "Connect", Gtk.ResponseType.ACCEPT,
                                                      "Cancel", Gtk.ResponseType.CANCEL);
                 Gtk.Box content = dialog.get_content_area() as Gtk.Box;
-                content.pack_start(new Label("Server address"), false, false, 5);
+                content.pack_start(new Label(_("Server address")), false, false, 5);
                 var server_name = new Entry();
                 server_name.activate.connect(() => {
                     dialog.response(Gtk.ResponseType.ACCEPT);
@@ -212,9 +239,11 @@ public class Kyrc : Object
                         case Gtk.ResponseType.ACCEPT:
                             string name = server_name.get_text().strip();
                             if (name.length > 2) {
-                            add_server(name);
-                            dialog.close();
-                        }
+                                var server = new SqlClient.Server();
+                                server.host = name;
+                                add_server(server);
+                                dialog.close();
+                            }
                             break;
                         case Gtk.ResponseType.CANCEL:
                             dialog.close();
@@ -222,33 +251,29 @@ public class Kyrc : Object
                     }
                 });
     }
-
-    public void add_server (string url) {
-        var client = new Connection(this);
-        client.username = "kyle123456";
-        clients.set(index, client); 
-        client.connect_to_server(url);
-    }
-
-    public void add_text (ChannelTab tab, Message message) {
-        tab.display_message(message);
-    }
-
-    public void send_text_out (string text) {
-        if(current_tab == -1 || !outputs.has_key(current_tab))
+    
+    private void tab_switch (Granite.Widgets.Tab? old_tab, Granite.Widgets.Tab new_tab) {
+        current_tab = lookup_channel_id(new_tab);
+        if (!outputs.has_key(current_tab))
             return;
-        var output = outputs[current_tab];  
-        output.send_text_out(text);
-        
-        var message = new Message();
+        var using_tab = outputs[current_tab];
+        if (using_tab.has_subject) { 
+            new_subject (current_tab, using_tab.channel_subject);
+        } else {
+            channel_subject.hide();
+        }
+    }
 
-        //Append message to screen
-        message.user_name_set(output.server.username);
-        message.message = text;
-        message.command = "PRIVMSG";
-        message.internal = true;
-        add_text(output, message); 
-        return; 
+    public void add_server (SqlClient.Server server, ArrayList<string>? connect_channels = null) {
+        var client = new Connection(this);
+        client.username =  server.username;
+        clients.set(index, client); 
+
+        if (connect_channels != null)
+            client.channel_autoconnect = connect_channels;
+
+		client.connect_to_server(server.host);
+        
     }
 
     public void refresh_server_list () {
@@ -272,26 +297,65 @@ public class Kyrc : Object
         }
     }
 
+    public void add_text (ChannelTab tab, Message message) {
+        tab.display_message(message);
+    }
+
+    public void send_text_out (string text) {
+        if(current_tab == -1 || !outputs.has_key(current_tab))
+            return;
+        var output = outputs[current_tab];  
+        output.send_text_out(text);
+        
+        var message = new Message();
+
+        //Append message to screen
+        message.user_name_set(output.server.username);
+        message.message = text;
+        message.command = "PRIVMSG";
+        message.internal = true;
+        add_text(output, message); 
+        return; 
+    }
+
     private void item_activated () {
         string type = current_selected_item.get_data<string>("type");
         if (type == "server") {
-            SqlClient.Server svr = current_selected_item.get_data<SqlClient.Server>("server");
+            //Has existing server
+            SqlClient.Server server = current_selected_item.get_data<SqlClient.Server>("server");
             foreach (var tab in outputs.entries) {
-                if (tab.value.is_server_tab && tab.value.channel_name == svr.host) {
+                if (tab.value.is_server_tab && tab.value.channel_name == server.host) {
                     tabs.current = tab.value.tab;
                     return;
                 }
             }
+            //No existing server
+            add_server(server);
         } else {
+            //Existing channel tab
             SqlClient.Channel channel = current_selected_item.get_data<SqlClient.Channel>("channel");
+            debug("Looking up " + channel.channel);
+            var server = SqlClient.servers[channel.server_id];
             foreach (var tab in outputs.entries) {
-                if (!tab.value.is_server_tab && tab.value.channel_name == channel.channel) {
+                debug("Looping at " + tab.value.channel_name);
+                if (!tab.value.is_server_tab && tab.value.tab.label == channel.channel && server.host == tab.value.server.url) {
+                    debug("Switching to " + tab.value.tab.label);
                     tabs.current = tab.value.tab;
                     return;
                 }
+            } 
+            //Has existing server but no channel
+            foreach (var con in clients) {
+                if (con.url == server.host) {
+                    con.join(channel.channel);
+                    return;
+                }
             }
+            //Has no existing server or channel
+            ArrayList<string> channels = new ArrayList<string>();
+            channels.add(channel.channel);
+            add_server(SqlClient.servers[channel.server_id], channels);
         }
-
     } 
 
     public bool slide_panel () {
@@ -318,47 +382,10 @@ public class Kyrc : Object
         return 0;
     }
 
-    public void set_up_add_sever (Gtk.HeaderBar toolbar) {
-        add_server_button = new Gtk.Button.from_icon_name("list-add-symbolic", Gtk.IconSize.LARGE_TOOLBAR);
-        add_server_button.tooltip_text = "Add new server";
-
-        var sm = new ServerManager();
-        add_server_button.button_release_event.connect( (event) => {
-            sm.open_window();
-            sm.window.destroy.connect( () => {
-                refresh_server_list ();
-            });
-            return false;
-        });
-
-        toolbar.pack_start(add_server_button);
-    }
-
-    
-    private void remove_tab (Widgets.Tab tab) {  
-        if(tab.label == "Welcome")
-            return;
-        
-        int id = lookup_channel_id(tab);
-        var tab_server = outputs[id].server; 
-        tab_server.channel_tabs.unset(tab.label);
-        
-        if (tab_server.channel_tabs.size < 1) {
-            debug("Closing server");
-            tab_server.do_exit();
-        }
-        
-        outputs.unset(index);
-        clients.unset(index);
-
-        if (tabs.n_tabs == 0)
-            show_welcome_screen();
-    }
-
     public int lookup_channel_id (Widgets.Tab tab) {
-        foreach (ChannelTab output in outputs) { 
-            if (output.tab == tab) {
-                return output.tab_index;
+        foreach (var output in outputs.entries) { 
+            if (output.value.tab == tab) {
+                return output.key;
             }
         }
         return -1;
@@ -376,23 +403,24 @@ public class Kyrc : Object
         channel_subject.show_all(); 
     }
 
-    private void tab_switch (Granite.Widgets.Tab? old_tab, Granite.Widgets.Tab new_tab) {
-        current_tab = lookup_channel_id(new_tab);
-        debug("Current tab is " + current_tab.to_string());
-        if (!outputs.has_key(current_tab))
-            return;
-        var using_tab = outputs[current_tab];
-        if (using_tab.has_subject) { 
-            new_subject (current_tab, using_tab.channel_subject);
-        } else {
-            channel_subject.hide();
+    private void load_autoconnect () {
+        bool opened_tab = false;
+        
+        foreach (var server in SqlClient.servers.entries) {
+            if(server.value.autoconnect) {
+                opened_tab = true;
+                ArrayList<string> to_connect = new ArrayList<string>();
+                foreach (var chan in server.value.channels) {
+                    to_connect.add(chan.channel);
+                }
+                add_server(server.value, to_connect);
+            }
         }
+        
+        if (!opened_tab)
+            show_welcome_screen();
     }
 
-    [CCode (instance_pos = -1)]
-    public void on_destroy (Widget window) {
-        Gtk.main_quit();
-    }
 
     public static void handle_log (string? log_domain, LogLevelFlags log_levels, string message) {
         string prefix = "";
@@ -449,15 +477,15 @@ public class Kyrc : Object
 
     private void show_welcome_screen () {
         var sm = new ServerManager();
-        var title = "Welcome to Kyrc";
-        var message =  "Lets get started";
+        var title = _("Welcome to Kyrc");
+        var message =  _("Lets get started");
         var welcome = new Widgets.Welcome(title, message);
-        welcome.append("network-server", "Manage", "Manage the servers you use");
-        welcome.append("list-add", "Connect", "Connect to a single server");
-        welcome.append("network-wired", "Saved", "Connect to a saved server");
+        welcome.append("network-server", _("Manage"), _("Manage the servers you use"));
+        welcome.append("list-add", _("Connect"), _("Connect to a single server"));
+        welcome.append("network-wired", _("Saved"), _("Connect to a saved server"));
 
         var tab = new Widgets.Tab();
-        tab.label = "Welcome";
+        tab.label = _("Welcome");
         tab.page = welcome;
         tabs.insert_tab(tab, -1);
 
@@ -478,6 +506,22 @@ public class Kyrc : Object
             }
         });
     }
+    
+    public void set_up_add_sever (Gtk.HeaderBar toolbar) {
+        add_server_button = new Gtk.Button.from_icon_name("list-add-symbolic", Gtk.IconSize.LARGE_TOOLBAR);
+        add_server_button.tooltip_text = _("Add new server");
+
+        var sm = new ServerManager();
+        add_server_button.button_release_event.connect( (event) => {
+            sm.open_window();
+            sm.window.destroy.connect( () => {
+                refresh_server_list ();
+            });
+            return false;
+        });
+
+        toolbar.pack_start(add_server_button);
+    }
 
     private void check_elementary () {
         string output;
@@ -493,6 +537,11 @@ public class Kyrc : Object
             client.do_exit();
         }
         GLib.Process.exit(0);
+    }
+
+    [CCode (instance_pos = -1)]
+    public void on_destroy (Widget window) {
+        Gtk.main_quit();
     }
 }
 

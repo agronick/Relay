@@ -366,7 +366,7 @@
                 <property name="valign">start</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkSwitch" id="autoconnect">
+                  <object class="GtkSwitch" id="encrypt">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="margin_top">5</property>
@@ -391,7 +391,7 @@
                 <property name="margin_bottom">5</property>
                 <property name="orientation">vertical</property>
                 <child>
-                  <object class="GtkSwitch" id="encrypt">
+                  <object class="GtkSwitch" id="autoconnect">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="halign">start</property>
