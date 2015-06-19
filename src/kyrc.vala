@@ -39,6 +39,7 @@ public class Kyrc : Object
     Button channel_subject;
     TextView subject_text;
     Button add_server_button;
+    HeaderBar toolbar;
 
     Gee.HashMap<int, ChannelTab> outputs = new Gee.HashMap<int, ChannelTab> ();
     Gee.HashMap<int, Connection> clients = new Gee.HashMap<int, Connection> (); 
@@ -58,7 +59,7 @@ public class Kyrc : Object
             builder.add_from_file (get_asset_file(UI_FILE));
             builder.connect_signals (this);
 
-            var toolbar = new Gtk.HeaderBar (); 
+            toolbar = new HeaderBar (); 
             tabs = new Granite.Widgets.DynamicNotebook();
             tabs.allow_drag = true;
 
@@ -186,10 +187,11 @@ public class Kyrc : Object
             }
             
             index++;
-
-            
             return false;
         });
+        if (!newTab.is_server_tab) {
+            newTab.server.send_output("TOPIC " + newTab.channel_name);
+        }
     }
     
     private void remove_tab (Widgets.Tab tab) {  
@@ -262,6 +264,7 @@ public class Kyrc : Object
         } else {
             channel_subject.hide();
         }
+        toolbar.set_title(using_tab.tab.label);
     }
 
     public void add_server (SqlClient.Server server, ArrayList<string>? connect_channels = null) {
@@ -345,9 +348,10 @@ public class Kyrc : Object
                 }
             } 
             //Has existing server but no channel
-            foreach (var con in clients) {
-                if (con.url == server.host) {
-                    con.join(channel.channel);
+            foreach (var con in clients.entries) {
+                debug("Has existing server but no channel: " + con.value.url + " " + channel.channel);
+                if (con.value.url == server.host) {
+                    con.value.join(channel.channel);
                     return;
                 }
             }

@@ -41,7 +41,7 @@ public class Message : GLib.Object {
         }
         
         
-        message = _message.escape("\b\f\n\r\t\\");
+        message = _message.escape("\b\f\n\r\t\\\"");
         message = fix_message.replace_literal(message, message.length, 0, "");
 
         parse_regex();
