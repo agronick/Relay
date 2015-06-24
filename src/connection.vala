@@ -25,6 +25,7 @@ public class Connection : Object
     public DataOutputStream output_stream;
     public string url = "";
     public string username = "";
+	public string nickname = "";
     public bool exit = false;
     private Kyrc backref;
     public ChannelTab server_tab;
@@ -33,13 +34,6 @@ public class Connection : Object
  
     public signal void new_topic(ChannelTab tab, string topic);
 
-    public const string RPL_TOPIC = "332";
-    public const string RPL_MOTDSTART = "375";
-    //":- <server> Message of the day - "
-    public const string RPL_MOTD = "372";
-    // ":- <text>"
-    public const string RPL_ENDOFMOTD = "376";
-    //End server messages
 
     public Connection(Kyrc back) {
         backref = back;
@@ -84,11 +78,7 @@ public class Connection : Object
         input_stream = new DataInputStream (conn.input_stream);
         output_stream = new DataOutputStream (conn.output_stream);
 
-
-        send_output ("PASS  -p");
-        send_output ("NICK " + username);
-        send_output("USER " + username + " " + username + " * :" + username);
-        send_output("MODE " + username + " +i");
+		do_register();
 
         string? line = "";
         do{
@@ -119,7 +109,7 @@ public class Connection : Object
             case "PONG":
                 info(msg);
                 return;
-            case RPL_TOPIC:
+            case IRC.RPL_TOPIC:
                 set_topic(ref message);
                 return;
             case "PRIVMSG": 
@@ -129,10 +119,17 @@ public class Connection : Object
                 add_channel_tab(message.message); 
                 return;
             case "NOTICE":
-            case RPL_MOTD:
-            case RPL_MOTDSTART:
+            case IRC.RPL_MOTD:
+            case IRC.RPL_MOTDSTART:
                 new_data (server_tab, message);
                 return;
+			case IRC.RPL_WELCOME:
+				do_autoconnect();
+				server_tab.tab.working = false;
+				break;
+			case IRC.ERR_NICKNAMEINUSE:
+				name_in_use(message.message);
+				break;
             default:
                 warning("Unhandled message: " + msg);
                 return;
@@ -146,6 +143,52 @@ public class Connection : Object
         topic_tab = t;
         new Thread<int>("Creating topic", set_topic_thread);
     }
+
+	public void do_register () {
+        send_output ("PASS  -p");
+        send_output ("NICK " + username);
+        send_output("USER " + username + " " + username + " * :" + username);
+        send_output("MODE " + username + " +i");
+	}
+
+	public void do_autoconnect () {
+		foreach (var chan in channel_autoconnect) {
+			join(chan);
+		}
+	}
+
+	public void name_in_use (string message) {
+		debug("At name in use");
+		var dialog = new Dialog.with_buttons(_("Nickname in use"), backref.window,
+		                                     DialogFlags.DESTROY_WITH_PARENT,
+		                                     "Connect", Gtk.ResponseType.ACCEPT,
+		                                     "Cancel", Gtk.ResponseType.CANCEL);
+		Gtk.Box content = dialog.get_content_area() as Gtk.Box;
+		content.pack_start(new Label(_(message)), false, false, 5);
+		var server_name = new Entry();
+		server_name.placeholder_text = _("New username");
+		server_name.activate.connect(() => {
+			dialog.response(Gtk.ResponseType.ACCEPT);
+		});
+		content.pack_start(server_name, false, false, 5);
+		dialog.show_all();
+		dialog.response.connect((id) => {
+			switch (id){
+				case Gtk.ResponseType.ACCEPT:
+					string name = server_name.get_text().strip();
+					if (name.length > 0) {
+						username = server_name.get_text();
+						do_register();
+						dialog.close();
+					}
+					break;
+				case Gtk.ResponseType.CANCEL:
+					dialog.close();
+					server_tab.tab.close();
+					break;
+			}
+		});
+	}
 
     private static ChannelTab? topic_tab;
     private static Message topic_message;
@@ -175,6 +218,10 @@ public class Connection : Object
         } catch (GLib.Error e){}
     }
 
+	public void join (string channel) {
+		send_output ("JOIN " + channel);
+	}
+
     public void send_output (string output) {
         stderr.printf("Sending out " + output + "\n");
         try{
@@ -189,8 +236,10 @@ public class Connection : Object
     public void do_exit () {
         exit = true;  
         input_stream.clear_pending();
-        input_stream.close();
-        output_stream.close();
+		if (!input_stream.is_closed())
+    		input_stream.close();
+		if (!output_stream.is_closed())
+   			output_stream.close();
     }
 
 }
