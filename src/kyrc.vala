@@ -41,9 +41,11 @@ public class Kyrc : Object
     Box users_list;
     Gtk.Menu user_menu;
     Label users_header;
+    Popover users_popover;
     ScrolledWindow users_scrolled;
     Button add_server_button;
     HeaderBar toolbar;
+    string channel_user_selected = "";
 
     Gee.HashMap<int, ChannelTab> outputs = new Gee.HashMap<int, ChannelTab> ();
     Gee.HashMap<int, Connection> clients = new Gee.HashMap<int, Connection> (); 
@@ -100,6 +102,7 @@ public class Kyrc : Object
                 channel_subject = new Gtk.Button.from_icon_name("text-x-generic", Gtk.IconSize.LARGE_TOOLBAR);
             channel_subject.tooltip_text = _("Channel subject");
             var subject_popover = new Gtk.Popover(channel_subject);
+            subject_popover.set_property("transitions-enabled", true);
             channel_subject.clicked.connect(() => {
                 subject_popover.show_all();
             });  
@@ -120,7 +123,8 @@ public class Kyrc : Object
             //Channel users button
             channel_users = new Gtk.Button.from_icon_name("system-users", Gtk.IconSize.SMALL_TOOLBAR);
             channel_users.tooltip_text = _("Channel users");
-            var users_popover = new Gtk.Popover(channel_users);
+            users_popover = new Gtk.Popover(channel_users);
+            users_popover.set_property("transitions-enabled", true);
             channel_users.clicked.connect(() => {
                 users_popover.show_all();
             });
@@ -139,16 +143,18 @@ public class Kyrc : Object
             font.set_weight(Pango.Weight.BOLD);
             users_header = new Label("");
             users_header.override_font(font);
-            users_header.height_request = 20;
-            users_wrap.pack_start(users_header);
+            users_header.height_request = 24;
+            users_wrap.pack_start(users_header, true, false, 4);
             users_wrap.pack_start(users_scrolled);
             users_popover.add(users_wrap);
             toolbar.pack_end(channel_users);
             user_menu = new Gtk.Menu();
             window.add(user_menu);
-            Gtk.MenuItem private_message = new Gtk.MenuItem.with_label ("Private Message");
+            Gtk.MenuItem private_message = new Gtk.MenuItem.with_label (_("Private Message"));
             user_menu.add(private_message);
-            Gtk.MenuItem block = new Gtk.MenuItem.with_label ("Block");
+            Gtk.MenuItem block = new Gtk.MenuItem.with_label (_("Block"));
+            private_message.button_release_event.connect(click_private_message);
+            block.button_release_event.connect(click_block);
             user_menu.add(block);
             user_menu.show_all();
 
@@ -316,6 +322,10 @@ public class Kyrc : Object
             toolbar.set_title(using_tab.tab.label + _(" on ") + using_tab.server.url);
         input.placeholder_text = using_tab.tab.label;
 
+        make_user_popover (using_tab);
+    }
+
+    private void make_user_popover (ChannelTab using_tab) {
         //Make users
         foreach (var box in users_list.get_children()) {
             users_list.remove(box);
@@ -325,15 +335,19 @@ public class Kyrc : Object
 
         int PER_BOX = 15;
         int BOX_WIDTH = 140;
+        int MAX_COLS = 4;
         var listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
         int i = 0;
         foreach (var user in using_tab.users) {
             var eb = new EventBox();
-            var label = new Label(user);
+            var label = new Label("");
+            string color = outputs[current_tab].blocked_users.contains(user) ? "red" : "white";
+            label.set_markup("<span foreground=\"" + color + "\">" + user + "</span>");
             label.width_chars = IRC.USER_LENGTH;
             eb.add(label);
             eb.button_press_event.connect( (event)=> {
                 debug("TRIGGERED " + user);
+                channel_user_selected = user;
                 user_menu.popup (null, null, null, event.button, event.time);
                 return true;
             });
@@ -351,12 +365,29 @@ public class Kyrc : Object
 
         int cols = (int) Math.ceilf((float)i / (float)PER_BOX); 
         debug("Cols is " + cols.to_string());
-        users_scrolled.min_content_width = (cols > 4) ? 560 : cols * BOX_WIDTH;
+        users_scrolled.min_content_width = (cols > MAX_COLS) ? BOX_WIDTH * MAX_COLS : cols * BOX_WIDTH;
         users_list.pack_start(listbox, true, true, 0);
     }
 
+    private bool click_private_message (Gdk.EventButton event) {
+        debug("SEND PRIVATE MESSAGE");
+        user_menu.popdown();
+        users_popover.set_visible(false);
+        return false;
+    }
 
-
+    private bool click_block (Gdk.EventButton event) {
+        user_menu.popdown();
+        ChannelTab using_tab = outputs[current_tab];
+        if (using_tab.blocked_users.contains(channel_user_selected))
+            using_tab.blocked_users.remove(channel_user_selected);
+        else
+            using_tab.blocked_users.add(channel_user_selected);
+        users_popover.set_visible(false);
+        make_user_popover(using_tab);
+        return false;
+    }
+    
     public void add_server (SqlClient.Server server, ArrayList<string>? connect_channels = null) {
         var client = new Connection(this);
         client.username =  server.username;
@@ -366,7 +397,6 @@ public class Kyrc : Object
             client.channel_autoconnect = connect_channels;
 
         client.connect_to_server(server.host);
-
     }
 
     public void refresh_server_list () {

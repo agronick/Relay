@@ -40,18 +40,20 @@ public class Message : GLib.Object {
             }
         }
         
-        
         message = _message.escape("\b\f\n\r\t\\\"");
         message = fix_message.replace_literal(message, message.length, 0, "");
-
         parse_regex();
     }
 
     public void user_name_set (string name) {
-        int length = IRC.USER_LENGTH - name.length;
-        user_name = name + string.nfill(length, ' ');
+        user_name = name;
     }
 
+    //Use this function to add padding to the user name
+    public string user_name_get () {
+        int length = IRC.USER_LENGTH - user_name.length;
+        return user_name + string.nfill(length, ' ');
+    }
 
     public void parse_regex () {
         try{

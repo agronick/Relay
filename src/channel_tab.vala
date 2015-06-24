@@ -33,6 +33,12 @@ public class ChannelTab : GLib.Object {
 	public ArrayList<string> blocked_users = new ArrayList<string>();
     private TextView output;
 
+    TextTag user_other_tag;
+    TextTag user_self_tag;
+    TextTag std_message_tag;
+    TextTag full_width_tag;
+	
+
     public signal void new_subject(int tab_id, string subject);
 
     public void add_text (string msg) {
@@ -105,19 +111,12 @@ public class ChannelTab : GLib.Object {
     }
  
     public void display_message (Message message) {    
-        
-        var tag_table = output.buffer.get_tag_table();
-        var user_other_tag = tag_table.lookup("user_other");
-        var user_self_tag = tag_table.lookup("user_self");
-        var std_message_tag = tag_table.lookup("std_message");
-        var full_width = tag_table.lookup("full_width");
 
         message.message += "\n";
         
         switch (message.command) {
             case "PRIVMSG": 
-                add_with_tag(message.user_name, message.internal ? user_self_tag : user_other_tag);
-                add_with_tag(message.message, std_message_tag);
+				handle_private_message(message);
                 break;
             case IRC.RPL_TOPIC:
                 set_subject(message.message);
@@ -125,14 +124,21 @@ public class ChannelTab : GLib.Object {
             case "NOTICE":
             case IRC.RPL_MOTD:
             case IRC.RPL_MOTDSTART:
-                add_with_tag(message.message, full_width);
+                add_with_tag(message.message, full_width_tag);
                 break;
 			default: 
-				add_with_tag(message.message, full_width);
+				add_with_tag(message.message, full_width_tag);
 				break;
-        }  
-
+        } 
     }
+
+	public void handle_private_message (Message message) {
+		if (blocked_users.contains(message.user_name))
+			return;
+		
+		add_with_tag(message.user_name_get(), message.internal ? user_self_tag : user_other_tag);
+		add_with_tag(message.message, std_message_tag);
+	}
     
     public void do_autoscroll () {
         ScrolledWindow sw = (ScrolledWindow) output.get_parent();
@@ -171,25 +177,25 @@ public class ChannelTab : GLib.Object {
     }
 
     private void update_tag_table () { 
-        var user_other = output.buffer.create_tag("user_other");
-        var user_self = output.buffer.create_tag("user_self");
-        var std_message = output.buffer.create_tag("std_message");
-        var full_width = output.buffer.create_tag("full_width");
+        user_other_tag = output.buffer.create_tag("user_other");
+        user_self_tag = output.buffer.create_tag("user_self");
+        std_message_tag = output.buffer.create_tag("std_message");
+        full_width_tag = output.buffer.create_tag("full_width");
 
         var color = new Gdk.RGBA();
         color.parse("#4EC9DE");
-        user_other.foreground_rgba = color;
-        user_other.left_margin = 0;
+        user_other_tag.foreground_rgba = color;
+        user_other_tag.left_margin = 0;
         
         color.parse("#AE81FF");
-        user_self.foreground_rgba = color;
-        user_self.left_margin = 0;
+        user_self_tag.foreground_rgba = color;
+        user_self_tag.left_margin = 0;
 
         color.parse("#F8F8F2");
-        std_message.foreground_rgba = color;
-        std_message.indent = 0;   
+        std_message_tag.foreground_rgba = color;
+        std_message_tag.indent = 0;   
 
-        full_width.left_margin = 0;
+        full_width_tag.left_margin = 0;
     }
 }
 

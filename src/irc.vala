@@ -66,9 +66,8 @@ public class IRC{
 	public const string ERR_ALREADYONCHANNEL = "479";
 	public const string ERR_CHANOPRIVSNEEDED = "482";
 
-
 	public static int compare(string a, string b) {
-		return GLib.strcmp(a, b);
+		return GLib.strcmp(a, b);                                                                                                                                                                                                                                                                                                                                                       
 	}
 }
 
