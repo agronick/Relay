@@ -18,6 +18,7 @@
  */
 using Granite;
 using Gtk;
+using Gee;
 
 public class ChannelTab : GLib.Object {
     public int tab_index { get; set; }
@@ -27,7 +28,8 @@ public class ChannelTab : GLib.Object {
     public bool is_server_tab = false;
     public bool has_subject = false;
     public string channel_subject = "";
-    public static bool is_locked = false;
+    public bool is_locked = false;
+	public ArrayList<string> users = new ArrayList<string>();
     private TextView output;
 
     public signal void new_subject(int tab_id, string subject);
@@ -53,6 +55,17 @@ public class ChannelTab : GLib.Object {
         channel_subject = subject;
         new_subject (tab_index, subject);
     }
+
+	public void add_users_message (Message message) {
+		var names = message.message.split(" ");
+		foreach (var name in names) {
+			if(name.length == 0)
+				continue;
+			users.add(name);
+		}
+		debug("Inserting names " + message.message);
+		debug("USERS SIZE IS " + users.size.to_string());
+	}
 
     public void set_output(TextView _output) {
         output = _output;
@@ -132,21 +145,26 @@ public class ChannelTab : GLib.Object {
         }
     }       
  
-    private void add_with_tag (string? text, TextTag tag) {
-		if(text == null || text.strip() == "")
+    private void add_with_tag (string? text, TextTag tag, int retry_count = 0) {
+		if(text == null || text.strip() == "" || retry_count > 4)
 			return;
 		
         while (is_locked) {
             Thread.usleep(111);
         } 
-        is_locked = true;
         Idle.add( () => {
-            TextIter end;
+    		is_locked = true;
+            TextIter? end;
             output.buffer.get_end_iter(out end);
+			if (end == null) {
+				add_with_tag(text, tag, retry_count++);
+				return false;
+			}
             output.buffer.insert_with_tags(end, text, text.length, tag, null);
+    		is_locked = false;
             return false;
         });
-        is_locked = false;
+		is_locked = false;
     }
 
     private void update_tag_table () { 

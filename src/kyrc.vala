@@ -36,7 +36,11 @@ public class Kyrc : Object
     Entry input;
     Paned pannel;
     Button channel_subject;
+    Button channel_users;
     TextView subject_text;
+	Box users_list;
+	Label users_header;
+	ScrolledWindow users_scrolled;
     Button add_server_button;
     HeaderBar toolbar;
 
@@ -88,10 +92,11 @@ public class Kyrc : Object
                 input.set_text("");
             });
 
+			//Channel subject button
             if(on_elementary)
                 channel_subject = new Gtk.Button.from_icon_name("help-info-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
             else
-                channel_subject = new Gtk.Button.from_icon_name("text-x-generic", Gtk.IconSize.SMALL_TOOLBAR);
+                channel_subject = new Gtk.Button.from_icon_name("text-x-generic", Gtk.IconSize.LARGE_TOOLBAR);
             channel_subject.tooltip_text = _("Channel subject");
             var subject_popover = new Gtk.Popover(channel_subject);
             channel_subject.clicked.connect(() => {
@@ -109,10 +114,36 @@ public class Kyrc : Object
             scrolled.set_size_request(320, 110);
             scrolled.add(subject_text);
             subject_popover.add(scrolled);
-            
-
-            toolbar.pack_end(channel_subject);
-
+			toolbar.pack_end(channel_subject);
+			
+			//Channel users button
+			channel_users = new Gtk.Button.from_icon_name("system-users", Gtk.IconSize.SMALL_TOOLBAR);
+			channel_users.tooltip_text = _("Channel users");
+            var users_popover = new Gtk.Popover(channel_users);
+            channel_users.clicked.connect(() => {
+                users_popover.show_all();
+            });
+            channel_users.clicked.connect(() => {
+                users_popover.show_all();
+            });  
+			
+			users_scrolled = new Gtk.ScrolledWindow (null, null);
+			users_scrolled.vscrollbar_policy = PolicyType.NEVER;
+			users_scrolled.hscrollbar_policy = PolicyType.AUTOMATIC;
+			users_list = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
+			users_scrolled.add(users_list);
+			
+			var users_wrap = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+			var font = new FontDescription();
+			font.set_weight(Pango.Weight.BOLD);
+			users_header = new Label("");
+			users_header.override_font(font);
+			users_header.height_request = 20;
+			users_wrap.pack_start(users_header);
+			users_wrap.pack_start(users_scrolled);
+			users_popover.add(users_wrap);
+			toolbar.pack_end(channel_users);
+			
             servers.item_selected.connect(set_item_selected);
 
             set_up_add_sever(toolbar);
@@ -122,7 +153,6 @@ public class Kyrc : Object
 
             toolbar.show_close_button = true;
             window.set_titlebar(toolbar);
-            /* ANJUTA: Widgets initialization for kyrc.ui - DO NOT REMOVE */
             window.show_all ();
  
             tabs.new_tab_requested.connect(new_tab_requested);
@@ -140,6 +170,13 @@ public class Kyrc : Object
         }
 
     }
+
+	public Gtk.Popover make_popover (Button parent) {
+            var popover = new Gtk.Popover(parent);
+            popover.set_no_show_all(true);
+            popover.hide();
+			return popover;
+	}
 
     private static Granite.Widgets.SourceList.Item current_selected_item;
     private void set_item_selected (Granite.Widgets.SourceList.Item? item) {
@@ -183,7 +220,7 @@ public class Kyrc : Object
             
             newTab.tab_index = index;
 
-            if (tabs.n_tabs == 0) {
+            if (tabs.n_tabs == 1) {
                 tab_switch (null, newTab.tab);
             }
             
@@ -259,13 +296,46 @@ public class Kyrc : Object
         current_tab = lookup_channel_id(new_tab);
         if (!outputs.has_key(current_tab))
             return;
-        var using_tab = outputs[current_tab];
+        ChannelTab using_tab = outputs[current_tab];
         if (using_tab.has_subject) { 
             new_subject (current_tab, using_tab.channel_subject);
         } else {
             channel_subject.hide();
         }
-        toolbar.set_title(using_tab.tab.label);
+		if (using_tab.is_server_tab)
+    		toolbar.set_title(using_tab.tab.label);
+		else
+			toolbar.set_title(using_tab.tab.label + _(" on ") + using_tab.server.url);
+		input.placeholder_text = using_tab.tab.label;
+
+		//Make users
+		foreach (var box in users_list.get_children()) {
+			users_list.remove(box);
+		} 
+
+		int PER_BOX = 15;
+		int BOX_WIDTH = 140;
+		var listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+		int i = 0;
+		foreach (var user in using_tab.users) {
+			var label = new Label(user);
+			label.width_chars = IRC.USER_LENGTH;
+			listbox.pack_start(label, false, false, 4);
+			i++;
+			if (i % PER_BOX == 0 && using_tab.users.size >= i) {
+				listbox.width_request = BOX_WIDTH;
+				users_list.pack_start(listbox, true, true, 0);
+				listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+			}
+		}
+		listbox.width_request = BOX_WIDTH;
+
+		users_header.set_text("Total users: " + i.to_string());
+		
+		int cols = (int) Math.ceilf((float)i / (float)PER_BOX); 
+		debug("Cols is " + cols.to_string());
+		users_scrolled.min_content_width = (cols > 4) ? 560 : cols * BOX_WIDTH;
+		users_list.pack_start(listbox, true, true, 0);
     }
 
     public void add_server (SqlClient.Server server, ArrayList<string>? connect_channels = null) {
@@ -447,7 +517,7 @@ public class Kyrc : Object
                 prefix = message;
                 break;
         }
-        stdout.printf(prefix + message + suffix + "\n");
+        GLib.stdout.printf(prefix + message + suffix + "\n");
     }
 
     public static string get_asset_file (string name) {

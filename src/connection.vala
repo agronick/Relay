@@ -61,6 +61,7 @@ public class Connection : Object
     }
 
     private ChannelTab find_channel_tab (string name) {
+		debug("LOOKING UP " + name);
         if (channel_tabs.has_key(name))
             return channel_tabs[name];
 
@@ -126,6 +127,12 @@ public class Connection : Object
 			case IRC.RPL_WELCOME:
 				do_autoconnect();
 				server_tab.tab.working = false;
+				break;
+			case IRC.RPL_NAMREPLY:
+				var tab = find_channel_tab(message.parameters[2]);
+				if (tab == server_tab)
+					return;
+				tab.add_users_message(message);
 				break;
 			case IRC.ERR_NICKNAMEINUSE:
 				name_in_use(message.message);
@@ -225,6 +232,8 @@ public class Connection : Object
     public void send_output (string output) {
         stderr.printf("Sending out " + output + "\n");
         try{
+			if (output_stream == null || output_stream.is_closed())
+				return;
             output_stream.put_string(output + "\r\n");
         }catch(GLib.Error e){}
     }
@@ -237,9 +246,13 @@ public class Connection : Object
         exit = true;  
         input_stream.clear_pending();
 		if (!input_stream.is_closed())
-    		input_stream.close();
+			try{
+    			input_stream.close();
+			}catch (IOError e) {}
 		if (!output_stream.is_closed())
-   			output_stream.close();
+			try{
+   				output_stream.close();
+			}catch (IOError e) {}
     }
 
 }
