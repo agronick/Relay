@@ -30,6 +30,7 @@ public class ChannelTab : GLib.Object {
     public string channel_subject = "";
     public bool is_locked = false;
 	public ArrayList<string> users = new ArrayList<string>();
+	public ArrayList<string> blocked_users = new ArrayList<string>();
     private TextView output;
 
     public signal void new_subject(int tab_id, string subject);
@@ -63,6 +64,8 @@ public class ChannelTab : GLib.Object {
 				continue;
 			users.add(name);
 		}
+
+		
 		debug("Inserting names " + message.message);
 		debug("USERS SIZE IS " + users.size.to_string());
 	}

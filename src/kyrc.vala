@@ -1,17 +1,17 @@
 /***
-  Copyright (C) 2011-2012 Application Name Developers
-  This program is free software: you can redistribute it and/or modify it
-  under the terms of the GNU Lesser General Public License version 3, as published
-  by the Free Software Foundation.
+ Copyright (C) 2011-2012 Application Name Developers
+     This program is free software: you can redistribute it and/or modify it
+     under the terms of the GNU Lesser General Public License version 3, as published
+     by the Free Software Foundation.
 
-  This program is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranties of
-  MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
-  PURPOSE. See the GNU General Public License for more details.
+     This program is distributed in the hope that it will be useful, but
+     WITHOUT ANY WARRANTY; without even the implied warranties of
+     MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
+     PURPOSE. See the GNU General Public License for more details.
 
-  You should have received a copy of the GNU General Public License along
-  with this program. If not, see
-***/
+     You should have received a copy of the GNU General Public License along
+     with this program. If not, see
+     ***/
 
 using GLib;
 using Gtk;
@@ -38,9 +38,10 @@ public class Kyrc : Object
     Button channel_subject;
     Button channel_users;
     TextView subject_text;
-	Box users_list;
-	Label users_header;
-	ScrolledWindow users_scrolled;
+    Box users_list;
+    Gtk.Menu user_menu;
+    Label users_header;
+    ScrolledWindow users_scrolled;
     Button add_server_button;
     HeaderBar toolbar;
 
@@ -92,7 +93,7 @@ public class Kyrc : Object
                 input.set_text("");
             });
 
-			//Channel subject button
+            //Channel subject button
             if(on_elementary)
                 channel_subject = new Gtk.Button.from_icon_name("help-info-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
             else
@@ -114,11 +115,11 @@ public class Kyrc : Object
             scrolled.set_size_request(320, 110);
             scrolled.add(subject_text);
             subject_popover.add(scrolled);
-			toolbar.pack_end(channel_subject);
-			
-			//Channel users button
-			channel_users = new Gtk.Button.from_icon_name("system-users", Gtk.IconSize.SMALL_TOOLBAR);
-			channel_users.tooltip_text = _("Channel users");
+            toolbar.pack_end(channel_subject);
+
+            //Channel users button
+            channel_users = new Gtk.Button.from_icon_name("system-users", Gtk.IconSize.SMALL_TOOLBAR);
+            channel_users.tooltip_text = _("Channel users");
             var users_popover = new Gtk.Popover(channel_users);
             channel_users.clicked.connect(() => {
                 users_popover.show_all();
@@ -126,24 +127,31 @@ public class Kyrc : Object
             channel_users.clicked.connect(() => {
                 users_popover.show_all();
             });  
-			
-			users_scrolled = new Gtk.ScrolledWindow (null, null);
-			users_scrolled.vscrollbar_policy = PolicyType.NEVER;
-			users_scrolled.hscrollbar_policy = PolicyType.AUTOMATIC;
-			users_list = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
-			users_scrolled.add(users_list);
-			
-			var users_wrap = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
-			var font = new FontDescription();
-			font.set_weight(Pango.Weight.BOLD);
-			users_header = new Label("");
-			users_header.override_font(font);
-			users_header.height_request = 20;
-			users_wrap.pack_start(users_header);
-			users_wrap.pack_start(users_scrolled);
-			users_popover.add(users_wrap);
-			toolbar.pack_end(channel_users);
-			
+
+            users_scrolled = new Gtk.ScrolledWindow (null, null);
+            users_scrolled.vscrollbar_policy = PolicyType.NEVER;
+            users_scrolled.hscrollbar_policy = PolicyType.AUTOMATIC;
+            users_list = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
+            users_scrolled.add(users_list);
+
+            var users_wrap = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+            var font = new FontDescription();
+            font.set_weight(Pango.Weight.BOLD);
+            users_header = new Label("");
+            users_header.override_font(font);
+            users_header.height_request = 20;
+            users_wrap.pack_start(users_header);
+            users_wrap.pack_start(users_scrolled);
+            users_popover.add(users_wrap);
+            toolbar.pack_end(channel_users);
+            user_menu = new Gtk.Menu();
+            window.add(user_menu);
+            Gtk.MenuItem private_message = new Gtk.MenuItem.with_label ("Private Message");
+            user_menu.add(private_message);
+            Gtk.MenuItem block = new Gtk.MenuItem.with_label ("Block");
+            user_menu.add(block);
+            user_menu.show_all();
+
             servers.item_selected.connect(set_item_selected);
 
             set_up_add_sever(toolbar);
@@ -154,13 +162,13 @@ public class Kyrc : Object
             toolbar.show_close_button = true;
             window.set_titlebar(toolbar);
             window.show_all ();
- 
+
             tabs.new_tab_requested.connect(new_tab_requested);
             tabs.tab_removed.connect(remove_tab);
             tabs.tab_switched.connect(tab_switch); 
 
             SqlClient.get_instance();
-            
+
             refresh_server_list(); 
 
             load_autoconnect();
@@ -171,12 +179,12 @@ public class Kyrc : Object
 
     }
 
-	public Gtk.Popover make_popover (Button parent) {
-            var popover = new Gtk.Popover(parent);
-            popover.set_no_show_all(true);
-            popover.hide();
-			return popover;
-	}
+    public Gtk.Popover make_popover (Button parent) {
+        var popover = new Gtk.Popover(parent);
+        popover.set_no_show_all(true);
+        popover.hide();
+        return popover;
+    }
 
     private static Granite.Widgets.SourceList.Item current_selected_item;
     private void set_item_selected (Granite.Widgets.SourceList.Item? item) {
@@ -187,9 +195,9 @@ public class Kyrc : Object
     public void add_tab (ChannelTab newTab) {
         Idle.add( () => { 
             newTab.tab = new Granite.Widgets.Tab(); 
-			
-			if (newTab.is_server_tab)
-				newTab.tab.working = true;
+
+            if (newTab.is_server_tab)
+                newTab.tab.working = true;
             TextView output = new TextView(); 
             output.set_editable(false);
             output.set_cursor_visible(false);
@@ -210,20 +218,20 @@ public class Kyrc : Object
             newTab.tab.page = scrolled;
             newTab.new_subject.connect(new_subject);
             tabs.insert_tab(newTab.tab, -1); 
-            
+
             debug("Setting index " + newTab.channel_name + ":" + index.to_string()); 
 
             newTab.set_output(output);
             outputs.set(index, newTab); 
 
             tabs.show_all();
-            
+
             newTab.tab_index = index;
 
             if (tabs.n_tabs == 1) {
                 tab_switch (null, newTab.tab);
             }
-            
+
             index++;
             return false;
         });
@@ -231,25 +239,25 @@ public class Kyrc : Object
             newTab.server.send_output("TOPIC " + newTab.channel_name);
         }
     }
-    
+
     private void remove_tab (Widgets.Tab tab) {  
         if(tab.label == _("Welcome"))
             return;
-        
+
         int id = lookup_channel_id(tab);
         var tab_server = outputs[id].server; 
-        
+
         if (!outputs[id].is_server_tab)
             tab_server.send_output("LEAVE " + outputs[id].channel_name);
-        
+
         tab_server.channel_tabs.unset(tab.label);
-        
+
         if (tab_server.channel_tabs.size < 1) {
             debug("Closing server");
             tab_server.do_exit();
             clients.unset(index);
         }
-        
+
         foreach (var item in outputs.entries) {
             if (item.value.tab == tab) {
                 outputs.unset(item.key);
@@ -262,36 +270,36 @@ public class Kyrc : Object
     }
 
     public void new_tab_requested () {
-                var dialog = new Dialog.with_buttons(_("New Connection"), window,
-                                                     DialogFlags.DESTROY_WITH_PARENT,
-                                                     "Connect", Gtk.ResponseType.ACCEPT,
-                                                     "Cancel", Gtk.ResponseType.CANCEL);
-                Gtk.Box content = dialog.get_content_area() as Gtk.Box;
-                content.pack_start(new Label(_("Server address")), false, false, 5);
-                var server_name = new Entry();
-                server_name.activate.connect(() => {
-                    dialog.response(Gtk.ResponseType.ACCEPT);
-                });
-                content.pack_start(server_name, false, false, 5);
-                dialog.show_all();
-                dialog.response.connect((id) => {
-                    switch (id){
-                        case Gtk.ResponseType.ACCEPT:
-                            string name = server_name.get_text().strip();
-                            if (name.length > 2) {
-                                var server = new SqlClient.Server();
-                                server.host = name;
-                                add_server(server);
-                                dialog.close();
-                            }
-                            break;
-                        case Gtk.ResponseType.CANCEL:
-                            dialog.close();
-                            break;
+        var dialog = new Dialog.with_buttons(_("New Connection"), window,
+                                             DialogFlags.DESTROY_WITH_PARENT,
+                                             "Connect", Gtk.ResponseType.ACCEPT,
+                                             "Cancel", Gtk.ResponseType.CANCEL);
+        Gtk.Box content = dialog.get_content_area() as Gtk.Box;
+        content.pack_start(new Label(_("Server address")), false, false, 5);
+        var server_name = new Entry();
+        server_name.activate.connect(() => {
+            dialog.response(Gtk.ResponseType.ACCEPT);
+        });
+        content.pack_start(server_name, false, false, 5);
+        dialog.show_all();
+        dialog.response.connect((id) => {
+            switch (id){
+                case Gtk.ResponseType.ACCEPT:
+                    string name = server_name.get_text().strip();
+                    if (name.length > 2) {
+                        var server = new SqlClient.Server();
+                        server.host = name;
+                        add_server(server);
+                        dialog.close();
                     }
-                });
+                    break;
+                case Gtk.ResponseType.CANCEL:
+                    dialog.close();
+                    break;
+            }
+        });
     }
-    
+
     private void tab_switch (Granite.Widgets.Tab? old_tab, Granite.Widgets.Tab new_tab) {
         current_tab = lookup_channel_id(new_tab);
         if (!outputs.has_key(current_tab))
@@ -302,41 +310,52 @@ public class Kyrc : Object
         } else {
             channel_subject.hide();
         }
-		if (using_tab.is_server_tab)
-    		toolbar.set_title(using_tab.tab.label);
-		else
-			toolbar.set_title(using_tab.tab.label + _(" on ") + using_tab.server.url);
-		input.placeholder_text = using_tab.tab.label;
+        if (using_tab.is_server_tab)
+            toolbar.set_title(using_tab.tab.label);
+        else
+            toolbar.set_title(using_tab.tab.label + _(" on ") + using_tab.server.url);
+        input.placeholder_text = using_tab.tab.label;
 
-		//Make users
-		foreach (var box in users_list.get_children()) {
-			users_list.remove(box);
-		} 
+        //Make users
+        foreach (var box in users_list.get_children()) {
+            users_list.remove(box);
+        } 
 
-		int PER_BOX = 15;
-		int BOX_WIDTH = 140;
-		var listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
-		int i = 0;
-		foreach (var user in using_tab.users) {
-			var label = new Label(user);
-			label.width_chars = IRC.USER_LENGTH;
-			listbox.pack_start(label, false, false, 4);
-			i++;
-			if (i % PER_BOX == 0 && using_tab.users.size >= i) {
-				listbox.width_request = BOX_WIDTH;
-				users_list.pack_start(listbox, true, true, 0);
-				listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
-			}
-		}
-		listbox.width_request = BOX_WIDTH;
+        using_tab.users.sort(IRC.compare);
 
-		users_header.set_text("Total users: " + i.to_string());
-		
-		int cols = (int) Math.ceilf((float)i / (float)PER_BOX); 
-		debug("Cols is " + cols.to_string());
-		users_scrolled.min_content_width = (cols > 4) ? 560 : cols * BOX_WIDTH;
-		users_list.pack_start(listbox, true, true, 0);
+        int PER_BOX = 15;
+        int BOX_WIDTH = 140;
+        var listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+        int i = 0;
+        foreach (var user in using_tab.users) {
+            var eb = new EventBox();
+            var label = new Label(user);
+            label.width_chars = IRC.USER_LENGTH;
+            eb.add(label);
+            eb.button_press_event.connect( (event)=> {
+                debug("TRIGGERED " + user);
+                user_menu.popup (null, null, null, event.button, event.time);
+                return true;
+            });
+            listbox.pack_start(eb, false, false, 4);
+            i++;
+            if (i % PER_BOX == 0 && using_tab.users.size >= i) {
+                listbox.width_request = BOX_WIDTH;
+                users_list.pack_start(listbox, true, true, 0);
+                listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+            }
+        }
+        listbox.width_request = BOX_WIDTH;
+
+        users_header.set_text("Total users: " + i.to_string());
+
+        int cols = (int) Math.ceilf((float)i / (float)PER_BOX); 
+        debug("Cols is " + cols.to_string());
+        users_scrolled.min_content_width = (cols > 4) ? 560 : cols * BOX_WIDTH;
+        users_list.pack_start(listbox, true, true, 0);
     }
+
+
 
     public void add_server (SqlClient.Server server, ArrayList<string>? connect_channels = null) {
         var client = new Connection(this);
@@ -346,8 +365,8 @@ public class Kyrc : Object
         if (connect_channels != null)
             client.channel_autoconnect = connect_channels;
 
-		client.connect_to_server(server.host);
-        
+        client.connect_to_server(server.host);
+
     }
 
     public void refresh_server_list () {
@@ -380,7 +399,7 @@ public class Kyrc : Object
             return;
         var output = outputs[current_tab];  
         output.send_text_out(text);
-        
+
         var message = new Message();
 
         //Append message to screen
@@ -472,7 +491,7 @@ public class Kyrc : Object
             channel_subject.hide();
             return;
         }
-        
+
         subject_text.buffer.set_text(message);
         channel_subject.set_no_show_all(false); 
         channel_subject.show_all(); 
@@ -480,7 +499,7 @@ public class Kyrc : Object
 
     private void load_autoconnect () {
         bool opened_tab = false;
-        
+
         foreach (var server in SqlClient.servers.entries) {
             if(server.value.autoconnect) {
                 opened_tab = true;
@@ -491,7 +510,7 @@ public class Kyrc : Object
                 add_server(server.value, to_connect);
             }
         }
-        
+
         if (!opened_tab)
             show_welcome_screen();
     }
@@ -581,7 +600,7 @@ public class Kyrc : Object
             }
         });
     }
-    
+
     public void set_up_add_sever (Gtk.HeaderBar toolbar) {
         add_server_button = new Gtk.Button.from_icon_name("list-add-symbolic", Gtk.IconSize.LARGE_TOOLBAR);
         add_server_button.tooltip_text = _("Add new server");
