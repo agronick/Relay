@@ -50,6 +50,8 @@ public class Connection : Object
     }
 
     public ChannelTab? add_channel_tab (string name) {
+        if (name == username || name == nickname)
+            return server_tab;
         if (channel_tabs.has_key(name))
             return channel_tabs[name];
         if (name.strip() == "")
@@ -115,7 +117,7 @@ public class Connection : Object
                 set_topic(ref message);
                 return;
             case IRC.PRIVATE_MESSAGE: 
-                new_data(find_channel_tab(message.parameters[0]), message);
+                new_data(add_channel_tab(message.parameters[0]), message);
                 return;
             case "JOIN": 
                 add_channel_tab(message.message); 

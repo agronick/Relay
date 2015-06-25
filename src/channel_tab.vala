@@ -152,16 +152,6 @@ public class ChannelTab : GLib.Object {
 		if (blocked_users.contains(message.user_name))
 			return;
 
-		//Delete all this just create new tab on private message recieved
-		if (message.user_name == server.nickname) {
-			message.user_name = message.get_prefix_name();
-			debug("NEED TO MAKE NEW TAB");
-			if (message.user_name != channel_name) {
-				ChannelTab new_tab = server.add_channel_tab(message.user_name);
-				new_tab.display_message(message);
-				return;
-			}
-		}
 		add_with_tag(message.user_name_get(), message.internal ? user_self_tag : user_other_tag);
 		add_with_tag(message.message, std_message_tag);
 	}

@@ -48,7 +48,7 @@ public class Kyrc : Object
     string channel_user_selected = "";
 
     Gee.HashMap<int, ChannelTab> outputs = new Gee.HashMap<int, ChannelTab> ();
-    Gee.HashMap<int, Connection> clients = new Gee.HashMap<int, Connection> (); 
+    Gee.HashMap<string, Connection> clients = new Gee.HashMap<string, Connection> (); 
     Granite.Widgets.SourceList servers = new Granite.Widgets.SourceList();
 
     public static bool on_elementary = false;
@@ -170,7 +170,7 @@ public class Kyrc : Object
             window.show_all ();
 
             tabs.new_tab_requested.connect(new_tab_requested);
-            tabs.tab_removed.connect(remove_tab);
+            tabs.tab_removed.connect(tab_remove);
             tabs.tab_switched.connect(tab_switch); 
 
             SqlClient.get_instance();
@@ -245,36 +245,7 @@ public class Kyrc : Object
             new_tab.server.send_output("TOPIC " + new_tab.channel_name);
         }
     }
-
-    private void remove_tab (Widgets.Tab tab) {  
-        if(tab.label == _("Welcome"))
-            return;
-
-        int id = lookup_channel_id(tab);
-        var tab_server = outputs[id].server; 
-
-        if (!outputs[id].is_server_tab)
-            tab_server.send_output("LEAVE " + outputs[id].channel_name);
-
-        tab_server.channel_tabs.unset(tab.label);
-
-        if (tab_server.channel_tabs.size < 1) {
-            debug("Closing server");
-            tab_server.do_exit();
-            clients.unset(index);
-        }
-
-        foreach (var item in outputs.entries) {
-            if (item.value.tab == tab) {
-                outputs.unset(item.key);
-                break;
-            }
-        }
-
-        if (tabs.n_tabs == 0)
-            show_welcome_screen();
-    }
-
+    
     public void new_tab_requested () {
         var dialog = new Dialog.with_buttons(_("New Connection"), window,
                                              DialogFlags.DESTROY_WITH_PARENT,
@@ -304,6 +275,41 @@ public class Kyrc : Object
                     break;
             }
         });
+    }
+
+    private void tab_remove (Widgets.Tab tab) {  
+        if(tab.label == _("Welcome"))
+            return;
+
+        int id = lookup_channel_id(tab);
+        var tab_server = outputs[id].server; 
+
+        if (!outputs[id].is_server_tab)
+            tab_server.send_output("PART " + outputs[id].channel_name);
+
+        //Remove tab from the servers tab list
+        tab_server.channel_tabs.unset(tab.label);
+
+        foreach (var client in clients.entries) {
+            debug("BEFORE " + client.key);
+        }
+
+        //Remove server if no connections are left
+        if (tab_server.channel_tabs.size < 1) {
+            debug("Closing server");
+            tab_server.do_exit();
+            clients.unset(tab_server.url);
+        }
+
+        foreach (var client in clients.entries) {
+            debug("AFTER " + client.key);
+        }
+
+        //Remove the tab from the list of tabs
+        outputs.unset(id);
+
+        if (tabs.n_tabs == 0)
+            show_welcome_screen();
     }
 
     private void tab_switch (Granite.Widgets.Tab? old_tab, Granite.Widgets.Tab new_tab) {
@@ -403,7 +409,8 @@ public class Kyrc : Object
     public void add_server (SqlClient.Server server, ArrayList<string>? connect_channels = null) {
         var client = new Connection(this);
         client.username =  server.username;
-        clients.set(index, client); 
+        clients.set(server.host, client); 
+        debug("Added server " + server.host  + "  with index " + index.to_string());
 
         if (connect_channels != null)
             client.channel_autoconnect = connect_channels;
@@ -482,7 +489,7 @@ public class Kyrc : Object
             //Has existing server but no channel
             foreach (var con in clients.entries) {
                 debug("Has existing server but no channel: " + con.value.url + " " + channel.channel);
-                if (con.value.url == server.host) {
+                if (con.key == server.host) {
                     con.value.join(channel.channel);
                     return;
                 }
@@ -669,8 +676,8 @@ public class Kyrc : Object
     }
 
     public void kyrc_close_program () { 
-        foreach(Connection client in clients) {
-            client.do_exit();
+        foreach(var client in clients.entries) {
+            client.value.do_exit();
         }
         GLib.Process.exit(0);
     }
