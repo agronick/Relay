@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU General Public License along
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+using X;
 
 public class IRC{
 	public const uint16 DEFAULT_PORT = 6667;
@@ -76,6 +77,10 @@ public class IRC{
 		if(user_prefixes.index_of_char(name[0]) != -1)
 			return name.substring(1);
 		return name;
+	}
+
+	public static void init_threads () {
+		X.init_threads();
 	}
 }
 

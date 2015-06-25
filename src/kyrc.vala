@@ -609,7 +609,7 @@ public class Kyrc : Object
 
     static int main (string[] args) {
         GLib.Log.set_default_handler(handle_log);
-
+        IRC.init_threads();
         Gtk.init (ref args);
         var app = new Kyrc ();
 
