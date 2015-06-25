@@ -21,6 +21,7 @@ public class IRC{
 	public const uint16 DEFAULT_PORT = 6667;
 	public const int USER_LENGTH = 20;
 	public const int USER_WIDTH = 140;
+	public const string user_prefixes = "~&@%+";
 
 	//Replies
 	public const string RPL_WELCOME = "001";
@@ -65,9 +66,16 @@ public class IRC{
 	public const string ERR_UNKNOWNMODE = "472";
 	public const string ERR_ALREADYONCHANNEL = "479";
 	public const string ERR_CHANOPRIVSNEEDED = "482";
+	public const string PRIVATE_MESSAGE = "PRIVMSG";
 
 	public static int compare(string a, string b) {
 		return GLib.strcmp(a, b);                                                                                                                                                                                                                                                                                                                                                       
+	}
+
+	public static string remove_user_prefix (string name) {
+		if(user_prefixes.index_of_char(name[0]) != -1)
+			return name.substring(1);
+		return name;
 	}
 }
 

@@ -63,11 +63,25 @@ public class ChannelTab : GLib.Object {
         new_subject (tab_index, subject);
     }
 
+	public void add_block_list (string name) {
+		blocked_users.add(name);
+
+		if(IRC.user_prefixes.index_of_char(name[0]) != -1)
+			blocked_users.add(IRC.remove_user_prefix(name));	}
+
+	public void remove_block_list (string name) {
+		blocked_users.remove(name);
+
+		if(IRC.user_prefixes.index_of_char(name[0]) != -1)
+			blocked_users.remove(IRC.remove_user_prefix(name));
+	}
+	
 	public void add_users_message (Message message) {
 		var names = message.message.split(" ");
 		foreach (var name in names) {
 			if(name.length == 0)
 				continue;
+			
 			users.add(name);
 		}
 
@@ -100,6 +114,8 @@ public class ChannelTab : GLib.Object {
     }
 
     public string format_channel_msg (string message) { 
+		if(message[0] == '/')
+			return message.substring(0);
         return "PRIVMSG " + channel_name + " :" + message.escape("");
     }
 
@@ -135,7 +151,17 @@ public class ChannelTab : GLib.Object {
 	public void handle_private_message (Message message) {
 		if (blocked_users.contains(message.user_name))
 			return;
-		
+
+		//Delete all this just create new tab on private message recieved
+		if (message.user_name == server.nickname) {
+			message.user_name = message.get_prefix_name();
+			debug("NEED TO MAKE NEW TAB");
+			if (message.user_name != channel_name) {
+				ChannelTab new_tab = server.add_channel_tab(message.user_name);
+				new_tab.display_message(message);
+				return;
+			}
+		}
 		add_with_tag(message.user_name_get(), message.internal ? user_self_tag : user_other_tag);
 		add_with_tag(message.message, std_message_tag);
 	}
@@ -186,10 +212,12 @@ public class ChannelTab : GLib.Object {
         color.parse("#4EC9DE");
         user_other_tag.foreground_rgba = color;
         user_other_tag.left_margin = 0;
+		user_other_tag.weight = Pango.Weight.SEMIBOLD;
         
         color.parse("#AE81FF");
         user_self_tag.foreground_rgba = color;
         user_self_tag.left_margin = 0;
+		user_self_tag.weight = Pango.Weight.SEMIBOLD;
 
         color.parse("#F8F8F2");
         std_message_tag.foreground_rgba = color;

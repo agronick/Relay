@@ -22,6 +22,7 @@ public class Message : GLib.Object {
     public string[] parameters { get; set; }
     public string user_name = "";
     public bool internal = false;
+    public bool usr_private_message = false;
     private static Regex? regex = null;
     private static Regex? fix_message = null;
 
@@ -45,6 +46,14 @@ public class Message : GLib.Object {
         parse_regex();
     }
 
+    public string get_prefix_name () {
+        if (prefix.index_of_char('!') == -1)
+            return "";
+        if (command == IRC.PRIVATE_MESSAGE)
+            usr_private_message = true;
+        return prefix.split("!")[0];
+    }
+
     public void user_name_set (string name) {
         user_name = name;
     }
@@ -52,7 +61,7 @@ public class Message : GLib.Object {
     //Use this function to add padding to the user name
     public string user_name_get () {
         int length = IRC.USER_LENGTH - user_name.length;
-        return user_name + string.nfill(length, ' ');
+        return "<" + user_name + ">" + string.nfill(length, ' ');
     }
 
     public void parse_regex () {
@@ -66,7 +75,7 @@ public class Message : GLib.Object {
                 if(message != null)
                     message = message.replace("\t", "");
                 
-                if(command == "PRIVMSG")
+                if(command == IRC.PRIVATE_MESSAGE)
                     user_name_set(prefix.split("!")[0]);
                 
                 return false;

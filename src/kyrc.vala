@@ -198,12 +198,12 @@ public class Kyrc : Object
     }
 
     public static int index = 0;
-    public void add_tab (ChannelTab newTab) {
+    public void add_tab (ChannelTab new_tab) {
         Idle.add( () => { 
-            newTab.tab = new Granite.Widgets.Tab(); 
+            new_tab.tab = new Granite.Widgets.Tab(); 
 
-            if (newTab.is_server_tab)
-                newTab.tab.working = true;
+            if (new_tab.is_server_tab)
+                new_tab.tab.working = true;
             TextView output = new TextView(); 
             output.set_editable(false);
             output.set_cursor_visible(false);
@@ -213,36 +213,36 @@ public class Kyrc : Object
             output.modify_font(FontDescription.from_string("Inconsolata 9"));
             ScrolledWindow scrolled = new Gtk.ScrolledWindow (null, null);
             scrolled.shadow_type = ShadowType.IN;
-            scrolled.margin = 3;
+            scrolled.margin = 6;
             scrolled.add(output);
 
             var ptabs = new Pango.TabArray(1, true);
             ptabs.set_tab(0, Pango.TabAlign.LEFT, 100);
             output.tabs = ptabs;
 
-            newTab.tab.label = newTab.channel_name; 
-            newTab.tab.page = scrolled;
-            newTab.new_subject.connect(new_subject);
-            tabs.insert_tab(newTab.tab, -1); 
+            new_tab.tab.label = new_tab.channel_name; 
+            new_tab.tab.page = scrolled;
+            new_tab.new_subject.connect(new_subject);
+            tabs.insert_tab(new_tab.tab, -1); 
 
-            debug("Setting index " + newTab.channel_name + ":" + index.to_string()); 
+            debug("Setting index " + new_tab.channel_name + ":" + index.to_string()); 
 
-            newTab.set_output(output);
-            outputs.set(index, newTab); 
+            new_tab.set_output(output);
+            outputs.set(index, new_tab); 
 
             tabs.show_all();
 
-            newTab.tab_index = index;
+            new_tab.tab_index = index;
 
             if (tabs.n_tabs == 1) {
-                tab_switch (null, newTab.tab);
+                tab_switch (null, new_tab.tab);
             }
 
             index++;
             return false;
         });
-        if (!newTab.is_server_tab) {
-            newTab.server.send_output("TOPIC " + newTab.channel_name);
+        if (!new_tab.is_server_tab) {
+            new_tab.server.send_output("TOPIC " + new_tab.channel_name);
         }
     }
 
@@ -340,10 +340,19 @@ public class Kyrc : Object
         int i = 0;
         foreach (var user in using_tab.users) {
             var eb = new EventBox();
+            eb.enter_notify_event.connect( ()=> {
+                eb.set_state_flags(StateFlags.PRELIGHT | StateFlags.SELECTED, true);
+                return false;
+            });
+            eb.leave_notify_event.connect( ()=> {
+                eb.set_state_flags(StateFlags.NORMAL, true);
+                return false;
+            });
             var label = new Label("");
             string color = outputs[current_tab].blocked_users.contains(user) ? "red" : "white";
-            label.set_markup("<span foreground=\"" + color + "\">" + user + "</span>");
+            label.set_markup("<span foreground=\"" + color + "\">" + GLib.Markup.escape_text(user) + "</span>");
             label.width_chars = IRC.USER_LENGTH;
+            label.margin_top = label.margin_bottom = 4;
             eb.add(label);
             eb.button_press_event.connect( (event)=> {
                 debug("TRIGGERED " + user);
@@ -351,7 +360,7 @@ public class Kyrc : Object
                 user_menu.popup (null, null, null, event.button, event.time);
                 return true;
             });
-            listbox.pack_start(eb, false, false, 4);
+            listbox.pack_start(eb, false, false, 0);
             i++;
             if (i % PER_BOX == 0 && using_tab.users.size >= i) {
                 listbox.width_request = BOX_WIDTH;
@@ -373,6 +382,9 @@ public class Kyrc : Object
         debug("SEND PRIVATE MESSAGE");
         user_menu.popdown();
         users_popover.set_visible(false);
+        ChannelTab using_tab = outputs[current_tab];
+        ChannelTab user_tab = using_tab.server.add_channel_tab(IRC.remove_user_prefix(channel_user_selected));
+        tabs.current = user_tab.tab;
         return false;
     }
 
@@ -380,9 +392,9 @@ public class Kyrc : Object
         user_menu.popdown();
         ChannelTab using_tab = outputs[current_tab];
         if (using_tab.blocked_users.contains(channel_user_selected))
-            using_tab.blocked_users.remove(channel_user_selected);
+            using_tab.remove_block_list(channel_user_selected);
         else
-            using_tab.blocked_users.add(channel_user_selected);
+            using_tab.add_block_list(channel_user_selected);
         users_popover.set_visible(false);
         make_user_popover(using_tab);
         return false;

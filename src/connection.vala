@@ -49,7 +49,7 @@ public class Connection : Object
         return true;
     }
 
-    private ChannelTab? add_channel_tab (string name) {
+    public ChannelTab? add_channel_tab (string name) {
         if (channel_tabs.has_key(name))
             return channel_tabs[name];
         if (name.strip() == "")
@@ -86,6 +86,7 @@ public class Connection : Object
             size_t size;
             try{
                 line = input_stream.read_line_utf8(out size);
+                debug("RAW INPUT " + line);
                 handle_input(line);
             }catch(IOError e) {
                 warning("IO error while reading");
@@ -113,7 +114,7 @@ public class Connection : Object
             case IRC.RPL_TOPIC:
                 set_topic(ref message);
                 return;
-            case "PRIVMSG": 
+            case IRC.PRIVATE_MESSAGE: 
                 new_data(find_channel_tab(message.parameters[0]), message);
                 return;
             case "JOIN": 
