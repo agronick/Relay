@@ -31,7 +31,7 @@ public class MainWindow : Object
     public const string UI_FILE_SERVERS = "ui/server_window.ui";
 
 
-    public Window window;
+    public static Window window;
     Granite.Widgets.DynamicNotebook tabs;
     Entry input;
     Paned pannel;

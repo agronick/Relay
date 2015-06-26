@@ -178,8 +178,10 @@ public class Connection : Object
     }
 
 	public void do_register () {
+        //TODO: make this work the way it should
+        nickname = username;
         send_output ("PASS  -p");
-        send_output ("NICK " + username);
+        send_output ("NICK " + nickname);
         send_output("USER " + username + " " + username + " * :" + username);
         send_output("MODE " + username + " +i");
 	}

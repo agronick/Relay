@@ -41,6 +41,7 @@ public class ChannelTab : GLib.Object {
     TextTag full_width_tag;
 	TextTag error_tag;
 	TextTag link_tag;
+	TextTag name_hilight_tag;
 	
 
     public signal void new_subject(int tab_id, string subject);
@@ -181,7 +182,10 @@ public class ChannelTab : GLib.Object {
 			return;
 
 		var rich_text = new RichText(text);
-		rich_text.parse_links();
+		if (tag == full_width_tag || tag == std_message_tag) {
+			rich_text.parse_links();
+			rich_text.parse_name(server.nickname);
+		}
 		
         while (is_locked) {
             Thread.usleep(111);
@@ -195,13 +199,25 @@ public class ChannelTab : GLib.Object {
 				return false;
 			}
             output.buffer.insert_with_tags(end, text, text.length, tag, null);
-			for (int i = 0; i < rich_text.link_locations_start.size; i++)
-			{
-        		output.buffer.get_end_iter(out end);
-				TextIter start = end;
-				start.set_offset(start.get_offset() - rich_text.link_locations_start[i]);
-				end.set_offset(end.get_offset() - rich_text.link_locations_end[i]);
-				output.buffer.apply_tag(link_tag, start, end);
+			if (rich_text.has_links) {
+				for (int i = 0; i < rich_text.link_locations_start.size; i++)
+				{
+		    		output.buffer.get_end_iter(out end);
+					TextIter start = end;
+					start.set_offset(start.get_offset() - rich_text.link_locations_start[i]);
+					end.set_offset(end.get_offset() - rich_text.link_locations_end[i]);
+					output.buffer.apply_tag(link_tag, start, end);
+				}
+			}
+			if (rich_text.has_names) {
+				for (int i = 0; i < rich_text.name_location_start.size; i++)
+				{
+		    		output.buffer.get_end_iter(out end);
+					TextIter start = end;
+					start.set_offset(start.get_offset() - rich_text.name_location_start[i]);
+					end.set_offset(end.get_offset() - rich_text.name_location_end[i]);
+					output.buffer.apply_tag(name_hilight_tag, start, end);
+				}
 			}
     		is_locked = false;
             return false;
@@ -216,6 +232,7 @@ public class ChannelTab : GLib.Object {
         full_width_tag = output.buffer.create_tag("full_width");
         error_tag = output.buffer.create_tag("error");
         link_tag = output.buffer.create_tag("link");
+		name_hilight_tag = output.buffer.create_tag("name_hilight");
 
         var color = new Gdk.RGBA();
         color.parse("#4EC9DE");
@@ -234,7 +251,7 @@ public class ChannelTab : GLib.Object {
 
         full_width_tag.left_margin = 0;
 
-		color.parse("#FF0000");
+		color.parse("#C54725");
 		error_tag.foreground_rgba = color;
 		error_tag.left_margin = 0;
 
@@ -242,8 +259,24 @@ public class ChannelTab : GLib.Object {
 		link_tag.foreground_rgba = color;
 		link_tag.underline_set = true;
 
+		link_tag.event.connect(hover_hand);
 		link_tag.event.connect(link_clicked);
+
+		color.parse("#6A9966");
+		name_hilight_tag.foreground_rgba = color;
+		name_hilight_tag.weight = Pango.Weight.SEMIBOLD;
     }
+
+	public bool hover_hand(GLib.Object event_object, Gdk.Event event, TextIter end) {
+		TextView tv = (TextView) event_object;
+		if (event.type == EventType.ENTER_NOTIFY) {
+			stdout.printf("Entered");
+			MainWindow.window.get_window().set_cursor(new Cursor.for_display(Display.get_default(), CursorType.HAND1));
+		} else if (event.type == EventType.LEAVE_NOTIFY) {
+			MainWindow.window.get_window().set_cursor(new Cursor.for_display(Display.get_default(), CursorType.XTERM));
+		}
+		return false;
+	}
 
 	public bool link_clicked(GLib.Object event_object, Gdk.Event event, TextIter end) {
 		if (event.type == EventType.BUTTON_RELEASE) {
@@ -264,7 +297,7 @@ public class ChannelTab : GLib.Object {
 			stdout.printf("LINK IS " + link + start.get_char().to_string() + end.get_char().to_string() +  "\n");
 			Granite.Services.System.open_uri(link);
 		}
-		return true;
+		return false;
 	}
 
 }
