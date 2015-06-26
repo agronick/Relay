@@ -27,15 +27,16 @@ public class Connection : Object
     public string username = "";
 	public string nickname = "";
     public bool exit = false;
-    private Kyrc backref;
+    public bool encrypted = false;
+    private weak MainWindow backref;
     public ChannelTab server_tab;
     public HashMap<string, ChannelTab> channel_tabs = new HashMap<string, ChannelTab>();
-    public ArrayList<string> channel_autoconnect = new ArrayList<string>();
+    public LinkedList<string> channel_autoconnect = new LinkedList<string>();
  
     public signal void new_topic(ChannelTab tab, string topic);
 
 
-    public Connection(Kyrc back) {
+    public Connection(MainWindow back) {
         backref = back;
     }
 
@@ -72,7 +73,7 @@ public class Connection : Object
 
     private int do_connect () {
         SocketClient client = new SocketClient ();
-
+        client.tls = encrypted;
         // Resolve hostname to IP address:
         Resolver resolver = Resolver.get_default ();
         GLib.List<InetAddress> addresses = resolver.lookup_by_name (url, null);
@@ -87,7 +88,7 @@ public class Connection : Object
         do{
             size_t size;
             try{
-                line = input_stream.read_line_utf8(out size);
+                line = input_stream.read_line(out size);
                 debug("RAW INPUT " + line);
                 handle_input(line);
             }catch(IOError e) {
@@ -114,23 +115,34 @@ public class Connection : Object
                 info(msg);
                 return;
             case IRC.RPL_TOPIC:
-                set_topic(ref message);
+                add_channel_tab(message.parameters[1]).set_topic(message.message);
                 return;
             case IRC.PRIVATE_MESSAGE: 
-                new_data(add_channel_tab(message.parameters[0]), message);
+                add_channel_tab(message.parameters[0]).display_message(message);
                 return;
             case "JOIN": 
                 add_channel_tab(message.message); 
                 return;
+            case IRC.RPL_LUSERCLIENT:
             case "NOTICE":
             case IRC.RPL_MOTD:
             case IRC.RPL_MOTDSTART:
-                new_data (server_tab, message);
+            case IRC.RPL_YOURHOST:
+            case IRC.RPL_LUSEROP:
+            case IRC.RPL_LUSERUNKNOWN:
+            case IRC.RPL_LUSERCHANNELS:
+                server_tab.display_message(message);
+                return;
+            case IRC.RPL_CREATED:
+            case IRC.RPL_LUSERME:
+                debug("SETTING TOPIC " + message.message);
+                server_tab.set_topic(message.message, true);
+                server_tab.display_message(message);
                 return;
 			case IRC.RPL_WELCOME:
 				do_autoconnect();
 				server_tab.tab.working = false;
-				break;
+                break;
 			case IRC.RPL_NAMREPLY:
 				var tab = find_channel_tab(message.parameters[2]);
 				if (tab == server_tab)
@@ -138,20 +150,31 @@ public class Connection : Object
 				tab.add_users_message(message);
 				break;
 			case IRC.ERR_NICKNAMEINUSE:
-				name_in_use(message.message);
+            case IRC.ERR_NONICKNAMEGIVEN:
+                string error_msg = "";
+                if (message.message == null)
+                    error_msg = "The name you chose is in use.";
+                error_msg = url + "\n" + error_msg;
+				name_in_use(error_msg);
 				break;
+            case IRC.ERR_NOSUCHNICK:
+            case IRC.ERR_NOSUCHCHANNEL:
+            case IRC.ERR_WASNOSUCHNICK:
+            case IRC.ERR_UNKNOWNCOMMAND:
+            case IRC.ERR_NOMOTD:
+            case IRC.ERR_USERNOTINCHANNEL:
+            case IRC.ERR_NOTONCHANNEL:
+            case IRC.ERR_NOTREGISTERED:
+            case IRC.ERR_NEEDMOREPARAMS:
+            case IRC.ERR_UNKNOWNMODE:
+            case IRC.ERR_ALREADYONCHANNEL:
+            case IRC.ERR_CHANOPRIVSNEEDED:
+                find_channel_tab(message.parameters[0]).display_error(message);
+                break;
             default:
                 warning("Unhandled message: " + msg);
                 return;
         } 
-    }
-
-    public void set_topic (ref Message msg) {
-        string channel = msg.parameters[1];
-        ChannelTab t = add_channel_tab(channel);
-        topic_message = msg;
-        topic_tab = t;
-        new Thread<int>("Creating topic", set_topic_thread);
     }
 
 	public void do_register () {
@@ -171,8 +194,8 @@ public class Connection : Object
 		debug("At name in use");
 		var dialog = new Dialog.with_buttons(_("Nickname in use"), backref.window,
 		                                     DialogFlags.DESTROY_WITH_PARENT,
-		                                     "Connect", Gtk.ResponseType.ACCEPT,
-		                                     "Cancel", Gtk.ResponseType.CANCEL);
+		                                     _("Connect"), Gtk.ResponseType.ACCEPT,
+		                                     _("Cancel"), Gtk.ResponseType.CANCEL);
 		Gtk.Box content = dialog.get_content_area() as Gtk.Box;
 		content.pack_start(new Label(_(message)), false, false, 5);
 		var server_name = new Entry();
@@ -195,21 +218,13 @@ public class Connection : Object
 				case Gtk.ResponseType.CANCEL:
 					dialog.close();
 					server_tab.tab.close();
+                    foreach (var tab in channel_tabs.entries) {
+                        tab.value.tab.close();
+                    }
 					break;
 			}
 		});
 	}
-
-    private static ChannelTab? topic_tab;
-    private static Message topic_message;
-    private int set_topic_thread () {
-        Thread.usleep(200000);
-        new_data(topic_tab, topic_message);
-        topic_tab = null;
-        topic_message = null;
-        return 0;
-    }
-
 
     private void handle_ping (ref Message msg) {
         send_output("PONG " + msg.message);
@@ -239,10 +254,6 @@ public class Connection : Object
 				return;
             output_stream.put_string(output + "\r\n");
         }catch(GLib.Error e){}
-    }
-
-    private void new_data (ChannelTab tab, Message msg) {
-        tab.display_message(msg);
     }
 
     public void do_exit () {

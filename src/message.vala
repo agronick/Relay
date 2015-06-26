@@ -14,6 +14,7 @@
 ***/
 
 using GLib;
+using Gee;
 
 public class Message : GLib.Object {
     public string? message { get; set; }
@@ -23,15 +24,13 @@ public class Message : GLib.Object {
     public string user_name = "";
     public bool internal = false;
     public bool usr_private_message = false;
-    private static Regex? regex = null;
-    private static Regex? fix_message = null;
+    private static Regex? regex;
+    private static Regex? fix_message;
 
     private static const string regex_string = """^(:(?<prefix>\S+) )?(?<command>\S+)( (?!:)(?<params>.+?))?( :(?<trail>.+))?$""";
-    private static const string replace_string = """\\00[0-9]""";
+    private static const string replace_string = """\\0[0-9][0-9]""";
     
     public Message (string _message = "") {
-        if (message == "")
-            return;
         if (regex == null) {
             try{
                 regex = new Regex(regex_string, RegexCompileFlags.OPTIMIZE );
@@ -40,7 +39,9 @@ public class Message : GLib.Object {
                 error("There was a regex error that should never happen");
             }
         }
-        
+        if (_message.length == 0)
+            return;
+
         message = _message.escape("\b\f\n\r\t\\\"");
         message = fix_message.replace_literal(message, message.length, 0, "");
         parse_regex();
@@ -60,8 +61,8 @@ public class Message : GLib.Object {
 
     //Use this function to add padding to the user name
     public string user_name_get () {
-        int length = IRC.USER_LENGTH - user_name.length;
-        return "<" + user_name + ">" + string.nfill(length, ' ');
+        int length = IRC.USER_LENGTH - user_name.length - 1;
+        return " " + user_name + string.nfill(length, ' ');
     }
 
     public void parse_regex () {

@@ -9,7 +9,7 @@
     <property name="window_position">center</property>
     <property name="default_width">800</property>
     <property name="default_height">600</property>
-    <property name="icon">kyrc_icon.png</property>
+    <property name="icon">kyrc.png</property>
     <child>
       <object class="GtkPaned" id="pannel">
         <property name="visible">True</property>

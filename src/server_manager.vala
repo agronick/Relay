@@ -46,9 +46,9 @@ public class ServerManager : Object
         current_server = null;
         var builder = new Builder();
         try{
-            builder.add_from_file(Kyrc.get_asset_file(Kyrc.UI_FILE_SERVERS));
+            builder.add_from_file(MainWindow.get_asset_file(MainWindow.UI_FILE_SERVERS));
         }catch(Error e){
-            error("Unable to load UI file " + Kyrc.get_asset_file(Kyrc.UI_FILE_SERVERS));
+            error("Unable to load UI file " + MainWindow.get_asset_file(MainWindow.UI_FILE_SERVERS));
         }
 
         window = builder.get_object ("window") as Gtk.Window;

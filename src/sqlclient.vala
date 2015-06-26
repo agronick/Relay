@@ -188,7 +188,7 @@ public class SqlClient : Object
         public bool encryption = false;
         public bool autoconnect = false;
         public bool validate_server = false;
-        public ArrayList<Channel> channels = new ArrayList<Channel>();
+        public LinkedList<Channel> channels = new LinkedList<Channel>();
 
         public int add_server_empty () {
             string sql = "INSERT INTO servers (host, port) VALUES('', " + Connection.DEFAULT_PORT.to_string() + ")";

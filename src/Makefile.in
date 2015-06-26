@@ -82,9 +82,9 @@ host_triplet = @host@
 bin_PROGRAMS = kyrc$(EXEEXT)
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am connection.c \
-	kyrc.c sqlclient.c server_manager.c channel_tab.c message.c \
-	irc.c $(top_srcdir)/depcomp $(srcdir)/--save-temps \
-	$(srcdir)/kyrc_vala.stamp
+	main_window.c sqlclient.c server_manager.c channel_tab.c \
+	message.c irc.c kyrc.c rich_text.c $(top_srcdir)/depcomp \
+	$(srcdir)/--save-temps $(srcdir)/kyrc_vala.stamp
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -96,9 +96,10 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(assetsdir)" \
 	"$(DESTDIR)$(uidir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_kyrc_OBJECTS = connection.$(OBJEXT) kyrc.$(OBJEXT) \
+am_kyrc_OBJECTS = connection.$(OBJEXT) main_window.$(OBJEXT) \
 	sqlclient.$(OBJEXT) server_manager.$(OBJEXT) \
-	channel_tab.$(OBJEXT) message.$(OBJEXT) irc.$(OBJEXT)
+	channel_tab.$(OBJEXT) message.$(OBJEXT) irc.$(OBJEXT) \
+	kyrc.$(OBJEXT) rich_text.$(OBJEXT)
 kyrc_OBJECTS = $(am_kyrc_OBJECTS)
 am__DEPENDENCIES_1 =
 kyrc_DEPENDENCIES = $(am__DEPENDENCIES_1)
@@ -342,7 +343,7 @@ AM_CFLAGS = \
      -g
 
 kyrc_SOURCES = \
-    config.vapi connection.vala kyrc.vala sqlclient.vala server_manager.vala channel_tab.vala message.vala irc.vala
+    config.vapi connection.vala main_window.vala sqlclient.vala server_manager.vala channel_tab.vala message.vala irc.vala kyrc.vala rich_text.vala
 
 kyrc_VALAFLAGS = \
     --target-glib 2.32 --pkg x11 --pkg gtk+-3.0 --pkg glib-2.0 --pkg granite --pkg sqlite3  -g --save-temps
@@ -450,7 +451,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/connection.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/irc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/kyrc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main_window.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/message.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rich_text.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/server_manager.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sqlclient.Po@am__quote@
 
@@ -479,7 +482,7 @@ $(srcdir)/connection.c: $(srcdir)/kyrc_vala.stamp
 	@if test -f $@; then :; else \
 	  $(MAKE) $(AM_MAKEFLAGS) $(srcdir)/kyrc_vala.stamp; \
 	fi
-$(srcdir)/kyrc.c: $(srcdir)/kyrc_vala.stamp
+$(srcdir)/main_window.c: $(srcdir)/kyrc_vala.stamp
 	@if test -f $@; then :; else rm -f $(srcdir)/kyrc_vala.stamp; fi
 	@if test -f $@; then :; else \
 	  $(MAKE) $(AM_MAKEFLAGS) $(srcdir)/kyrc_vala.stamp; \
@@ -509,14 +512,24 @@ $(srcdir)/irc.c: $(srcdir)/kyrc_vala.stamp
 	@if test -f $@; then :; else \
 	  $(MAKE) $(AM_MAKEFLAGS) $(srcdir)/kyrc_vala.stamp; \
 	fi
+$(srcdir)/kyrc.c: $(srcdir)/kyrc_vala.stamp
+	@if test -f $@; then :; else rm -f $(srcdir)/kyrc_vala.stamp; fi
+	@if test -f $@; then :; else \
+	  $(MAKE) $(AM_MAKEFLAGS) $(srcdir)/kyrc_vala.stamp; \
+	fi
+$(srcdir)/rich_text.c: $(srcdir)/kyrc_vala.stamp
+	@if test -f $@; then :; else rm -f $(srcdir)/kyrc_vala.stamp; fi
+	@if test -f $@; then :; else \
+	  $(MAKE) $(AM_MAKEFLAGS) $(srcdir)/kyrc_vala.stamp; \
+	fi
 $(srcdir)/--save-temps: $(srcdir)/kyrc_vala.stamp
 	@if test -f $@; then :; else rm -f $(srcdir)/kyrc_vala.stamp; fi
 	@if test -f $@; then :; else \
 	  $(MAKE) $(AM_MAKEFLAGS) $(srcdir)/kyrc_vala.stamp; \
 	fi
-$(srcdir)/kyrc_vala.stamp: config.vapi connection.vala kyrc.vala sqlclient.vala server_manager.vala channel_tab.vala message.vala irc.vala
+$(srcdir)/kyrc_vala.stamp: config.vapi connection.vala main_window.vala sqlclient.vala server_manager.vala channel_tab.vala message.vala irc.vala kyrc.vala rich_text.vala
 	$(AM_V_at)rm -f $@ && echo stamp > $@-t
-	$(AM_V_VALAC)$(am__cd) $(srcdir) && $(VALAC) $(kyrc_VALAFLAGS) $(VALAFLAGS) -C config.vapi connection.vala kyrc.vala sqlclient.vala server_manager.vala channel_tab.vala message.vala irc.vala
+	$(AM_V_VALAC)$(am__cd) $(srcdir) && $(VALAC) $(kyrc_VALAFLAGS) $(VALAFLAGS) -C config.vapi connection.vala main_window.vala sqlclient.vala server_manager.vala channel_tab.vala message.vala irc.vala kyrc.vala rich_text.vala
 	$(AM_V_at)mv -f $@-t $@
 
 mostlyclean-libtool:
@@ -692,14 +705,18 @@ maintainer-clean-generic:
 	-rm -f $(srcdir)/irc.c
 	-rm -f $(srcdir)/kyrc.c
 	-rm -f $(srcdir)/kyrc_vala.stamp
+	-rm -f $(srcdir)/main_window.c
 	-rm -f $(srcdir)/message.c
+	-rm -f $(srcdir)/rich_text.c
 	-rm -f $(srcdir)/server_manager.c
 	-rm -f $(srcdir)/sqlclient.c
 	-rm -f channel_tab.c
 	-rm -f connection.c
 	-rm -f irc.c
 	-rm -f kyrc.c
+	-rm -f main_window.c
 	-rm -f message.c
+	-rm -f rich_text.c
 	-rm -f server_manager.c
 	-rm -f sqlclient.c
 clean: clean-am

@@ -16,7 +16,6 @@
  * You should have received a copy of the GNU General Public License along
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-using X;
 
 public class IRC{
 	public const uint16 DEFAULT_PORT = 6667;
@@ -51,6 +50,17 @@ public class IRC{
 	public const string RPL_MOTD = "372";
 	public const string RPL_MOTDSTART = "375";
 	public const string RPL_ENDOFMOTD = "376";
+    public const string RPL_LUSEROP = "252";
+             // "<integer> :operator(s) online"
+    public const string RPL_LUSERUNKNOWN = "253";
+             //"<integer> :unknown connection(s)"
+    public const string RPL_LUSERCHANNELS = "254";
+             //"<integer> :channels formed"
+    public const string RPL_LUSERME = "255";
+             //":I have <integer> clients and <integer> servers"
+	public const string RPL_LUSERCLIENT = "251";
+			//:There are <integer> users and <integer> services on <integer> servers"
+	public const string PRIVATE_MESSAGE = "PRIVMSG";
 
 	//Errors
 	public const string ERR_NOSUCHNICK = "401";
@@ -62,12 +72,11 @@ public class IRC{
 	public const string ERR_NICKNAMEINUSE = "433";
 	public const string ERR_USERNOTINCHANNEL = "441";
 	public const string ERR_NOTONCHANNEL = "442";
-	public const string ERR_NOTREGISTERED = "451";
-	public const string ERR_NEEDMOREPARAMS = "461";
+	public const string ERR_NOTREGISTERED = "451"; //
+	public const string ERR_NEEDMOREPARAMS = "461"; //
 	public const string ERR_UNKNOWNMODE = "472";
 	public const string ERR_ALREADYONCHANNEL = "479";
 	public const string ERR_CHANOPRIVSNEEDED = "482";
-	public const string PRIVATE_MESSAGE = "PRIVMSG";
 
 	public static int compare(string a, string b) {
 		return GLib.strcmp(a, b);                                                                                                                                                                                                                                                                                                                                                       
@@ -77,10 +86,6 @@ public class IRC{
 		if(user_prefixes.index_of_char(name[0]) != -1)
 			return name.substring(1);
 		return name;
-	}
-
-	public static void init_threads () {
-		X.init_threads();
 	}
 }
 

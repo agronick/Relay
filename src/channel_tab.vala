@@ -1,3 +1,4 @@
+
 /* -*- Mode: vala; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*-  */
 /*
  * channeltab.vala
@@ -19,6 +20,7 @@
 using Granite;
 using Gtk;
 using Gee;
+using Gdk;
 
 public class ChannelTab : GLib.Object {
     public int tab_index { get; set; }
@@ -37,6 +39,8 @@ public class ChannelTab : GLib.Object {
     TextTag user_self_tag;
     TextTag std_message_tag;
     TextTag full_width_tag;
+	TextTag error_tag;
+	TextTag link_tag;
 	
 
     public signal void new_subject(int tab_id, string subject);
@@ -57,16 +61,19 @@ public class ChannelTab : GLib.Object {
         tab = t;
     }
 
-    public void set_subject (string subject) {
+    public void set_topic (string subject, bool append = false) {
         has_subject = true;
-        channel_subject = subject;
-        new_subject (tab_index, subject);
+        channel_subject = append ? channel_subject + subject + "\n" : subject;
+		Idle.add( () => { 
+    		new_subject (tab_index, subject);
+			return false;
+		});
     }
 
 	public void add_block_list (string name) {
 		blocked_users.add(name);
 
-		if(IRC.user_prefixes.index_of_char(name[0]) != -1)
+		if (IRC.user_prefixes.index_of_char(name[0]) != -1)
 			blocked_users.add(IRC.remove_user_prefix(name));	}
 
 	public void remove_block_list (string name) {
@@ -84,10 +91,6 @@ public class ChannelTab : GLib.Object {
 			
 			users.add(name);
 		}
-
-		
-		debug("Inserting names " + message.message);
-		debug("USERS SIZE IS " + users.size.to_string());
 	}
 
     public void set_output(TextView _output) {
@@ -134,9 +137,6 @@ public class ChannelTab : GLib.Object {
             case "PRIVMSG": 
 				handle_private_message(message);
                 break;
-            case IRC.RPL_TOPIC:
-                set_subject(message.message);
-                return;
             case "NOTICE":
             case IRC.RPL_MOTD:
             case IRC.RPL_MOTDSTART:
@@ -147,6 +147,12 @@ public class ChannelTab : GLib.Object {
 				break;
         } 
     }
+
+	public void display_error (Message message) {
+		tab.working = false;
+		message.message += "\n";
+		add_with_tag(message.message, error_tag);
+	}
 
 	public void handle_private_message (Message message) {
 		if (blocked_users.contains(message.user_name))
@@ -173,6 +179,9 @@ public class ChannelTab : GLib.Object {
     private void add_with_tag (string? text, TextTag tag, int retry_count = 0) {
 		if(text == null || text.strip() == "" || retry_count > 4)
 			return;
+
+		var rich_text = new RichText(text);
+		rich_text.parse_links();
 		
         while (is_locked) {
             Thread.usleep(111);
@@ -186,6 +195,14 @@ public class ChannelTab : GLib.Object {
 				return false;
 			}
             output.buffer.insert_with_tags(end, text, text.length, tag, null);
+			for (int i = 0; i < rich_text.link_locations_start.size; i++)
+			{
+        		output.buffer.get_end_iter(out end);
+				TextIter start = end;
+				start.set_offset(start.get_offset() - rich_text.link_locations_start[i]);
+				end.set_offset(end.get_offset() - rich_text.link_locations_end[i]);
+				output.buffer.apply_tag(link_tag, start, end);
+			}
     		is_locked = false;
             return false;
         });
@@ -197,6 +214,8 @@ public class ChannelTab : GLib.Object {
         user_self_tag = output.buffer.create_tag("user_self");
         std_message_tag = output.buffer.create_tag("std_message");
         full_width_tag = output.buffer.create_tag("full_width");
+        error_tag = output.buffer.create_tag("error");
+        link_tag = output.buffer.create_tag("link");
 
         var color = new Gdk.RGBA();
         color.parse("#4EC9DE");
@@ -214,6 +233,39 @@ public class ChannelTab : GLib.Object {
         std_message_tag.indent = 0;   
 
         full_width_tag.left_margin = 0;
+
+		color.parse("#FF0000");
+		error_tag.foreground_rgba = color;
+		error_tag.left_margin = 0;
+
+		color.parse("#3D81C4");
+		link_tag.foreground_rgba = color;
+		link_tag.underline_set = true;
+
+		link_tag.event.connect(link_clicked);
     }
+
+	public bool link_clicked(GLib.Object event_object, Gdk.Event event, TextIter end) {
+		if (event.type == EventType.BUTTON_RELEASE) {
+			TextView tv = (TextView) event_object;
+			string delimiters = " \n\t\r";
+			TextIter start = end;
+
+			while(delimiters.index_of_char(end.get_char()) == -1)
+				tv.buffer.get_iter_at_offset(out end, end.get_offset() + 1);
+
+			while(delimiters.index_of_char(start.get_char()) == -1)
+				tv.buffer.get_iter_at_offset(out start, start.get_offset() - 1);
+
+			tv.buffer.get_iter_at_offset(out end, end.get_offset() - 1);
+			tv.buffer.get_iter_at_offset(out start, start.get_offset() + 1);
+			
+			string link = start.get_text(end);
+			stdout.printf("LINK IS " + link + start.get_char().to_string() + end.get_char().to_string() +  "\n");
+			Granite.Services.System.open_uri(link);
+		}
+		return true;
+	}
+
 }
 
