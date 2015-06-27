@@ -62,7 +62,7 @@ public class Message : GLib.Object {
     //Use this function to add padding to the user name
     public string user_name_get () {
         int length = IRC.USER_LENGTH - user_name.length - 1;
-        return " " + user_name + string.nfill(length, ' ');
+        return user_name + string.nfill(length, ' ');
     }
 
     public void parse_regex () {
