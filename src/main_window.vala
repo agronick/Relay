@@ -540,8 +540,6 @@ public class MainWindow : Object
 
     private void new_subject (int tab_id, string message) {
         if (tab_id != current_tab || message.strip().length == 0) {
-            channel_subject.set_no_show_all(true); 
-            channel_subject.hide();
             return;
         }
 
