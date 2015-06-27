@@ -34,6 +34,12 @@ public class ChannelTab : GLib.Object {
 	public ArrayList<string> users = new ArrayList<string>();
 	public ArrayList<string> blocked_users = new ArrayList<string>();
     private TextView output;
+	
+	public static TimeVal timeval = TimeVal();
+	public static int timestamp_seconds = 180;
+	private long last_timestamp = 0;
+	string date_format = "%A, %B %e";
+	string time_format = Granite.DateTime.get_default_time_format(true, true);
 
     TextTag user_other_tag;
     TextTag user_self_tag;
@@ -42,6 +48,8 @@ public class ChannelTab : GLib.Object {
 	TextTag error_tag;
 	TextTag link_tag;
 	TextTag name_hilight_tag;
+	TextTag timestamp_tag;
+
 	
 
     public signal void new_subject(int tab_id, string subject);
@@ -130,7 +138,8 @@ public class ChannelTab : GLib.Object {
         return message.substring(1); 
     }
  
-    public void display_message (Message message) {    
+    public void display_message (Message message) {   
+		make_timestamp(); 
 
         message.message += "\n";
         
@@ -161,6 +170,17 @@ public class ChannelTab : GLib.Object {
 
 		add_with_tag(message.user_name_get(), message.internal ? user_self_tag : user_other_tag);
 		add_with_tag(message.message, std_message_tag);
+	}
+
+	private void make_timestamp() {
+		timeval.get_current_time();
+		long current = timeval.tv_sec;
+		if (current - last_timestamp > timestamp_seconds) {
+			var local = new GLib.DateTime.now_local();
+			string datetime = local.format(date_format  + time_format) + "\n";
+			add_with_tag(datetime, timestamp_tag);
+			last_timestamp = current;
+		}
 	}
     
     public void do_autoscroll () {
@@ -233,6 +253,7 @@ public class ChannelTab : GLib.Object {
         error_tag = output.buffer.create_tag("error");
         link_tag = output.buffer.create_tag("link");
 		name_hilight_tag = output.buffer.create_tag("name_hilight");
+		timestamp_tag = output.buffer.create_tag("timestamp");
 
         var color = new Gdk.RGBA();
         color.parse("#4EC9DE");
@@ -248,8 +269,12 @@ public class ChannelTab : GLib.Object {
         color.parse("#F8F8F2");
         std_message_tag.foreground_rgba = color;
         std_message_tag.indent = 0;   
+		std_message_tag.pixels_above_lines = 1;
+		std_message_tag.pixels_below_lines = 1;
 
         full_width_tag.left_margin = 0;
+		full_width_tag.pixels_above_lines = 1;
+		full_width_tag.pixels_below_lines = 1;
 
 		color.parse("#C54725");
 		error_tag.foreground_rgba = color;
@@ -265,6 +290,14 @@ public class ChannelTab : GLib.Object {
 		color.parse("#6A9966");
 		name_hilight_tag.foreground_rgba = color;
 		name_hilight_tag.weight = Pango.Weight.SEMIBOLD;
+
+		color.parse("#D5D5D5");
+		timestamp_tag.foreground_rgba = color;
+		timestamp_tag.justification = Justification.RIGHT;
+		timestamp_tag.size_points = 8;
+		timestamp_tag.family = "Liberation Sans";
+		timestamp_tag.pixels_above_lines = 3;
+		timestamp_tag.pixels_below_lines = 3;
     }
 
 	public bool hover_hand(GLib.Object event_object, Gdk.Event event, TextIter end) {
