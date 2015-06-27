@@ -23,9 +23,7 @@ public class Connection : Object
     public static const uint16 DEFAULT_PORT = 6667;
     public DataInputStream input_stream;
     public DataOutputStream output_stream;
-    public string url = "";
-    public string username = "";
-	public string nickname = "";
+	public SqlClient.Server server;
     public bool exit = false;
     public bool encrypted = false;
     private weak MainWindow backref;
@@ -40,18 +38,18 @@ public class Connection : Object
         backref = back;
     }
 
-    public bool connect_to_server (string location) {
-        url = location;
-        server_tab = add_channel_tab(url);
+    public bool connect_to_server (SqlClient.Server _server) {
+        server = _server;
+        server_tab = add_channel_tab(server.host);
         server_tab.is_server_tab = true; 
 
-        new Thread<int>("Connection " + location, do_connect);
+        new Thread<int>("Connection " + server.host, do_connect);
 
         return true;
     }
 
     public ChannelTab? add_channel_tab (string name) {
-        if (name == username || name == nickname)
+        if (name == server.username || name == server.nickname)
             return server_tab;
         if (channel_tabs.has_key(name))
             return channel_tabs[name];
@@ -76,7 +74,7 @@ public class Connection : Object
         client.tls = encrypted;
         // Resolve hostname to IP address:
         Resolver resolver = Resolver.get_default ();
-        GLib.List<InetAddress> addresses = resolver.lookup_by_name (url, null);
+        GLib.List<InetAddress> addresses = resolver.lookup_by_name(server.host, null);
         InetAddress address = addresses.nth_data (0);
         SocketConnection conn = client.connect (new InetSocketAddress (address, DEFAULT_PORT));
         input_stream = new DataInputStream (conn.input_stream);
@@ -154,7 +152,7 @@ public class Connection : Object
                 string error_msg = "";
                 if (message.message == null)
                     error_msg = "The name you chose is in use.";
-                error_msg = url + "\n" + error_msg;
+                error_msg = server.host + "\n" + error_msg;
 				name_in_use(error_msg);
 				break;
             case IRC.ERR_NOSUCHNICK:
@@ -179,11 +177,10 @@ public class Connection : Object
 
 	public void do_register () {
         //TODO: make this work the way it should
-        nickname = username;
         send_output ("PASS  -p");
-        send_output ("NICK " + nickname);
-        send_output("USER " + username + " " + username + " * :" + username);
-        send_output("MODE " + username + " +i");
+        send_output ("NICK " + server.nickname);
+        send_output("USER " + server.username + " 0 * :" + server.realname);
+        send_output("MODE " + server.username + " +i");
 	}
 
 	public void do_autoconnect () {
@@ -194,7 +191,7 @@ public class Connection : Object
 
 	public void name_in_use (string message) {
 		debug("At name in use");
-		var dialog = new Dialog.with_buttons(_("Nickname in use"), backref.window,
+		var dialog = new Dialog.with_buttons(_("Nickname in use"), MainWindow.window,
 		                                     DialogFlags.DESTROY_WITH_PARENT,
 		                                     _("Connect"), Gtk.ResponseType.ACCEPT,
 		                                     _("Cancel"), Gtk.ResponseType.CANCEL);
@@ -212,7 +209,7 @@ public class Connection : Object
 				case Gtk.ResponseType.ACCEPT:
 					string name = server_name.get_text().strip();
 					if (name.length > 0) {
-						username = server_name.get_text();
+						server.username = server_name.get_text();
 						do_register();
 						dialog.close();
 					}

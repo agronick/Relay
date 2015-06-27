@@ -24,7 +24,7 @@ using Gdk;
 
 public class ChannelTab : GLib.Object {
     public int tab_index { get; set; }
-    public Connection server { get; set; }
+    public Connection connection { get; set; }
     public string channel_name { get; set; }
     public Granite.Widgets.Tab tab;
     public bool is_server_tab = false;
@@ -55,12 +55,12 @@ public class ChannelTab : GLib.Object {
     public signal void new_subject(int tab_id, string subject);
 
     public void add_text (string msg) {
-        server.send_output(msg);
+        connection.send_output(msg);
     }
 
     // Constructor
     public ChannelTab (Connection? param_server = null, string param_channel_name = "", int param_tab_index = -1) {
-        server = param_server;
+        connection = param_server;
         channel_name = param_channel_name;
         tab_index = param_tab_index;
     }  
@@ -122,7 +122,7 @@ public class ChannelTab : GLib.Object {
         if(formatted_message.strip().length == 0)
             return;
         debug("Sending out " + formatted_message);
-        server.send_output(formatted_message);
+        connection.send_output(formatted_message);
     }
 
     public string format_channel_msg (string message) { 
@@ -204,7 +204,7 @@ public class ChannelTab : GLib.Object {
 		var rich_text = new RichText(text);
 		if (tag == full_width_tag || tag == std_message_tag) {
 			rich_text.parse_links();
-			rich_text.parse_name(server.nickname);
+			rich_text.parse_name(connection.server.nickname);
 		}
 		
         while (is_locked) {

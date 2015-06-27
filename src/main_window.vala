@@ -242,7 +242,7 @@ public class MainWindow : Object
             return false;
         });
         if (!new_tab.is_server_tab) {
-            new_tab.server.send_output("TOPIC " + new_tab.channel_name);
+            new_tab.connection.send_output("TOPIC " + new_tab.channel_name);
         }
     }
     
@@ -282,7 +282,7 @@ public class MainWindow : Object
             return;
 
         int id = lookup_channel_id(tab);
-        var tab_server = outputs[id].server; 
+        Connection tab_server = outputs[id].connection; 
 
         if (!outputs[id].is_server_tab)
             tab_server.send_output("PART " + outputs[id].channel_name);
@@ -298,7 +298,7 @@ public class MainWindow : Object
         if (tab_server.channel_tabs.size < 1) {
             debug("Closing server");
             tab_server.do_exit();
-            clients.unset(tab_server.url);
+            clients.unset(tab_server.server.host);
         }
 
         foreach (var client in clients.entries) {
@@ -326,7 +326,7 @@ public class MainWindow : Object
         if (using_tab.is_server_tab)
             toolbar.set_title(using_tab.tab.label);
         else
-            toolbar.set_title(using_tab.tab.label + _(" on ") + using_tab.server.url);
+            toolbar.set_title(using_tab.tab.label + _(" on ") + using_tab.connection.server.host);
         input.placeholder_text = using_tab.tab.label;
 
         make_user_popover (using_tab);
@@ -394,7 +394,7 @@ public class MainWindow : Object
         user_menu.popdown();
         users_popover.set_visible(false);
         ChannelTab using_tab = outputs[current_tab];
-        ChannelTab user_tab = using_tab.server.add_channel_tab(IRC.remove_user_prefix(channel_user_selected));
+        ChannelTab user_tab = using_tab.connection.add_channel_tab(IRC.remove_user_prefix(channel_user_selected));
         tabs.current = user_tab.tab;
         return false;
     }
@@ -412,15 +412,13 @@ public class MainWindow : Object
     }
     
     public void add_server (SqlClient.Server server, LinkedList<string>? connect_channels = null) {
-        var client = new Connection(this);
-        client.username =  server.username;
-        clients.set(server.host, client); 
-        debug("Added server " + server.host  + "  with index " + index.to_string());
+        var connection = new Connection(this);
+        clients.set(server.host, connection); 
 
         if (connect_channels != null)
-            client.channel_autoconnect = connect_channels;
+            connection.channel_autoconnect = connect_channels;
 
-        client.connect_to_server(server.host);
+        connection.connect_to_server(server);
     }
 
     public void refresh_server_list () {
@@ -457,7 +455,7 @@ public class MainWindow : Object
         var message = new Message();
 
         //Append message to screen
-        message.user_name_set(output.server.username);
+        message.user_name_set(output.connection.server.nickname);
         message.message = text;
         message.command = "PRIVMSG";
         message.internal = true;
@@ -485,15 +483,16 @@ public class MainWindow : Object
             var server = SqlClient.servers[channel.server_id];
             foreach (var tab in outputs.entries) {
                 debug("Looping at " + tab.value.channel_name);
-                if (!tab.value.is_server_tab && tab.value.tab.label == channel.channel && server.host == tab.value.server.url) {
-                    debug("Switching to " + tab.value.tab.label);
-                    tabs.current = tab.value.tab;
-                    return;
+                if (!tab.value.is_server_tab && 
+                    tab.value.tab.label == channel.channel &&
+                    server.host == tab.value.connection.server.host) {
+		                debug("Switching to " + tab.value.tab.label);
+		                tabs.current = tab.value.tab;
+		                return;
                 }
             } 
             //Has existing server but no channel
             foreach (var con in clients.entries) {
-                debug("Has existing server but no channel: " + con.value.url + " " + channel.channel);
                 if (con.key == server.host) {
                     con.value.join(channel.channel);
                     return;

@@ -292,6 +292,7 @@ public class ServerManager : Object
 
 
     private bool add_server_clicked (Gdk.EventButton event) {
+		save_changes (select_row);
         current_server = new SqlClient.Server();
         int id = current_server.add_server_empty();
         current_server.id = id;
