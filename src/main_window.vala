@@ -58,7 +58,6 @@ public class MainWindow : Object
 
         try
         {
-            Gtk.Settings.get_default().set("gtk-application-prefer-dark-theme", true);
             check_elementary();
 
             var builder = new Builder ();
@@ -163,7 +162,7 @@ public class MainWindow : Object
 
             set_up_add_sever(toolbar);
 
-            toolbar.set_title("MainWindow");
+            toolbar.set_title("Kyrc");
             toolbar.show_all();
 
             toolbar.show_close_button = true;
@@ -582,12 +581,12 @@ public class MainWindow : Object
         if (file.query_exists())
             return check;
 
-        check =  name;
+        check = "./" + name;
         file = File.new_for_path (check);
         if (file.query_exists())
             return check;
 
-        error("Unable to find UI file.");
+        error("Unable to find asset file: " + check);
     }
 
 

@@ -60,7 +60,7 @@ public class Kyrc : Granite.Application {
     /* Method definitions */
     public static int main (string[] args) {
         X.init_threads ();
-
+        Gtk.Settings.get_default().set("gtk-application-prefer-dark-theme", true);
         
         GLib.Log.set_default_handler(handle_log);
         Gtk.init (ref args);
@@ -68,7 +68,6 @@ public class Kyrc : Granite.Application {
         Kyrc main = new Kyrc();
         main.run(args);
         Gtk.main ();
-
 
         return 0;
     }
