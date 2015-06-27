@@ -348,8 +348,7 @@ dist_doc_DATA = \
 	COPYING \
 	AUTHORS \
 	ChangeLog \
-	INSTALL \
-	NEWS
+	INSTALL
 
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
