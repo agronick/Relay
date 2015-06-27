@@ -1,22 +1,143 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# Kyle Agronick <agronick@gmail.com>, 2015.
-#
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-06-18 00:41-0400\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"Project-Id-Version: Kyrc\n"
+"POT-Creation-Date: 2015-06-27 12:29-0500\n"
+"PO-Revision-Date: 2015-06-27 12:30-0500\n"
+"Last-Translator: Kyle Agronick <agronick@gmail.com>\n"
+"Language-Team:  <agronick@gmail.com>\n"
+"Language: English\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.5.4\n"
+"X-Poedit-KeywordsList: _;gettext;gettext_noop\n"
+"X-Poedit-Basepath: /home/kyle/Apps/projects/kyrc\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-SearchPath-0: src\n"
 
-#: kyrc.vala:77
-msgid "Open server/channel view"
+#: /home/kyle/Apps/projects/kyrc/src/connection.vala:197
+#: src/connection.vala:197
+msgid "Nickname in use"
+msgstr ""
+
+#: /home/kyle/Apps/projects/kyrc/src/connection.vala:197
+#: /home/kyle/Apps/projects/kyrc/src/main-window.vala:600
+#: /home/kyle/Apps/projects/kyrc/src/main_window.vala:600
+#: src/connection.vala:199 src/main_window.vala:600
+msgid "Connect"
+msgstr ""
+
+#: /home/kyle/Apps/projects/kyrc/src/connection.vala:197
+#: src/connection.vala:200
+msgid "Cancel"
+msgstr ""
+
+#: /home/kyle/Apps/projects/kyrc/src/connection.vala:204
+#: src/connection.vala:204
+msgid "New username"
+msgstr ""
+
+#: /home/kyle/Apps/projects/kyrc/src/main-window.vala:103
+#: /home/kyle/Apps/projects/kyrc/src/main_window.vala:103
+#: src/main_window.vala:103
+msgid "Channel subject"
+msgstr ""
+
+#: /home/kyle/Apps/projects/kyrc/src/main-window.vala:125
+#: /home/kyle/Apps/projects/kyrc/src/main_window.vala:125
+#: src/main_window.vala:125
+msgid "Channel users"
+msgstr ""
+
+#: /home/kyle/Apps/projects/kyrc/src/main-window.vala:154
+#: /home/kyle/Apps/projects/kyrc/src/main_window.vala:154
+#: src/main_window.vala:154
+msgid "Private Message"
+msgstr ""
+
+#: /home/kyle/Apps/projects/kyrc/src/main-window.vala:156
+#: /home/kyle/Apps/projects/kyrc/src/main_window.vala:156
+#: src/main_window.vala:156
+msgid "Block"
+msgstr ""
+
+#: /home/kyle/Apps/projects/kyrc/src/main-window.vala:251
+#: /home/kyle/Apps/projects/kyrc/src/main_window.vala:251
+#: src/main_window.vala:251
+msgid "New Connection"
+msgstr ""
+
+#: /home/kyle/Apps/projects/kyrc/src/main-window.vala:256
+#: /home/kyle/Apps/projects/kyrc/src/main_window.vala:256
+#: src/main_window.vala:256
+msgid "Server address"
+msgstr ""
+
+#: /home/kyle/Apps/projects/kyrc/src/main-window.vala:282
+#: /home/kyle/Apps/projects/kyrc/src/main-window.vala:604
+#: /home/kyle/Apps/projects/kyrc/src/main_window.vala:282
+#: /home/kyle/Apps/projects/kyrc/src/main_window.vala:604
+#: src/main_window.vala:282 src/main_window.vala:604
+msgid "Welcome"
+msgstr ""
+
+#: /home/kyle/Apps/projects/kyrc/src/main-window.vala:330
+#: /home/kyle/Apps/projects/kyrc/src/main_window.vala:330
+#: src/main_window.vala:330
+msgid " on "
+msgstr ""
+
+#: /home/kyle/Apps/projects/kyrc/src/main-window.vala:596
+#: /home/kyle/Apps/projects/kyrc/src/main_window.vala:596
+msgid "Welcome to MainWindow"
+msgstr ""
+
+#: /home/kyle/Apps/projects/kyrc/src/main-window.vala:597
+#: /home/kyle/Apps/projects/kyrc/src/main_window.vala:597
+#: src/main_window.vala:597
+msgid "Lets get started"
+msgstr ""
+
+#: /home/kyle/Apps/projects/kyrc/src/main-window.vala:599
+#: /home/kyle/Apps/projects/kyrc/src/main_window.vala:599
+#: src/main_window.vala:599
+msgid "Manage"
+msgstr ""
+
+#: /home/kyle/Apps/projects/kyrc/src/main-window.vala:599
+#: /home/kyle/Apps/projects/kyrc/src/main_window.vala:599
+#: src/main_window.vala:599
+msgid "Manage the servers you use"
+msgstr ""
+
+#: /home/kyle/Apps/projects/kyrc/src/main-window.vala:600
+#: /home/kyle/Apps/projects/kyrc/src/main_window.vala:600
+#: src/main_window.vala:600
+msgid "Connect to a single server"
+msgstr ""
+
+#: /home/kyle/Apps/projects/kyrc/src/main-window.vala:601
+#: /home/kyle/Apps/projects/kyrc/src/main_window.vala:601
+#: src/main_window.vala:601
+msgid "Saved"
+msgstr ""
+
+#: /home/kyle/Apps/projects/kyrc/src/main-window.vala:601
+#: /home/kyle/Apps/projects/kyrc/src/main_window.vala:601
+#: src/main_window.vala:601
+msgid "Connect to a saved server"
+msgstr ""
+
+#: /home/kyle/Apps/projects/kyrc/src/main-window.vala:628
+#: /home/kyle/Apps/projects/kyrc/src/main_window.vala:628
+#: src/main_window.vala:628
+msgid "Add new server"
+msgstr ""
+
+#: /home/kyle/Apps/projects/kyrc/src/kyrc.vala:48
+msgid "translator-credits"
+msgstr ""
+
+#: src/main_window.vala:596
+msgid "Welcome to Kyrc"
 msgstr ""

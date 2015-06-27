@@ -593,7 +593,7 @@ public class MainWindow : Object
 
     private void show_welcome_screen () {
         var sm = new ServerManager();
-        var title = _("Welcome to MainWindow");
+        var title = _("Welcome to Kyrc");
         var message =  _("Lets get started");
         var welcome = new Widgets.Welcome(title, message);
         welcome.append("network-server", _("Manage"), _("Manage the servers you use"));

@@ -41,14 +41,19 @@ public class Kyrc : Granite.Application {
             help_url = "http://poisonpacket.wordpress.com";
             translate_url = "https://translations.launchpad.net/kyrc";
 
-            about_authors = { "Nathan Dyer <mail@nathandyer.me>" };
-            about_documenters = { "Nathan Dyer <mail@nathandyer.me>" };
-            about_artists = { "Nathan Dyer (App) <mail@nathandyer.me>", "Harvey Cabaguio (Icons and Branding) <harvey@elementaryos.org", "Mashnoon Ibtesum (Artwork)" };
-            about_comments = "Podcast Client for the Modern Desktop";
-            about_translators = _("translator-credits");
+            about_authors = { "Kyle Agronick <agronick@gmail.com>" };
+            about_documenters = { "Kyle Agronick <agronick@gmail.com>" };
+            about_artists = { "Kyle Agronick (App) <agronick@gmail.com>" };
+            about_comments = "IRC Client for the Modern Desktop";
+            about_translators = "translator-credits";
             about_license_type = Gtk.License.GPL_3_0;
 
             set_options();
+
+            Intl.setlocale(LocaleCategory.MESSAGES, "");
+            Intl.textdomain(Config.GETTEXT_PACKAGE); 
+            Intl.bind_textdomain_codeset(Config.GETTEXT_PACKAGE, "utf-8"); 
+            Intl.bindtextdomain(Config.GETTEXT_PACKAGE, "./locale");
         }
 
 
