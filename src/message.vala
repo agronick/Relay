@@ -55,14 +55,16 @@ public class Message : GLib.Object {
         return prefix.split("!")[0];
     }
 
-    public void user_name_set (string name) {
-        user_name = name;
+    public void user_name_set (string name) { user_name = name;
     }
 
     //Use this function to add padding to the user name
     public string user_name_get () {
-        int length = IRC.USER_LENGTH - user_name.length - 1;
-        return user_name + string.nfill(length, ' ');
+		string name = user_name;
+		if (name.length >= IRC.USER_LENGTH) 
+			name = user_name.substring(0, IRC.USER_LENGTH - 4) + "...";
+        int length = IRC.USER_LENGTH - name.length;
+        return name + string.nfill(length, ' ');
     }
 
     public void parse_regex () {

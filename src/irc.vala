@@ -19,8 +19,8 @@
 
 public class IRC{
 	public const uint16 DEFAULT_PORT = 6667;
-	public const int USER_LENGTH = 20;
-	public const int USER_WIDTH = 140;
+	public const int USER_LENGTH = 18;
+	public const int USER_WIDTH = 126;
 	public const string user_prefixes = "~&@%+";
 
 	//Replies

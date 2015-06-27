@@ -217,7 +217,7 @@ public class MainWindow : Object
             scrolled.add(output);
 
             var ptabs = new Pango.TabArray(1, true);
-            ptabs.set_tab(0, Pango.TabAlign.LEFT, 100);
+            ptabs.set_tab(0, Pango.TabAlign.LEFT, IRC.USER_WIDTH);
             output.tabs = ptabs;
 
             new_tab.tab.label = new_tab.channel_name; 
