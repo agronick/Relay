@@ -198,7 +198,7 @@ public class ChannelTab : GLib.Object {
         Adjustment position = sw.get_vadjustment();
         if (!(position is Adjustment))
             return;
-        if (position.value > position.upper - position.page_size - 350) {
+        if (position.value > position.upper - position.page_size - 20) {
             Idle.add( () => {
                 position.set_value(position.upper - position.page_size);
                 sw.set_vadjustment(position);
@@ -281,7 +281,6 @@ public class ChannelTab : GLib.Object {
         color.parse("#F8F8F2");
         std_message_tag.foreground_rgba = color;
         std_message_tag.indent = 0;
-		std_message_tag.pixels_below_lines = 3;
 
         full_width_tag.left_margin = 0;
 
@@ -296,7 +295,7 @@ public class ChannelTab : GLib.Object {
 		link_tag.event.connect(hover_hand);
 		link_tag.event.connect(link_clicked);
 
-		color.parse("#B58710");
+		color.parse("#F1AB25");
 		name_hilight_tag.foreground_rgba = color;
 		name_hilight_tag.weight = Pango.Weight.SEMIBOLD;
 
@@ -308,7 +307,7 @@ public class ChannelTab : GLib.Object {
 		timestamp_tag.pixels_above_lines = 7;
 		timestamp_tag.pixels_below_lines = 1;
 
-		spacing_tag.size_points = 4;
+		spacing_tag.size_points = 2;
     }
 
 	public bool hover_hand(GLib.Object event_object, Gdk.Event event, TextIter end) {

@@ -48,27 +48,6 @@ public class Connection : Object
         return true;
     }
 
-    public ChannelTab? add_channel_tab (string? name) {
-        if (name == null || name.strip() == "")
-            return null;
-        if (name == server.username || name == server.nickname)
-            return server_tab;
-        if (channel_tabs.has_key(name))
-            return channel_tabs[name];
-        var newTab = new ChannelTab(this, name);
-        backref.add_tab(newTab); 
-        channel_tabs[name] = newTab;
-        return newTab;
-    }
-
-    private ChannelTab find_channel_tab (string name) {
-		debug("LOOKING UP " + name);
-        if (channel_tabs.has_key(name))
-            return channel_tabs[name];
-
-        return server_tab;
-    }
-
     private int do_connect () {
         SocketClient client = new SocketClient ();
         client.tls = encrypted;
@@ -96,6 +75,27 @@ public class Connection : Object
 
 
         return 1;
+    }
+
+    public ChannelTab? add_channel_tab (string? name) {
+        if (name == null || name.strip() == "")
+            return null;
+        if (name == server.username || name == server.nickname)
+            return server_tab;
+        if (channel_tabs.has_key(name))
+            return channel_tabs[name];
+        var newTab = new ChannelTab(this, name);
+        backref.add_tab(newTab); 
+        channel_tabs[name] = newTab;
+        return newTab;
+    }
+
+    private ChannelTab find_channel_tab (string name) {
+		debug("LOOKING UP " + name);
+        if (channel_tabs.has_key(name))
+            return channel_tabs[name];
+
+        return server_tab;
     }
 
     private void handle_input (string? msg) {
