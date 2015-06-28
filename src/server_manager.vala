@@ -38,7 +38,7 @@ public class ServerManager : Object
     Grid form;
     SqlClient.Server current_server = null;
     bool none_selected = false;
-    public const char[] CHANNEL_CHAR = {'&', '#', '+', '!'};
+    public char[] CHANNEL_CHAR = {'&', '#', '+', '!'};
 
 
 
