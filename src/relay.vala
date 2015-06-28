@@ -1,14 +1,14 @@
 /* -*- Mode: vala; indent-tabs-mode: nil; c-basic-offset: 4; tab-width: 4 -*-  */
 /*
- * kyrc.vala
+ * relay.vala
  * Copyright (C) 2015 Kyle Agronick <agronick@gmail.com>
  *
- * kyrc is free software: you can redistribute it and/or modify it
+ * relay is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  * 
- * kyrc is distributed in the hope that it will be useful, but
+ * relay is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
@@ -18,28 +18,28 @@
  */
 using X;
 
-public class Kyrc : Granite.Application {
+public class Relay : Granite.Application {
 
         private MainWindow window = null;
         public string[] args;
 
         construct {
-            program_name = "Kyrc";
-            exec_name = "kyrc";
+            program_name = "Relay";
+            exec_name = "relay";
 
             build_data_dir = Config.PACKAGE_DATA_DIR;
             build_pkg_data_dir = Config.GETTEXT_PACKAGE;
             build_version = Config.VERSION;
 
             app_years = "2015";
-            app_icon = "kyrc";
-            app_launcher = "kyrc.desktop";
-            application_id = "net.launchpad.kyrc";
+            app_icon = "relay";
+            app_launcher = "relay.desktop";
+            application_id = "net.launchpad.relay";
 
             main_url = "http://poisonpacket.wordpress.com";
-            bug_url = "https://bugs.launchpad.net/kyrc";
+            bug_url = "https://bugs.launchpad.net/relay";
             help_url = "http://poisonpacket.wordpress.com";
-            translate_url = "https://translations.launchpad.net/kyrc";
+            translate_url = "https://translations.launchpad.net/relay";
 
             about_authors = { "Kyle Agronick <agronick@gmail.com>" };
             about_documenters = { "Kyle Agronick <agronick@gmail.com>" };
@@ -65,7 +65,7 @@ public class Kyrc : Granite.Application {
         GLib.Log.set_default_handler(handle_log);
         Gtk.init (ref args);
 
-        Kyrc main = new Kyrc();
+        Relay main = new Relay();
         main.run(args);
         Gtk.main ();
 

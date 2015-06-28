@@ -40,7 +40,7 @@ public class SqlClient : Object
     }
 
     private void init () {
-        string confbase = GLib.Environment.get_user_config_dir() + "/kyrc";
+        string confbase = GLib.Environment.get_user_config_dir() + "/relay";
         File dir = File.new_for_path(confbase);
         try{
             if (!dir.query_exists())
@@ -49,7 +49,7 @@ public class SqlClient : Object
             error("Unable to create database. Can not write to " + confbase + ". Program will not function.");
         }
 
-        string conffile = confbase + "/kyrc.db";
+        string conffile = confbase + "/relay.db";
 
         int ec = Sqlite.Database.open_v2(conffile, out db);
         if (ec != Sqlite.OK) {

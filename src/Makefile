@@ -61,10 +61,10 @@ am__make_running_with_option = \
   test $$has_opt = yes
 am__make_dryrun = (target_option=n; $(am__make_running_with_option))
 am__make_keepgoing = (target_option=k; $(am__make_running_with_option))
-pkgdatadir = $(datadir)/kyrc
-pkgincludedir = $(includedir)/kyrc
-pkglibdir = $(libdir)/kyrc
-pkglibexecdir = $(libexecdir)/kyrc
+pkgdatadir = $(datadir)/relay
+pkgincludedir = $(includedir)/relay
+pkglibdir = $(libdir)/relay
+pkglibexecdir = $(libexecdir)/relay
 am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
 install_sh_DATA = $(install_sh) -c -m 644
 install_sh_PROGRAM = $(install_sh) -c
@@ -79,10 +79,10 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = x86_64-unknown-linux-gnu
 host_triplet = x86_64-unknown-linux-gnu
-bin_PROGRAMS = kyrc$(EXEEXT)
+bin_PROGRAMS = relay$(EXEEXT)
 subdir = src
-DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am kyrc.c \
-	client.c $(top_srcdir)/depcomp $(srcdir)/kyrc_vala.stamp
+DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am relay.c \
+	client.c $(top_srcdir)/depcomp $(srcdir)/relay_vala.stamp
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -93,17 +93,17 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(uidir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_kyrc_OBJECTS = kyrc.$(OBJEXT) client.$(OBJEXT)
-kyrc_OBJECTS = $(am_kyrc_OBJECTS)
+am_relay_OBJECTS = relay.$(OBJEXT) client.$(OBJEXT)
+relay_OBJECTS = $(am_relay_OBJECTS)
 am__DEPENDENCIES_1 =
-kyrc_DEPENDENCIES = $(am__DEPENDENCIES_1)
+relay_DEPENDENCIES = $(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-kyrc_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+relay_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(kyrc_LDFLAGS) $(LDFLAGS) -o $@
+	$(relay_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_$(V))
 am__v_P_ = $(am__v_P_$(AM_DEFAULT_VERBOSITY))
 am__v_P_0 = false
@@ -146,8 +146,8 @@ AM_V_VALAC = $(am__v_VALAC_$(V))
 am__v_VALAC_ = $(am__v_VALAC_$(AM_DEFAULT_VERBOSITY))
 am__v_VALAC_0 = @echo "  VALAC   " $@;
 am__v_VALAC_1 = 
-SOURCES = $(kyrc_SOURCES)
-DIST_SOURCES = $(kyrc_SOURCES)
+SOURCES = $(relay_SOURCES)
+DIST_SOURCES = $(relay_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -232,8 +232,8 @@ INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
-KYRC_CFLAGS = -pthread -I/usr/include/gee-0.8 -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/gtk-3.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/pango-1.0 -I/usr/include/gio-unix-2.0/ -I/usr/include/cairo -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/harfbuzz -I/usr/include/freetype2 -I/usr/include/pixman-1 -I/usr/include/libpng12  
-KYRC_LIBS = -lgee-0.8 -lgtk-3 -lgdk-3 -latk-1.0 -lgio-2.0 -lpangocairo-1.0 -lgdk_pixbuf-2.0 -lcairo-gobject -lpango-1.0 -lcairo -lgobject-2.0 -lglib-2.0  
+RELAY_CFLAGS = -pthread -I/usr/include/gee-0.8 -I/usr/include/glib-2.0 -I/usr/lib/x86_64-linux-gnu/glib-2.0/include -I/usr/include/gtk-3.0 -I/usr/include/atk-1.0 -I/usr/include/at-spi2-atk/2.0 -I/usr/include/pango-1.0 -I/usr/include/gio-unix-2.0/ -I/usr/include/cairo -I/usr/include/gdk-pixbuf-2.0 -I/usr/include/harfbuzz -I/usr/include/freetype2 -I/usr/include/pixman-1 -I/usr/include/libpng12  
+RELAY_LIBS = -lgee-0.8 -lgtk-3 -lgdk-3 -latk-1.0 -lgio-2.0 -lpangocairo-1.0 -lgdk_pixbuf-2.0 -lcairo-gobject -lpango-1.0 -lcairo -lgobject-2.0 -lglib-2.0  
 LD = /usr/bin/ld -m elf_x86_64
 LDFLAGS = 
 LIBOBJS = 
@@ -251,11 +251,11 @@ OBJDUMP = objdump
 OBJEXT = o
 OTOOL = 
 OTOOL64 = 
-PACKAGE = kyrc
+PACKAGE = relay
 PACKAGE_BUGREPORT = 
-PACKAGE_NAME = kyrc
-PACKAGE_STRING = kyrc 0.1
-PACKAGE_TARNAME = kyrc
+PACKAGE_NAME = relay
+PACKAGE_STRING = relay 0.1
+PACKAGE_TARNAME = relay
 PACKAGE_URL = 
 PACKAGE_VERSION = 0.1
 PATH_SEPARATOR = :
@@ -322,27 +322,27 @@ top_build_prefix = ../
 top_builddir = ..
 top_srcdir = ..
 uidir = $(pkgdatadir)/ui
-ui_DATA = kyrc.ui
+ui_DATA = relay.ui
 AM_CPPFLAGS = \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-DPACKAGE_SRC_DIR=\""$(srcdir)"\" \
 	-DPACKAGE_DATA_DIR=\""$(pkgdatadir)"\" \
-	$(KYRC_CFLAGS)
+	$(RELAY_CFLAGS)
 
 AM_CFLAGS = \
 	 -Wall\
 	 -g
 
-kyrc_SOURCES = \
-	kyrc.vala config.vapi client.vala
+relay_SOURCES = \
+	relay.vala config.vapi client.vala
 
-kyrc_VALAFLAGS = \
+relay_VALAFLAGS = \
 	--pkg gtk+-3.0 --pkg glib-2.0 --pkg gee-0.8
 
-kyrc_LDFLAGS = \
+relay_LDFLAGS = \
 	-Wl,--export-dynamic
 
-kyrc_LDADD = $(KYRC_LIBS)
+relay_LDADD = $(RELAY_LIBS)
 EXTRA_DIST = $(ui_DATA)
 all: all-am
 
@@ -428,9 +428,9 @@ clean-binPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
-kyrc$(EXEEXT): $(kyrc_OBJECTS) $(kyrc_DEPENDENCIES) $(EXTRA_kyrc_DEPENDENCIES) 
-	@rm -f kyrc$(EXEEXT)
-	$(AM_V_CCLD)$(kyrc_LINK) $(kyrc_OBJECTS) $(kyrc_LDADD) $(LIBS)
+relay$(EXEEXT): $(relay_OBJECTS) $(relay_DEPENDENCIES) $(EXTRA_relay_DEPENDENCIES) 
+	@rm -f relay$(EXEEXT)
+	$(AM_V_CCLD)$(relay_LINK) $(relay_OBJECTS) $(relay_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -439,7 +439,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 include ./$(DEPDIR)/client.Po
-include ./$(DEPDIR)/kyrc.Po
+include ./$(DEPDIR)/relay.Po
 
 .c.o:
 	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -461,19 +461,19 @@ include ./$(DEPDIR)/kyrc.Po
 #	$(AM_V_CC)source='$<' object='$@' libtool=yes \
 #	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
 #	$(AM_V_CC_no)$(LTCOMPILE) -c -o $@ $<
-$(srcdir)/kyrc.c: $(srcdir)/kyrc_vala.stamp
-	@if test -f $@; then :; else rm -f $(srcdir)/kyrc_vala.stamp; fi
+$(srcdir)/relay.c: $(srcdir)/relay_vala.stamp
+	@if test -f $@; then :; else rm -f $(srcdir)/relay_vala.stamp; fi
 	@if test -f $@; then :; else \
-	  $(MAKE) $(AM_MAKEFLAGS) $(srcdir)/kyrc_vala.stamp; \
+	  $(MAKE) $(AM_MAKEFLAGS) $(srcdir)/relay_vala.stamp; \
 	fi
-$(srcdir)/client.c: $(srcdir)/kyrc_vala.stamp
-	@if test -f $@; then :; else rm -f $(srcdir)/kyrc_vala.stamp; fi
+$(srcdir)/client.c: $(srcdir)/relay_vala.stamp
+	@if test -f $@; then :; else rm -f $(srcdir)/relay_vala.stamp; fi
 	@if test -f $@; then :; else \
-	  $(MAKE) $(AM_MAKEFLAGS) $(srcdir)/kyrc_vala.stamp; \
+	  $(MAKE) $(AM_MAKEFLAGS) $(srcdir)/relay_vala.stamp; \
 	fi
-$(srcdir)/kyrc_vala.stamp: kyrc.vala config.vapi client.vala
+$(srcdir)/relay_vala.stamp: relay.vala config.vapi client.vala
 	$(AM_V_at)rm -f $@ && echo stamp > $@-t
-	$(AM_V_VALAC)$(am__cd) $(srcdir) && $(VALAC) $(kyrc_VALAFLAGS) $(VALAFLAGS) -C kyrc.vala config.vapi client.vala
+	$(AM_V_VALAC)$(am__cd) $(srcdir) && $(VALAC) $(relay_VALAFLAGS) $(VALAFLAGS) -C relay.vala config.vapi client.vala
 	$(AM_V_at)mv -f $@-t $@
 
 mostlyclean-libtool:
@@ -623,10 +623,10 @@ maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 	-rm -f $(srcdir)/client.c
-	-rm -f $(srcdir)/kyrc.c
-	-rm -f $(srcdir)/kyrc_vala.stamp
+	-rm -f $(srcdir)/relay.c
+	-rm -f $(srcdir)/relay_vala.stamp
 	-rm -f client.c
-	-rm -f kyrc.c
+	-rm -f relay.c
 clean: clean-am
 
 clean-am: clean-binPROGRAMS clean-generic clean-libtool mostlyclean-am

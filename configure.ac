@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl Created by Anjuta application wizard.
 
-AC_INIT(kyrc, 0.1)
+AC_INIT(relay, 0.1)
 
 AC_CONFIG_HEADERS([config.h])
 
@@ -20,7 +20,7 @@ dnl Check for vala
 AM_PROG_VALAC([0.10.0])
 
 
-PKG_CHECK_MODULES(KYRC, granite
+PKG_CHECK_MODULES(RELAY, granite
 sqlite3
 gee-0.8
 glib-2.0

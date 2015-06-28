@@ -26,8 +26,8 @@ public class MainWindow : Object
      * Uncomment this line when you are done testing and building a tarball
      * or installing
      */
-    //const string UI_FILE = Config.PACKAGE_DATA_DIR + "/ui/" + "kyrc.ui";
-    public const string UI_FILE = "ui/kyrc.ui";
+    //const string UI_FILE = Config.PACKAGE_DATA_DIR + "/ui/" + "relay.ui";
+    public const string UI_FILE = "ui/relay.ui";
     public const string UI_FILE_SERVERS = "ui/server_window.ui";
 
 
@@ -71,7 +71,7 @@ public class MainWindow : Object
 			tabs.show_icons = true;
 
             window = builder.get_object ("window") as Window;
-            window.destroy.connect(kyrc_close_program);
+            window.destroy.connect(relay_close_program);
             var nb_wrapper = builder.get_object("notebook_wrapper") as Box;
             nb_wrapper.pack_start(tabs, true, true, 0); 
             tabs.set_size_request(500, 20);
@@ -165,7 +165,7 @@ public class MainWindow : Object
 
             set_up_add_sever(builder);
 
-            toolbar.set_title("Kyrc");
+            toolbar.set_title("Relay");
             toolbar.show_all();
 
             toolbar.show_close_button = true;
@@ -599,7 +599,7 @@ public class MainWindow : Object
 
     private void show_welcome_screen () {
         var sm = new ServerManager();
-        var title = _("Welcome to Kyrc");
+        var title = _("Welcome to Relay");
         var message =  _("Lets get started");
         var welcome = new Widgets.Welcome(title, message);
         welcome.append("network-server", _("Manage"), _("Manage the servers you use"));
@@ -653,7 +653,7 @@ public class MainWindow : Object
         }
     }
 
-    public void kyrc_close_program () { 
+    public void relay_close_program () { 
         foreach(var client in clients.entries) {
             client.value.do_exit();
         }
