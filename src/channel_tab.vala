@@ -287,7 +287,7 @@ public class ChannelTab : GLib.Object {
 		link_tag.event.connect(hover_hand);
 		link_tag.event.connect(link_clicked);
 
-		color.parse("#6A9966");
+		color.parse("#B58710");
 		name_hilight_tag.foreground_rgba = color;
 		name_hilight_tag.weight = Pango.Weight.SEMIBOLD;
 

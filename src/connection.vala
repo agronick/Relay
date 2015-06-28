@@ -80,7 +80,7 @@ public class Connection : Object
         input_stream = new DataInputStream (conn.input_stream);
         output_stream = new DataOutputStream (conn.output_stream);
 
-		do_register();
+        do_register();
 
         string? line = "";
         do{
@@ -149,8 +149,8 @@ public class Connection : Object
 				break;
 			case IRC.ERR_NICKNAMEINUSE:
             case IRC.ERR_NONICKNAMEGIVEN:
-                string error_msg = "";
-                if (message.message == null)
+                string error_msg = message.message;
+                if (message.message == null || message.message.strip().length < 3)
                     error_msg = "The name you chose is in use.";
                 error_msg = server.host + "\n" + error_msg;
 				name_in_use(error_msg);
@@ -177,8 +177,8 @@ public class Connection : Object
 
 	public void do_register () {
         //TODO: make this work the way it should
-        send_output ("PASS  -p");
         send_output ("NICK " + server.nickname);
+        send_output ("PASS  -p");
         send_output("USER " + server.username + " 0 * :" + server.realname);
         send_output("MODE " + server.username + " +i");
 	}
@@ -209,7 +209,9 @@ public class Connection : Object
 				case Gtk.ResponseType.ACCEPT:
 					string name = server_name.get_text().strip();
 					if (name.length > 0) {
-						server.username = server_name.get_text();
+						server.nickname = server.username = server_name.get_text();
+						if (server.realname.size() == 0)
+							server.realname = server.nickname;
 						do_register();
 						dialog.close();
 					}
@@ -247,7 +249,7 @@ public class Connection : Object
 	}
 
     public void send_output (string output) {
-        stderr.printf("Sending out " + output + "\n");
+        stderr.printf("Sending out " + output + "  " + server.host + "\n");
         try{
 			if (output_stream == null || output_stream.is_closed())
 				return;

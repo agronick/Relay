@@ -75,20 +75,21 @@ public class MainWindow : Object
             tabs.set_size_request(500, 20);
             tabs.show_all();
 
+			//Slide out panel
             pannel = builder.get_object("pannel") as Paned;
             var server_list_container = builder.get_object("server_list_container") as Box;
             server_list_container.pack_start(servers, true, true, 0);
 
-            Image icon = new Image.from_file("src/assets/server_run.png");
+			//Slide out panel button
+            Image icon = new Image.from_file("src/assets/server_icon.png");
             var select_channel = new Gtk.Button();
             select_channel.image = icon;
-            select_channel.tooltip_text = "Open server/channel view";
+            select_channel.tooltip_text = _("Open server/channel view");
             toolbar.pack_start(select_channel);
             select_channel.button_release_event.connect(slide_panel);
             pannel.position = 1;
 
             input = builder.get_object("input") as Entry;
-
             input.activate.connect (() => {
                 send_text_out(input.get_text ());
                 input.set_text("");
@@ -160,14 +161,14 @@ public class MainWindow : Object
 
             servers.item_selected.connect(set_item_selected);
 
-            set_up_add_sever(toolbar);
+            set_up_add_sever(builder);
 
             toolbar.set_title("Kyrc");
             toolbar.show_all();
 
             toolbar.show_close_button = true;
             window.set_titlebar(toolbar);
-            window.show_all ();
+            window.show_all();
 
             tabs.new_tab_requested.connect(new_tab_requested);
             tabs.tab_removed.connect(tab_remove);
@@ -290,21 +291,13 @@ public class MainWindow : Object
         //Remove tab from the servers tab list
         tab_server.channel_tabs.unset(tab.label);
 
-        foreach (var client in clients.entries) {
-            debug("BEFORE " + client.key);
-        }
-
         //Remove server if no connections are left
         if (tab_server.channel_tabs.size < 1) {
             debug("Closing server");
             tab_server.do_exit();
             clients.unset(tab_server.server.host);
-        }
-
-        foreach (var client in clients.entries) {
-            debug("AFTER " + client.key);
-        }
-
+		}
+			
         //Remove the tab from the list of tabs
         outputs.unset(id);
 
@@ -313,6 +306,13 @@ public class MainWindow : Object
     }
 
     private void tab_switch (Granite.Widgets.Tab? old_tab, Granite.Widgets.Tab new_tab) {
+		if (new_tab.label == _("Welcome")) {
+			channel_subject.hide();
+			channel_users.hide();
+			toolbar.set_title(new_tab.label);
+			return;
+		}
+		
         current_tab = lookup_channel_id(new_tab);
         if (!outputs.has_key(current_tab))
             return;
@@ -323,10 +323,12 @@ public class MainWindow : Object
         else
             channel_subject.hide();
         
-        if (using_tab.is_server_tab)
+        if (using_tab.is_server_tab) {
             toolbar.set_title(using_tab.tab.label);
-        else
+			channel_users.hide();
+		} else
             toolbar.set_title(using_tab.tab.label + _(" on ") + using_tab.connection.server.host);
+		
         input.placeholder_text = using_tab.tab.label;
 
         make_user_popover (using_tab);
@@ -390,7 +392,6 @@ public class MainWindow : Object
     }
 
     private bool click_private_message (Gdk.EventButton event) {
-        debug("SEND PRIVATE MESSAGE");
         user_menu.popdown();
         users_popover.set_visible(false);
         ChannelTab using_tab = outputs[current_tab];
@@ -479,14 +480,11 @@ public class MainWindow : Object
         } else {
             //Existing channel tab
             SqlClient.Channel channel = current_selected_item.get_data<SqlClient.Channel>("channel");
-            debug("Looking up " + channel.channel);
             var server = SqlClient.servers[channel.server_id];
             foreach (var tab in outputs.entries) {
-                debug("Looping at " + tab.value.channel_name);
                 if (!tab.value.is_server_tab && 
                     tab.value.tab.label == channel.channel &&
                     server.host == tab.value.connection.server.host) {
-		                debug("Switching to " + tab.value.tab.label);
 		                tabs.current = tab.value.tab;
 		                return;
                 }
@@ -598,6 +596,7 @@ public class MainWindow : Object
 
         var tab = new Widgets.Tab();
         tab.label = _("Welcome");
+		toolbar.set_title(tab.label);
         tab.page = welcome;
         tabs.insert_tab(tab, -1);
 
@@ -619,9 +618,8 @@ public class MainWindow : Object
         });
     }
 
-    public void set_up_add_sever (Gtk.HeaderBar toolbar) {
-        add_server_button = new Gtk.Button.from_icon_name("list-add-symbolic", Gtk.IconSize.LARGE_TOOLBAR);
-        add_server_button.tooltip_text = _("Add new server");
+    public void set_up_add_sever (Builder builder) {
+        var add_server_button = builder.get_object("manage_servers") as Button;
 
         var sm = new ServerManager();
         add_server_button.button_release_event.connect( (event) => {
@@ -631,8 +629,6 @@ public class MainWindow : Object
             });
             return false;
         });
-
-        toolbar.pack_start(add_server_button);
     }
 
     private void check_elementary () {
