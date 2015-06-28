@@ -164,7 +164,12 @@ public class ServerManager : Object
             message = "A server with that host already exists. Your changes will not be saved.";
         }
         if (message != "") {
-            Gtk.MessageDialog msg = new Gtk.MessageDialog (window, Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK, message);
+            Gtk.MessageDialog msg = new Gtk.MessageDialog (window, 
+                                                           Gtk.DialogFlags.MODAL, 
+                                                           Gtk.MessageType.WARNING, 
+                                                           Gtk.ButtonsType.OK, 
+                                                           "%s",
+                                                           message);
             msg.response.connect ((response_id) => {
                 host.grab_focus();
                 msg.destroy();
