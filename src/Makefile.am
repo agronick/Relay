@@ -7,7 +7,8 @@ uidir = $(pkgdatadir)/ui
 ui_DATA = ui/relay.ui ui/server_window.ui
 
 assetsdir = $(pkgdatadir)/assets
-assets_DATA = assets/server_run.png
+assets_DATA = assets/server_run.png \
+	ui/relay.png
 
 AM_CPPFLAGS = \
     -DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \

@@ -578,7 +578,8 @@ public class MainWindow : Object
 
 
     public static string get_asset_file (string name) {
-        string check = Config.PACKAGE_DATA_DIR + name;
+        string check = Config.PACKAGE_DATA_DIR + "/" + name;
+		debug("Checking asset: " + check);
         File file = File.new_for_path (check);
         if (file.query_exists())
             return check;
