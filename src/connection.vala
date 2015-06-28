@@ -48,13 +48,13 @@ public class Connection : Object
         return true;
     }
 
-    public ChannelTab? add_channel_tab (string name) {
+    public ChannelTab? add_channel_tab (string? name) {
+        if (name == null || name.strip() == "")
+            return null;
         if (name == server.username || name == server.nickname)
             return server_tab;
         if (channel_tabs.has_key(name))
             return channel_tabs[name];
-        if (name.strip() == "")
-            return null;
         var newTab = new ChannelTab(this, name);
         backref.add_tab(newTab); 
         channel_tabs[name] = newTab;
@@ -113,10 +113,14 @@ public class Connection : Object
                 info(msg);
                 return;
             case IRC.RPL_TOPIC:
-                add_channel_tab(message.parameters[1]).set_topic(message.message);
+                ChannelTab tab = add_channel_tab(message.parameters[1]);
+				if (tab != null)
+					tab.set_topic(message.message);
                 return;
             case IRC.PRIVATE_MESSAGE: 
-                add_channel_tab(message.parameters[0]).display_message(message);
+                ChannelTab tab = add_channel_tab(message.parameters[0]);
+				if (tab != null)
+					backref.add_text(tab, message);
                 return;
             case "JOIN": 
                 add_channel_tab(message.message); 

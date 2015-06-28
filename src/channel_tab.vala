@@ -38,6 +38,7 @@ public class ChannelTab : GLib.Object {
 	public static TimeVal timeval = TimeVal();
 	public static int timestamp_seconds = 180;
 	private long last_timestamp = 0;
+	private string last_user = "";
 	string date_format = "%A, %B %e";
 	string time_format = Granite.DateTime.get_default_time_format(true, true);
 
@@ -49,8 +50,7 @@ public class ChannelTab : GLib.Object {
 	TextTag link_tag;
 	TextTag name_hilight_tag;
 	TextTag timestamp_tag;
-
-	
+	TextTag spacing_tag;
 
     public signal void new_subject(int tab_id, string subject);
 
@@ -139,7 +139,6 @@ public class ChannelTab : GLib.Object {
     }
  
     public void display_message (Message message) {   
-		make_timestamp(); 
 
         message.message += "\n";
         
@@ -168,19 +167,30 @@ public class ChannelTab : GLib.Object {
 		if (blocked_users.contains(message.user_name))
 			return;
 
-		add_with_tag(message.user_name_get(), message.internal ? user_self_tag : user_other_tag);
+		string user = message.user_name_get();
+		if (user == last_user)
+			user = "";
+		else {
+			if (!make_timestamp())
+				add_with_tag(" \n", spacing_tag);
+			last_user = user;
+		}
+		
+		add_with_tag(user, message.internal ? user_self_tag : user_other_tag);
 		add_with_tag(message.message, std_message_tag);
 	}
 
-	private void make_timestamp() {
+	private bool make_timestamp() {
 		timeval.get_current_time();
 		long current = timeval.tv_sec;
 		if (current - last_timestamp > timestamp_seconds) {
 			var local = new GLib.DateTime.now_local();
-			string datetime = local.format(date_format  + time_format) + "\n";
+			string datetime = local.format(date_format + " "  + time_format) + "\n";
 			add_with_tag(datetime, timestamp_tag);
 			last_timestamp = current;
+			return true;
 		}
+		return false;
 	}
     
     public void do_autoscroll () {
@@ -198,7 +208,7 @@ public class ChannelTab : GLib.Object {
     }       
  
     private void add_with_tag (string? text, TextTag tag, int retry_count = 0) {
-		if(text == null || text.strip() == "" || retry_count > 4)
+		if(text == null || (text.strip() == "" && tag != spacing_tag) || retry_count > 4)
 			return;
 
 		var rich_text = new RichText(text);
@@ -245,6 +255,7 @@ public class ChannelTab : GLib.Object {
 		is_locked = false;
     }
 
+
     private void update_tag_table () { 
         user_other_tag = output.buffer.create_tag("user_other");
         user_self_tag = output.buffer.create_tag("user_self");
@@ -254,6 +265,7 @@ public class ChannelTab : GLib.Object {
         link_tag = output.buffer.create_tag("link");
 		name_hilight_tag = output.buffer.create_tag("name_hilight");
 		timestamp_tag = output.buffer.create_tag("timestamp");
+		spacing_tag = output.buffer.create_tag("spacing");
 
         var color = new Gdk.RGBA();
         color.parse("#4EC9DE");
@@ -268,13 +280,10 @@ public class ChannelTab : GLib.Object {
 
         color.parse("#F8F8F2");
         std_message_tag.foreground_rgba = color;
-        std_message_tag.indent = 0;   
-		std_message_tag.pixels_above_lines = 1;
-		std_message_tag.pixels_below_lines = 1;
+        std_message_tag.indent = 0;
+		std_message_tag.pixels_below_lines = 3;
 
         full_width_tag.left_margin = 0;
-		full_width_tag.pixels_above_lines = 1;
-		full_width_tag.pixels_below_lines = 1;
 
 		color.parse("#C54725");
 		error_tag.foreground_rgba = color;
@@ -296,11 +305,14 @@ public class ChannelTab : GLib.Object {
 		timestamp_tag.justification = Justification.RIGHT;
 		timestamp_tag.size_points = 8;
 		timestamp_tag.family = "Liberation Sans";
-		timestamp_tag.pixels_above_lines = 3;
-		timestamp_tag.pixels_below_lines = 3;
+		timestamp_tag.pixels_above_lines = 7;
+		timestamp_tag.pixels_below_lines = 1;
+
+		spacing_tag.size_points = 4;
     }
 
 	public bool hover_hand(GLib.Object event_object, Gdk.Event event, TextIter end) {
+		//TODO: Make this work or remove it
 		TextView tv = (TextView) event_object;
 		if (event.type == EventType.ENTER_NOTIFY) {
 			stdout.printf("Entered");

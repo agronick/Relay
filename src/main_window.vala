@@ -37,6 +37,7 @@ public class MainWindow : Object
     Paned pannel;
     Button channel_subject;
     Button channel_users;
+	Icon channel_tab_icon;
     TextView subject_text;
     Box users_list;
     Gtk.Menu user_menu;
@@ -67,6 +68,7 @@ public class MainWindow : Object
             toolbar = new HeaderBar (); 
             tabs = new Granite.Widgets.DynamicNotebook();
             tabs.allow_drag = true;
+			tabs.show_icons = true;
 
             window = builder.get_object ("window") as Window;
             window.destroy.connect(kyrc_close_program);
@@ -74,6 +76,7 @@ public class MainWindow : Object
             nb_wrapper.pack_start(tabs, true, true, 0); 
             tabs.set_size_request(500, 20);
             tabs.show_all();
+			channel_tab_icon = new Image.from_icon_name("mail-unread", IconSize.MENU).gicon;
 
 			//Slide out panel
             pannel = builder.get_object("pannel") as Paned;
@@ -81,7 +84,7 @@ public class MainWindow : Object
             server_list_container.pack_start(servers, true, true, 0);
 
 			//Slide out panel button
-            Image icon = new Image.from_file("src/assets/server_icon.png");
+            Image icon = new Image.from_file(get_asset_file("assets/server_icon.png"));
             var select_channel = new Gtk.Button();
             select_channel.image = icon;
             select_channel.tooltip_text = _("Open server/channel view");
@@ -150,7 +153,6 @@ public class MainWindow : Object
             users_popover.add(users_wrap);
             toolbar.pack_end(channel_users);
             user_menu = new Gtk.Menu();
-            window.add(user_menu);
             Gtk.MenuItem private_message = new Gtk.MenuItem.with_label (_("Private Message"));
             user_menu.add(private_message);
             Gtk.MenuItem block = new Gtk.MenuItem.with_label (_("Block"));
@@ -201,7 +203,7 @@ public class MainWindow : Object
     public static int index = 0;
     public void add_tab (ChannelTab new_tab) {
         Idle.add( () => { 
-            new_tab.tab = new Granite.Widgets.Tab(); 
+            new_tab.tab = new Widgets.Tab(); 
 
             if (new_tab.is_server_tab)
                 new_tab.tab.working = true;
@@ -221,7 +223,7 @@ public class MainWindow : Object
             ptabs.set_tab(0, Pango.TabAlign.LEFT, IRC.USER_WIDTH);
             output.tabs = ptabs;
 
-            new_tab.tab.label = new_tab.channel_name; 
+            new_tab.tab.restore_data = new_tab.tab.label = new_tab.channel_name; 
             new_tab.tab.page = scrolled;
             new_tab.new_subject.connect(new_subject);
             tabs.insert_tab(new_tab.tab, -1); 
@@ -238,6 +240,8 @@ public class MainWindow : Object
             if (tabs.n_tabs == 1) {
                 tab_switch (null, new_tab.tab);
             }
+
+			new_tab.tab.icon = null;
 
             index++;
             return false;
@@ -312,6 +316,8 @@ public class MainWindow : Object
 			toolbar.set_title(new_tab.label);
 			return;
 		}
+
+		new_tab.icon = null;
 		
         current_tab = lookup_channel_id(new_tab);
         if (!outputs.has_key(current_tab))
@@ -369,8 +375,10 @@ public class MainWindow : Object
             eb.add(label);
             eb.button_press_event.connect( (event)=> {
                 debug("TRIGGERED " + user);
-                channel_user_selected = user;
-                user_menu.popup (null, null, null, event.button, event.time);
+				if (event.button == 3) {
+		            channel_user_selected = user;
+		            user_menu.popup (null, null, null, event.button, event.time);
+				}
                 return true;
             });
             listbox.pack_start(eb, false, false, 0);
@@ -445,6 +453,10 @@ public class MainWindow : Object
 
     public void add_text (ChannelTab tab, Message message) {
         tab.display_message(message);
+
+		if (!tab.is_server_tab && current_tab != tab.tab_index) {
+			tab.tab.icon = channel_tab_icon;
+		}
     }
 
     public void send_text_out (string text) {
@@ -595,6 +607,7 @@ public class MainWindow : Object
         welcome.append("network-wired", _("Saved"), _("Connect to a saved server"));
 
         var tab = new Widgets.Tab();
+		tab.icon = null;
         tab.label = _("Welcome");
 		toolbar.set_title(tab.label);
         tab.page = welcome;
