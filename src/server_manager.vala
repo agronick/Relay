@@ -38,7 +38,7 @@ public class ServerManager : Object
     Grid form;
     SqlClient.Server current_server = null;
     bool none_selected = false;
-    public const char[] channel_char = {'&', '#', '+', '!'};
+    public const char[] CHANNEL_CHAR = {'&', '#', '+', '!'};
 
 
 
@@ -246,14 +246,22 @@ public class ServerManager : Object
         return false;
     }
 
-    static const string CHANNEL_ERROR = _("""A channel name must begin with one of the following characters: &, #, +, !.""");
+    static string CHANNEL_ERROR = _("A channel name must begin with one of the following characters: %c, %c, %c, %c.");
     private bool add_channel_clicked (Gdk.EventButton event) {
         string chan_name = new_channel.get_text().strip();
         if (chan_name.length == 0)
             return false;
 
-        if (!(chan_name[0] in channel_char)) {
-            Gtk.MessageDialog msg = new Gtk.MessageDialog (window, Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK, CHANNEL_ERROR);
+        if (!(chan_name[0] in CHANNEL_CHAR)) {
+            Gtk.MessageDialog msg = new Gtk.MessageDialog (window, 
+                                                           Gtk.DialogFlags.MODAL, 
+                                                           Gtk.MessageType.WARNING, 
+                                                           Gtk.ButtonsType.OK, 
+                                                           CHANNEL_ERROR,
+                                                           CHANNEL_CHAR[0], 
+                                                           CHANNEL_CHAR[1], 
+                                                           CHANNEL_CHAR[2], 
+                                                           CHANNEL_CHAR[3]);
             msg.response.connect ((response_id) => {
                 host.grab_focus();
                 msg.destroy();
