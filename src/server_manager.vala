@@ -246,14 +246,14 @@ public class ServerManager : Object
         return false;
     }
 
+    static const string CHANNEL_ERROR = _("""A channel name must begin with one of the following characters: &, #, +, !.""");
     private bool add_channel_clicked (Gdk.EventButton event) {
         string chan_name = new_channel.get_text().strip();
         if (chan_name.length == 0)
             return false;
 
         if (!(chan_name[0] in channel_char)) {
-            string message = "A channel name must begin with one of the following characters: &, #, +, !.";
-            Gtk.MessageDialog msg = new Gtk.MessageDialog (window, Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK, message);
+            Gtk.MessageDialog msg = new Gtk.MessageDialog (window, Gtk.DialogFlags.MODAL, Gtk.MessageType.WARNING, Gtk.ButtonsType.OK, CHANNEL_ERROR);
             msg.response.connect ((response_id) => {
                 host.grab_focus();
                 msg.destroy();
