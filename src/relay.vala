@@ -22,6 +22,7 @@ public class Relay : Granite.Application {
 
         private MainWindow window = null;
         public string[] args;
+        public static bool has_activated = false;
 
         construct {
             program_name = "Relay";
@@ -58,27 +59,29 @@ public class Relay : Granite.Application {
 
 
     /* Method definitions */
-    public static int main (string[] args) {
+    public static void main (string[] args) {
         X.init_threads ();
         Gtk.Settings.get_default().set("gtk-application-prefer-dark-theme", true);
         
         GLib.Log.set_default_handler(handle_log);
-        Gtk.init (ref args);
 
-        Relay main = new Relay();
+        var main = new Relay();
         main.run(args);
-        Gtk.main ();
-
-        return 0;
     }
 
     public override void activate () {
 
-        // Set Vocal to use the dark theme (if available)
-        var settings = Gtk.Settings.get_default();
-        settings.gtk_application_prefer_dark_theme = true;
+        if (has_activated) {
+            window.window.present();
+            return;
+        }
 
-        MainWindow window = new MainWindow();
+        has_activated = true;
+
+        Gtk.Settings.get_default().gtk_application_prefer_dark_theme = true;
+
+        window = new MainWindow();
+        Gtk.main ();
     }
 
     public static void handle_log (string? log_domain, LogLevelFlags log_levels, string message) {

@@ -37,7 +37,7 @@ public class MainWindow : Object
     Paned pannel;
     Button channel_subject;
     Button channel_users;
-	Icon channel_tab_icon;
+	Icon channel_tab_icon_new_msg;
     TextView subject_text;
     Box users_list;
     Gtk.Menu user_menu;
@@ -76,7 +76,7 @@ public class MainWindow : Object
             nb_wrapper.pack_start(tabs, true, true, 0); 
             tabs.set_size_request(500, 20);
             tabs.show_all();
-			channel_tab_icon = new Image.from_icon_name("mail-unread", IconSize.MENU).gicon;
+			channel_tab_icon_new_msg = new Image.from_icon_name("mail-unread", IconSize.MENU).gicon;
 
 			//Slide out panel
             pannel = builder.get_object("pannel") as Paned;
@@ -394,7 +394,7 @@ public class MainWindow : Object
         }
         listbox.width_request = BOX_WIDTH;
 
-        users_header.set_text("Total users: " + i.to_string());
+        users_header.set_text(_("Total users: ") + i.to_string());
 
         int cols = (int) Math.ceilf((float)i / (float)PER_BOX); 
         debug("Cols is " + cols.to_string());
@@ -461,7 +461,7 @@ public class MainWindow : Object
     		tab.display_message(message);
 
 		if (current_tab != tab.tab_index) {
-			tab.tab.icon = channel_tab_icon;
+			tab.tab.icon = channel_tab_icon_new_msg;
 		}
     }
 
@@ -520,6 +520,12 @@ public class MainWindow : Object
             add_server(SqlClient.servers[channel.server_id], channels);
         }
     } 
+
+    public void user_names_changed (int tab_id) {
+        if (current_tab == tab_id) {
+            make_user_popover(outputs[tab_id]);
+        }
+    }
 
     public bool slide_panel () {
         new Thread<int>("slider_move", move_slider_t);
