@@ -226,6 +226,7 @@ public class MainWindow : Object
             new_tab.tab.restore_data = new_tab.tab.label = new_tab.channel_name; 
             new_tab.tab.page = scrolled;
             new_tab.new_subject.connect(new_subject);
+            new_tab.user_names_changed.connect(user_names_changed);
             tabs.insert_tab(new_tab.tab, -1); 
 
             debug("Setting index " + new_tab.channel_name + ":" + index.to_string()); 

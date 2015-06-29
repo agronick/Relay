@@ -79,7 +79,7 @@ public class Message : GLib.Object {
                 if(message != null)
                     message = message.replace("\t", "");
                 
-                if(command == IRC.PRIVATE_MESSAGE)
+                if(command == IRC.PRIVATE_MESSAGE || command == IRC.USER_NAME_CHANGED)
                     user_name_set(prefix.split("!")[0]);
                 
                 return false;
@@ -88,9 +88,5 @@ public class Message : GLib.Object {
             warning("Regex error with " + message);
         }
     }
-
-
-
-
 }
 
