@@ -51,6 +51,11 @@ public class IRC{
 	public const string RPL_MOTDSTART = "375";
 	public const string RPL_ENDOFMOTD = "376";
     public const string RPL_LUSEROP = "252";
+	public const string RPL_UMODEIS = "221";
+	public const string RPL_SERVLIST = "234";
+	public const string RPL_ENDOFSTATS = "219";
+	public const string RPL_STATSCOMMANDS = "212";
+	public const string RPL_STATSLINKINFO = "211";
              // "<integer> :operator(s) online"
     public const string RPL_LUSERUNKNOWN = "253";
              //"<integer> :unknown connection(s)"
@@ -61,6 +66,7 @@ public class IRC{
 	public const string RPL_LUSERCLIENT = "251";
 			//:There are <integer> users and <integer> services on <integer> servers"
 	public const string PRIVATE_MESSAGE = "PRIVMSG";
+	public const string USER_NAME_CHANGED = "NICK";
 
 	//Errors
 	public const string ERR_NOSUCHNICK = "401";
@@ -77,6 +83,7 @@ public class IRC{
 	public const string ERR_UNKNOWNMODE = "472";
 	public const string ERR_ALREADYONCHANNEL = "479";
 	public const string ERR_CHANOPRIVSNEEDED = "482";
+	public const string ERR_NONONREG = "486";
 
 	public static int compare(string a, string b) {
 		return GLib.strcmp(a, b);                                                                                                                                                                                                                                                                                                                                                       

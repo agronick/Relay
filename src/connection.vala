@@ -133,13 +133,17 @@ public class Connection : Object
             case IRC.RPL_LUSEROP:
             case IRC.RPL_LUSERUNKNOWN:
             case IRC.RPL_LUSERCHANNELS:
+            case IRC.RPL_UMODEIS: //maybe atab
+            case IRC.RPL_SERVLIST:
+            case IRC.RPL_ENDOFSTATS:
+            case IRC.RPL_STATSLINKINFO:
                 server_tab.display_message(message);
                 return;
             case IRC.RPL_CREATED:
             case IRC.RPL_LUSERME:
                 debug("SETTING TOPIC " + message.message);
                 server_tab.set_topic(message.message, true);
-                server_tab.display_message(message);
+				backref.add_text(server_tab, message);
                 return;
 			case IRC.RPL_WELCOME:
 				do_autoconnect();
@@ -151,6 +155,15 @@ public class Connection : Object
 					return;
 				tab.add_users_message(message);
 				break;
+			case IRC.USER_NAME_CHANGED:
+                foreach(var t in channel_tabs.entries)
+                    t.value.user_name_change(message.user_name, message.message);
+				return;
+            case IRC.RPL_ENDOFNAMES:
+                ChannelTab tab = find_channel_tab(message.parameters[1]);
+                tab.user_names_changed(tab.tab_index);
+                break;
+			//Errors
 			case IRC.ERR_NICKNAMEINUSE:
             case IRC.ERR_NONICKNAMEGIVEN:
                 string error_msg = message.message;
@@ -171,10 +184,11 @@ public class Connection : Object
             case IRC.ERR_UNKNOWNMODE:
             case IRC.ERR_ALREADYONCHANNEL:
             case IRC.ERR_CHANOPRIVSNEEDED:
-                find_channel_tab(message.parameters[0]).display_error(message);
+			case IRC.ERR_NONONREG:
+				backref.add_text(find_channel_tab(message.parameters[0]), message, true);
                 break;
             default:
-                warning("Unhandled message: " + msg);
+                debug("Unhandled message: " + msg);
                 return;
         } 
     }

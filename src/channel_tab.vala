@@ -31,8 +31,8 @@ public class ChannelTab : GLib.Object {
     public bool has_subject = false;
     public string channel_subject = "";
     public bool is_locked = false;
-	public ArrayList<string> users = new ArrayList<string>();
-	public ArrayList<string> blocked_users = new ArrayList<string>();
+	public LinkedList<string> users = new LinkedList<string>();
+	public LinkedList<string> blocked_users = new LinkedList<string>();
     private TextView output;
 	
 	public static TimeVal timeval = TimeVal();
@@ -53,6 +53,7 @@ public class ChannelTab : GLib.Object {
 	TextTag spacing_tag;
 
     public signal void new_subject(int tab_id, string subject);
+	public signal void user_names_changed(int tab_id);
 
     public void add_text (string msg) {
         connection.send_output(msg);
@@ -102,6 +103,14 @@ public class ChannelTab : GLib.Object {
 		}
 	}
 
+	public void user_name_change(string old_name, string new_name) {
+		int index = users.index_of(old_name);
+		if (index != -1)
+			users[index] = new_name;
+
+		user_names_changed(tab_index);
+	}
+
     public void set_output(TextView _output) {
         output = _output;
         output.buffer.changed.connect(do_autoscroll);
@@ -114,32 +123,35 @@ public class ChannelTab : GLib.Object {
 
     public void send_text_out (string message) {
         string formatted_message = "";
-        if (is_server_tab) {
-            formatted_message = format_server_msg(message);
-        } else {
-            formatted_message = format_channel_msg(message);
-        }
-        if(formatted_message.strip().length == 0)
-            return;
-        debug("Sending out " + formatted_message);
+		debug("send_text: " + message + "  " + message[0:4]);
+        if (message[0:4] == "/msg") {
+			debug ("Will send cmd");
+			formatted_message =  parse_message_cmd(message);
+		} else {
+		    if (is_server_tab) {
+		        formatted_message = format_server_msg(message);
+		    } else {
+		        formatted_message = format_channel_msg(message);
+		    }
+		    if (formatted_message.strip().length == 0)
+		        return;
+		}
         connection.send_output(formatted_message);
     }
 
     public string format_channel_msg (string message) { 
-		if(message[0] == '/')
-			return message.substring(0);
+		if (message[0] == '/')
+			return message.substring(1);
         return "PRIVMSG " + channel_name + " :" + message.escape("");
     }
 
     public string format_server_msg (string message) {
-        //TODO: format better;
-        if(message[0] != '/')
+        if (message[0] != '/')
             return "";
         return message.substring(1); 
     }
  
     public void display_message (Message message) {   
-
         message.message += "\n";
         
         switch (message.command) {
@@ -168,7 +180,7 @@ public class ChannelTab : GLib.Object {
 			return;
 
 		string user = message.user_name_get();
-		if (user == last_user)
+		if (!is_server_tab && user == last_user)
 			user = "";
 		else {
 			if (!make_timestamp())
@@ -344,5 +356,12 @@ public class ChannelTab : GLib.Object {
 		return false;
 	}
 
+	private string parse_message_cmd(string message) {
+		string[] split = message.split(" ");
+		string[] slice = split[2:split.length];
+		string msg = "PRIVMSG " + split[1] + " :" + string.joinv(" ", slice);
+		debug("MSG = " + msg);
+		return msg;
+	}
 }
 
