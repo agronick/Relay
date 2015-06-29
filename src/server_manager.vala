@@ -26,6 +26,7 @@ public class ServerManager : Object
     ListBoxRow select_row = null;
     SqlClient sqlclient = SqlClient.get_instance();
     Button add_channel;
+	Button cancel;
 
     Entry host;
     SpinButton port;
@@ -53,9 +54,9 @@ public class ServerManager : Object
 
         window = builder.get_object ("window") as Gtk.Window;
         var box = builder.get_object ("port_wrap") as Box;
-        var cancel = builder.get_object ("cancel") as Button;
         var remove_channel = builder.get_object ("remove_channel") as Button;
         var server_btns = builder.get_object ("server_buttons") as Box;
+        cancel = builder.get_object ("cancel") as Button;
         add_channel = builder.get_object ("add_channel") as Button;
         new_channel = builder.get_object ("channel_name") as Entry;
         channels = builder.get_object ("channel") as ListBox;
@@ -80,9 +81,9 @@ public class ServerManager : Object
         server_btns.pack_end(add_server, false, false, 0);
         server_btns.pack_end(remove_server, false, false, 0);
 
-        channels.set_size_request (100,100);
+        channels.set_size_request(100,100);
         channels.set_selection_mode(SelectionMode.BROWSE);
-        servers.set_size_request (175,50);
+        servers.set_size_request(175,50);
 
 
         cancel.button_release_event.connect(cancel_clicked);
@@ -102,7 +103,8 @@ public class ServerManager : Object
 
         add_servers();
         window.show_all ();
-        set_forms_active (false);
+        set_forms_active(false);
+
 
         return false;
     }
@@ -299,8 +301,9 @@ public class ServerManager : Object
     private void set_forms_active (bool active) {
         var children = form.get_children();
         foreach (var child in children) {
-            child.set_sensitive(active);
+        		child.set_sensitive(active);
         }
+		cancel.get_parent().set_sensitive(true);
     }
 
 

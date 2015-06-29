@@ -55,7 +55,8 @@ public class Message : GLib.Object {
         return prefix.split("!")[0];
     }
 
-    public void user_name_set (string name) { user_name = name;
+    public void user_name_set (string name) { 
+		user_name = name;
     }
 
     //Use this function to add padding to the user name

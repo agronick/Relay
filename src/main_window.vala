@@ -314,8 +314,11 @@ public class MainWindow : Object
 			channel_subject.hide();
 			channel_users.hide();
 			toolbar.set_title(new_tab.label);
+			input.hide();
 			return;
 		}
+
+		input.show();
 
 		new_tab.icon = null;
 		
@@ -451,10 +454,13 @@ public class MainWindow : Object
         }
     }
 
-    public void add_text (ChannelTab tab, Message message) {
-        tab.display_message(message);
+    public void add_text (ChannelTab tab, Message message, bool error = false) {
+		if (error)
+			tab.display_error(message);
+		else
+    		tab.display_message(message);
 
-		if (!tab.is_server_tab && current_tab != tab.tab_index) {
+		if (current_tab != tab.tab_index) {
 			tab.tab.icon = channel_tab_icon;
 		}
     }
