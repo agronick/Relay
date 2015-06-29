@@ -75,10 +75,8 @@ public class SqlClient : Object
     }
 
     public Server? get_server_id (int id) {
-        foreach (var svr in servers.entries) {
-            if (svr.value.id == id)
-                return svr.value;
-        }
+        if (servers.has_key(id))
+            return servers[id];
         return null;
     }
 
@@ -206,6 +204,14 @@ public class SqlClient : Object
             return id;
         }
 
+		public Channel? find_channel_by_name (string name) {
+			foreach(Channel chan in channels) {
+				if(chan.channel == name)
+					return chan;
+			}
+			return null;
+		}
+
         public int update () {
             var svr = this;
             Sqlite.Statement stmt;
@@ -277,11 +283,12 @@ public class SqlClient : Object
 
         public void delete_channel () {
             string sql = "DELETE FROM channels WHERE server_id=" + this.server_id.to_string() + " AND channel=$NAME";
-            channel_query(sql);
-            foreach (Channel chan in servers[server_id].channels) {
-                if (chan.channel == this.channel)
-                    servers[server_id].channels.remove(chan);
-            }
+			channel_query(sql);
+			if(!servers.has_key(server_id)) {
+				warning("No server with key " + server_id.to_string());
+				return;
+			}
+            servers[server_id].channels.remove(this);
         }
 
         public void add_channel () {

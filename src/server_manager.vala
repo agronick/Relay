@@ -245,9 +245,7 @@ public class ServerManager : Object
     private bool remove_channel_clicked (Gdk.EventButton event) {
         var widget = channels.get_selected_row();
         channels.remove(widget);
-        var channel = new SqlClient.Channel();
-        channel.server_id = current_server.id;
-        channel.channel = widget.name;
+        var channel = current_server.find_channel_by_name(widget.name);
         channel.delete_channel();
         current_server.channels = SqlClient.servers[current_server.id].channels;
         return false;
@@ -256,7 +254,7 @@ public class ServerManager : Object
     static string CHANNEL_ERROR = _("A channel name must begin with one of the following characters: %c, %c, %c, %c.");
     private bool add_channel_clicked (Gdk.EventButton event) {
         string chan_name = new_channel.get_text().strip();
-        if (chan_name.length == 0)
+        if (chan_name.length == 0 || current_server.find_channel_by_name(chan_name) != null)
             return false;
 
         if (!(chan_name[0] in CHANNEL_CHAR)) {
