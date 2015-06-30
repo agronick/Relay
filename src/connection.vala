@@ -91,7 +91,6 @@ public class Connection : Object
     }
 
     private ChannelTab find_channel_tab (string name) {
-		debug("LOOKING UP " + name);
         if (channel_tabs.has_key(name))
             return channel_tabs[name];
 
@@ -105,7 +104,6 @@ public class Connection : Object
         }  
         
         Message message = new Message (msg);
-        debug("Command: " + message.command);
         switch (message.command) {
             case "PING":
                 handle_ping(ref message);
@@ -116,7 +114,7 @@ public class Connection : Object
             case IRC.RPL_TOPIC:
                 ChannelTab tab = add_channel_tab(message.parameters[1]);
 				if (tab != null)
-					tab.set_topic(message.message);
+					tab.set_topic(message.get_msg_txt());
                 return;
             case IRC.PRIVATE_MESSAGE: 
                 ChannelTab tab = add_channel_tab(message.parameters[0]);
@@ -139,11 +137,12 @@ public class Connection : Object
                 return;
             case IRC.RPL_CREATED:
             case IRC.RPL_LUSERME:
-                debug("SETTING TOPIC " + message.message);
-                server_tab.set_topic(message.message, true);
+                debug("SETTING TOPIC " + message.get_msg_txt());
+                server_tab.set_topic(message.get_msg_txt(), true);
 				backref.add_text(server_tab, message);
                 return;
 			case IRC.RPL_WELCOME:
+                run_on_connect_cmds();
 				do_autoconnect();
 				server_tab.tab.working = false;
                 break;
@@ -156,16 +155,21 @@ public class Connection : Object
             case IRC.QUIT_MSG:
             case IRC.PART_MSG:
                 debug(message.user_name + " has left");
-                foreach(var t in channel_tabs.entries)
-                    t.value.user_leave_channel(message.user_name, message.message);
+                foreach(var t in channel_tabs.entries) {
+                    if (t != null && message.user_name != null && message.user_name.length > 0)
+                        t.value.user_leave_channel(message.user_name, message.get_msg_txt());
+                }
                 return;
 			case IRC.USER_NAME_CHANGED:
-                foreach(var t in channel_tabs.entries)
-                    t.value.user_name_change(message.user_name, message.message);
+                foreach(var t in channel_tabs.entries) {
+                    if (t != null && message.user_name != null && message.user_name.length > 0)
+                        t.value.user_name_change(message.user_name, message.get_msg_txt());
+                }
 				return;
             case IRC.JOIN_MSG:
-                var tab = add_channel_tab(message.message); 
-                tab.user_join_channel(message.user_name);
+                var tab = add_channel_tab(message.get_msg_txt()); 
+                if (tab != null && message.user_name != null && message.user_name.length > 0)
+                    tab.user_join_channel(message.user_name);
                 return;
             case IRC.RPL_ENDOFNAMES:
                 ChannelTab tab = find_channel_tab(message.parameters[1]);
@@ -174,9 +178,9 @@ public class Connection : Object
 			//Errors
 			case IRC.ERR_NICKNAMEINUSE:
             case IRC.ERR_NONICKNAMEGIVEN:
-                string error_msg = message.message;
-                if (message.message == null || message.message.strip().length < 3)
-                    error_msg = "The name you chose is in use.";
+                string error_msg = message.get_msg_txt();
+                if (message.get_msg_txt().length < 3)
+                    error_msg = _("The name you chose is in use.");
                 error_msg = server.host + "\n" + error_msg;
 				name_in_use(error_msg);
 				break;
@@ -202,9 +206,8 @@ public class Connection : Object
     }
 
 	public void do_register () {
-        //TODO: make this work the way it should
-        send_output ("NICK " + server.nickname);
-        send_output ("PASS  -p");
+        send_output("PASS  " + ((server.password.length > 0) ? server.password : "-p"));
+        send_output("NICK " + server.nickname);
         send_output("USER " + server.username + " 0 * :" + server.realname);
         send_output("MODE " + server.username + " +i");
 	}
@@ -214,6 +217,17 @@ public class Connection : Object
 			join(chan);
 		}
 	}
+
+    public void run_on_connect_cmds() {
+        if(server.connect_cmds.length > 0) {
+            string cmd = server.connect_cmds + "\n";
+            string[] cmds = server.connect_cmds.split("\n");
+            foreach(string run in cmds) {
+                if (run.length > 1)
+                    server_tab.send_text_out(run);
+            }
+        }
+    }
 
 	public void name_in_use (string message) {
 		debug("At name in use");
@@ -271,11 +285,11 @@ public class Connection : Object
     }
 
 	public void join (string channel) {
-		send_output ("JOIN " + channel);
+		send_output("JOIN " + channel);
 	}
 
     public void send_output (string output) {
-        stderr.printf("Sending out " + output + "  " + server.host + "\n");
+        debug("Sending out " + output + "  " + server.host + "\n");
         try{
 			if (output_stream == null || output_stream.is_closed())
 				return;
@@ -284,8 +298,9 @@ public class Connection : Object
     }
 
     public void do_exit () {
-        exit = true;  
+        exit = true;
         input_stream.clear_pending();
+        send_output("QUIT :Relay, a simple beautiful IRC client");
 		if (!input_stream.is_closed())
 			try{
     			input_stream.close();
