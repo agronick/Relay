@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Encoding=UTF-8
+Name=Relay
+Comment=IRC Client for the Modern Desktop
+Exec=relay
+Icon=relay
+Terminal=false
+Type=Application
+StartupNotify=false
+Categories=Network;IRCClient;Chat;

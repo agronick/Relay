@@ -47,6 +47,7 @@ public class MainWindow : Object
     Button add_server_button;
     HeaderBar toolbar;
     string channel_user_selected = "";
+    Relay app;
 
     Gee.HashMap<int, ChannelTab> outputs = new Gee.HashMap<int, ChannelTab> ();
     Gee.HashMap<string, Connection> clients = new Gee.HashMap<string, Connection> (); 
@@ -59,6 +60,7 @@ public class MainWindow : Object
 
         try
         {
+            app = application;
             check_elementary();
 
             var builder = new Builder ();
@@ -313,8 +315,8 @@ public class MainWindow : Object
 		if (new_tab.label == _("Welcome")) {
 			channel_subject.hide();
 			channel_users.hide();
-			toolbar.set_title(new_tab.label);
 			input.hide();
+            toolbar.set_title(app.program_name);
 			return;
 		}
 
@@ -599,7 +601,7 @@ public class MainWindow : Object
         var tab = new Widgets.Tab();
 		tab.icon = null;
         tab.label = _("Welcome");
-		toolbar.set_title(tab.label);
+		toolbar.set_title(app.program_name);
         tab.page = welcome;
         tabs.insert_tab(tab, -1);
 

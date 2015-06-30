@@ -135,7 +135,7 @@ public class ChannelTab : GLib.Object {
 			users.add(uname);
 		user_names_changed(tab_index);
 		space();
-		add_with_tag(name + _(" has joined: ") + channel_name + "\n", full_width_tag);
+		add_with_tag(uname + _(" has joined: ") + channel_name + "\n", full_width_tag);
 	}
 	
     public void set_output(TextView _output) {
@@ -150,9 +150,9 @@ public class ChannelTab : GLib.Object {
 
     public void send_text_out (string message) {
         string formatted_message = "";
-        if (message[0:4] == "/msg") {
+        if (message.length > 4 && message[0:4] == "/msg") {
 			formatted_message =  parse_message_cmd(message);
-		} else if (message[0:5] == "/nick") {
+		} else if (message.length > 5 && message[0:5] == "/nick") {
 			formatted_message = parse_nick_change(message);
 		} else {
 		    if (is_server_tab) {
@@ -185,6 +185,7 @@ public class ChannelTab : GLib.Object {
     }
  
     public void display_message (Message message) {   
+		message.message = message.get_msg_txt();
         message.message += "\n";
         
         switch (message.command) {
@@ -256,8 +257,11 @@ public class ChannelTab : GLib.Object {
         }
     }       
  
-    private void add_with_tag (string? text, TextTag tag, int retry_count = 0) {
-		if(text == null || (text.strip() == "" && tag != spacing_tag) || retry_count > 4)
+    private void add_with_tag (string? text, TextTag? tag, int retry_count = 0) {
+		if(text == null || 
+		   tag == null || 
+		   retry_count > 4 ||
+		   (text.strip() == "" && tag != spacing_tag))
 			return;
 
 		var rich_text = new RichText(text);
