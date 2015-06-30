@@ -28,7 +28,7 @@ public class Message : GLib.Object {
     private static Regex? fix_message;
 
     private static string regex_string = """^(:(?<prefix>\S+) )?(?<command>\S+)( (?!:)(?<params>.+?))?( :(?<trail>.+))?$""";
-    private static string replace_string = """\\0[0-9][0-9]""";
+    private static string replace_string = """[\x00-\x1F\x80-\xFF]""";
     public static string[] user_cmds = {IRC.PRIVATE_MESSAGE, IRC.JOIN_MSG, IRC.USER_NAME_CHANGED, IRC.QUIT_MSG, IRC.PART_MSG};
     
     public Message (string _message = "") {
@@ -43,8 +43,7 @@ public class Message : GLib.Object {
         if (_message.length == 0)
             return;
 
-        message = _message.escape("\b\f\n\r\t\\\"");
-        message = fix_message.replace_literal(message, message.length, 0, "");
+        message = fix_message.replace_literal(_message, _message.length, 0, "");
         parse_regex();
     }
 
