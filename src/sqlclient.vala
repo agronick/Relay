@@ -125,6 +125,12 @@ public class SqlClient : Object
                 case "autoconnect":
                     server.autoconnect = to_bool(values[i]);
                     break;
+                case "connect_cmds":
+                    server.connect_cmds = values[i];
+                    break;
+                default:
+                    warning("Not able to handle col: " + column_names[i]);
+                    break;
             }
         }
         servers[server.id] = server;
@@ -173,7 +179,7 @@ public class SqlClient : Object
 
     public class Server{
 
-        public const string[] keys = {"host", "port", "nickname", "realname", "username", "password", "on_connect", "encryption", "validate_server", "autoconnect"};
+        public const string[] keys = {"host", "port", "nickname", "realname", "username", "password", "on_connect", "encryption", "validate_server", "autoconnect", "connect_cmds"};
 
         public int id = -1;
         public string host = "";
@@ -186,6 +192,7 @@ public class SqlClient : Object
         public bool encryption = false;
         public bool autoconnect = false;
         public bool validate_server = false;
+        public string connect_cmds = "";
         public LinkedList<Channel> channels = new LinkedList<Channel>();
 
         public int add_server_empty () {
@@ -256,6 +263,7 @@ public class SqlClient : Object
                 stmt.bind_int(8, bool_to(svr.encryption));
                 stmt.bind_int(9, bool_to(svr.validate_server));
                 stmt.bind_int(10, bool_to(svr.autoconnect));
+                stmt.bind_text(11, svr.connect_cmds);
 
                 stmt.step();
 
@@ -323,6 +331,7 @@ public class SqlClient : Object
         "username" TEXT,
         "password" TEXT,
         "on_connect" TEXT,
+        "connect_cmds" TEXT,
         "encryption" BOOL,
         "autoconnect" BOOL,
         "validate_server" BOOL

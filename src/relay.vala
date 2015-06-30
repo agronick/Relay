@@ -17,6 +17,7 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 using X;
+using GLib;
 
 public class Relay : Granite.Application {
 
@@ -80,8 +81,27 @@ public class Relay : Granite.Application {
 
         Gtk.Settings.get_default().gtk_application_prefer_dark_theme = true;
 
-        window = new MainWindow();
+        window = new MainWindow(this);
         Gtk.main ();
+    }
+
+    public static string get_asset_file (string name) {
+        string check = "./" + name;
+        File file = File.new_for_path (check);
+        if (file.query_exists())
+            return check;
+
+        check = "src/" + name;
+        file = File.new_for_path (check);
+        if (file.query_exists())
+            return check;
+
+        check = Config.PACKAGE_DATA_DIR + "/" + name;
+        file = File.new_for_path (check);
+        if (file.query_exists())
+            return check;
+
+        error("Unable to find asset file: " + check);
     }
 
     public static void handle_log (string? log_domain, LogLevelFlags log_levels, string message) {

@@ -36,6 +36,7 @@ public class ServerManager : Object
     Entry nick;
     Switch encrypt;
     Switch autoconnect;
+    TextView connect_cmds;
     Grid form;
     SqlClient.Server current_server = null;
     bool none_selected = false;
@@ -47,9 +48,9 @@ public class ServerManager : Object
         current_server = null;
         var builder = new Builder();
         try{
-            builder.add_from_file(MainWindow.get_asset_file(MainWindow.UI_FILE_SERVERS));
+            builder.add_from_file(Relay.get_asset_file(MainWindow.UI_FILE_SERVERS));
         }catch(Error e){
-            error("Unable to load UI file " + MainWindow.get_asset_file(MainWindow.UI_FILE_SERVERS));
+            error("Unable to load UI file " + Relay.get_asset_file(MainWindow.UI_FILE_SERVERS));
         }
 
         window = builder.get_object ("window") as Gtk.Window;
@@ -66,6 +67,7 @@ public class ServerManager : Object
         user = builder.get_object ("user") as Entry;
         pass = builder.get_object ("pass") as Entry;
         nick = builder.get_object ("nick") as Entry;
+        connect_cmds = builder.get_object ("connect_cmds") as TextView;
         encrypt = builder.get_object ("encrypt") as Switch;
         autoconnect = builder.get_object ("autoconnect") as Switch;
         form = builder.get_object ("form") as Grid;
@@ -142,6 +144,7 @@ public class ServerManager : Object
         current_server.port = port.get_value_as_int();
         current_server.encryption = encrypt.get_active();
         current_server.autoconnect = autoconnect.get_active();
+        current_server.connect_cmds = connect_cmds.buffer.text;
 
         current_server.update();
 
@@ -205,6 +208,7 @@ public class ServerManager : Object
         nick.set_text(svr.nickname);
         encrypt.set_state(svr.encryption);
         autoconnect.set_state(svr.autoconnect);
+        connect_cmds.buffer.text = svr.connect_cmds;
 
         foreach (Widget lbr in channels.get_children()) {
             channels.remove(lbr);

@@ -55,14 +55,14 @@ public class MainWindow : Object
     public static bool on_elementary = false;
     public static int current_tab = -1;
 
-    public MainWindow () {
+    public MainWindow (Relay application) {
 
         try
         {
             check_elementary();
 
             var builder = new Builder ();
-            builder.add_from_file (get_asset_file(UI_FILE));
+            builder.add_from_file (Relay.get_asset_file(UI_FILE));
             builder.connect_signals (this);
 
             toolbar = new HeaderBar (); 
@@ -72,6 +72,7 @@ public class MainWindow : Object
 
             window = builder.get_object ("window") as Window;
             window.destroy.connect(relay_close_program);
+            application.add_window(window);
             var nb_wrapper = builder.get_object("notebook_wrapper") as Box;
             nb_wrapper.pack_start(tabs, true, true, 0); 
             tabs.set_size_request(500, 20);
@@ -84,7 +85,7 @@ public class MainWindow : Object
             server_list_container.pack_start(servers, true, true, 0);
 
 			//Slide out panel button
-            Image icon = new Image.from_file(get_asset_file("assets/server_icon.png"));
+            Image icon = new Image.from_file(Relay.get_asset_file("assets/server_icon.png"));
             var select_channel = new Gtk.Button();
             select_channel.image = icon;
             select_channel.tooltip_text = _("Open server/channel view");
@@ -585,27 +586,6 @@ public class MainWindow : Object
         if (!opened_tab)
             show_welcome_screen();
     }
-
-
-    public static string get_asset_file (string name) {
-        string check = Config.PACKAGE_DATA_DIR + "/" + name;
-        File file = File.new_for_path (check);
-        if (file.query_exists())
-            return check;
-
-        check = "src/" + name;
-        file = File.new_for_path (check);
-        if (file.query_exists())
-            return check;
-
-        check = "./" + name;
-        file = File.new_for_path (check);
-        if (file.query_exists())
-            return check;
-
-        error("Unable to find asset file: " + check);
-    }
-
 
     private void show_welcome_screen () {
         var sm = new ServerManager();

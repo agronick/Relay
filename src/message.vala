@@ -68,6 +68,10 @@ public class Message : GLib.Object {
         return name + string.nfill(length, ' ');
     }
 
+    public string get_msg_txt() {
+        return (message == null) ? "" : message.strip();
+    }
+
     public void parse_regex () {
         try{
             regex.replace_eval (message, -1, 0, 0, (mi, s) => {
