@@ -67,6 +67,9 @@ public class IRC{
 			//:There are <integer> users and <integer> services on <integer> servers"
 	public const string PRIVATE_MESSAGE = "PRIVMSG";
 	public const string USER_NAME_CHANGED = "NICK";
+	public const string QUIT_MSG = "QUIT";
+	public const string JOIN_MSG = "JOIN";
+	public const string PART_MSG = "PART";
 
 	//Errors
 	public const string ERR_NOSUCHNICK = "401";

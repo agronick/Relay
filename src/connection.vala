@@ -105,6 +105,7 @@ public class Connection : Object
         }  
         
         Message message = new Message (msg);
+        debug("Command: " + message.command);
         switch (message.command) {
             case "PING":
                 handle_ping(ref message);
@@ -121,9 +122,6 @@ public class Connection : Object
                 ChannelTab tab = add_channel_tab(message.parameters[0]);
 				if (tab != null)
 					backref.add_text(tab, message);
-                return;
-            case "JOIN": 
-                add_channel_tab(message.message); 
                 return;
             case IRC.RPL_LUSERCLIENT:
             case "NOTICE":
@@ -155,10 +153,20 @@ public class Connection : Object
 					return;
 				tab.add_users_message(message);
 				break;
+            case IRC.QUIT_MSG:
+            case IRC.PART_MSG:
+                debug(message.user_name + " has left");
+                foreach(var t in channel_tabs.entries)
+                    t.value.user_leave_channel(message.user_name, message.message);
+                return;
 			case IRC.USER_NAME_CHANGED:
                 foreach(var t in channel_tabs.entries)
                     t.value.user_name_change(message.user_name, message.message);
 				return;
+            case IRC.JOIN_MSG:
+                var tab = add_channel_tab(message.message); 
+                tab.user_join_channel(message.user_name);
+                return;
             case IRC.RPL_ENDOFNAMES:
                 ChannelTab tab = find_channel_tab(message.parameters[1]);
                 tab.user_names_changed(tab.tab_index);

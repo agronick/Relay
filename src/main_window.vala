@@ -229,8 +229,6 @@ public class MainWindow : Object
             new_tab.user_names_changed.connect(user_names_changed);
             tabs.insert_tab(new_tab.tab, -1); 
 
-            debug("Setting index " + new_tab.channel_name + ":" + index.to_string()); 
-
             new_tab.set_output(output);
             outputs.set(index, new_tab); 
 
@@ -378,7 +376,6 @@ public class MainWindow : Object
             label.margin_top = label.margin_bottom = 4;
             eb.add(label);
             eb.button_press_event.connect( (event)=> {
-                debug("TRIGGERED " + user);
 				if (event.button == 3) {
 		            channel_user_selected = user;
 		            user_menu.popup (null, null, null, event.button, event.time);
@@ -398,12 +395,12 @@ public class MainWindow : Object
         users_header.set_text(_("Total users: ") + i.to_string());
 
         int cols = (int) Math.ceilf((float)i / (float)PER_BOX); 
-        debug("Cols is " + cols.to_string());
         users_scrolled.min_content_width = (cols > MAX_COLS) ? BOX_WIDTH * MAX_COLS : cols * BOX_WIDTH;
         users_list.pack_start(listbox, true, true, 0);
     }
 
     private bool click_private_message (Gdk.EventButton event) {
+        debug("Selected user is " + channel_user_selected);
         user_menu.popdown();
         users_popover.set_visible(false);
         ChannelTab using_tab = outputs[current_tab];
@@ -592,7 +589,6 @@ public class MainWindow : Object
 
     public static string get_asset_file (string name) {
         string check = Config.PACKAGE_DATA_DIR + "/" + name;
-		debug("Checking asset: " + check);
         File file = File.new_for_path (check);
         if (file.query_exists())
             return check;

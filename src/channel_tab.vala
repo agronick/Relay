@@ -31,7 +31,7 @@ public class ChannelTab : GLib.Object {
     public bool has_subject = false;
     public string channel_subject = "";
     public bool is_locked = false;
-	public LinkedList<string> users = new LinkedList<string>();
+	public ArrayList<string> users = new ArrayList<string>();
 	public LinkedList<string> blocked_users = new LinkedList<string>();
     private TextView output;
 	
@@ -98,19 +98,46 @@ public class ChannelTab : GLib.Object {
 		foreach (var name in names) {
 			if(name.length == 0)
 				continue;
-			
-			users.add(name);
+
+			name = fix_user_name(name);
+			if (!users.contains(name))
+				users.add(name);
 		}
 	}
 
+	public string fix_user_name (string name) {
+		if (IRC.user_prefixes.index_of_char(name[0]) != -1)
+			return name.substring(1);
+		else
+			return name;
+	}
+
 	public void user_name_change(string old_name, string new_name) {
-		int index = users.index_of(old_name);
+		int index = users.index_of(fix_user_name(old_name));
 		if (index != -1)
-			users[index] = new_name;
+			users[index] = fix_user_name(new_name);
 
 		user_names_changed(tab_index);
 	}
 
+	public void user_leave_channel(string name, string msg) {
+		if (users.contains(fix_user_name(name))) {
+			users.remove(fix_user_name(name));
+			user_names_changed(tab_index);
+			space();
+			add_with_tag(name + _(" has left: ") + msg + "\n", full_width_tag);
+		}
+	}
+
+	public void user_join_channel(string name) {
+		string uname = fix_user_name(name);
+		if (!users.contains(uname))
+			users.add(uname);
+		user_names_changed(tab_index);
+		space();
+		add_with_tag(name + _(" has joined: ") + channel_name + "\n", full_width_tag);
+	}
+	
     public void set_output(TextView _output) {
         output = _output;
         output.buffer.changed.connect(do_autoscroll);
@@ -123,10 +150,10 @@ public class ChannelTab : GLib.Object {
 
     public void send_text_out (string message) {
         string formatted_message = "";
-		debug("send_text: " + message + "  " + message[0:4]);
         if (message[0:4] == "/msg") {
-			debug ("Will send cmd");
 			formatted_message =  parse_message_cmd(message);
+		} else if (message[0:5] == "/nick") {
+			formatted_message = parse_nick_change(message);
 		} else {
 		    if (is_server_tab) {
 		        formatted_message = format_server_msg(message);
@@ -144,6 +171,12 @@ public class ChannelTab : GLib.Object {
 			return message.substring(1);
         return "PRIVMSG " + channel_name + " :" + message.escape("");
     }
+
+	public string parse_nick_change (string message) {
+		string[] split = message.split(" ");
+		connection.server.nickname = split[1];
+		return "NICK " + split[1];
+	}
 
     public string format_server_msg (string message) {
         if (message[0] != '/')
@@ -175,8 +208,12 @@ public class ChannelTab : GLib.Object {
 		add_with_tag(message.message, error_tag);
 	}
 
+	public void space() {
+		add_with_tag(" \n", spacing_tag);
+	}
+
 	public void handle_private_message (Message message) {
-		if (blocked_users.contains(message.user_name))
+		if (blocked_users.contains(fix_user_name(message.user_name)))
 			return;
 
 		string user = message.user_name_get();
@@ -184,7 +221,7 @@ public class ChannelTab : GLib.Object {
 			user = "";
 		else {
 			if (!make_timestamp())
-				add_with_tag(" \n", spacing_tag);
+				space();
 			last_user = user;
 		}
 		
@@ -360,7 +397,6 @@ public class ChannelTab : GLib.Object {
 		string[] split = message.split(" ");
 		string[] slice = split[2:split.length];
 		string msg = "PRIVMSG " + split[1] + " :" + string.joinv(" ", slice);
-		debug("MSG = " + msg);
 		return msg;
 	}
 }
