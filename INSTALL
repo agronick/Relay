@@ -9,6 +9,7 @@ libx11-dev
 valac-0.26 
 libgranite-dev
 libsqlite3-dev
+libgee-0.8-dev
 
 (Other versions of valac may work. But newer versions seems to have a bug that prevents compiling)
 
