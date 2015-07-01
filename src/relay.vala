@@ -38,9 +38,9 @@ public class Relay : Granite.Application {
             app_launcher = "relay.desktop";
             application_id = "net.launchpad.relay";
 
-            main_url = "http://poisonpacket.wordpress.com";
+            main_url = "https://poisonpacket.wordpress.com/relay/";
             bug_url = "https://bugs.launchpad.net/relay";
-            help_url = "http://poisonpacket.wordpress.com";
+            help_url = "https://poisonpacket.wordpress.com/relay/";
             translate_url = "https://translations.launchpad.net/relay";
 
             about_authors = { "Kyle Agronick <agronick@gmail.com>" };
@@ -86,22 +86,16 @@ public class Relay : Granite.Application {
     }
 
     public static string get_asset_file (string name) {
-        string check = "./" + name;
-        File file = File.new_for_path (check);
-        if (file.query_exists())
-            return check;
-
-        check = "src/" + name;
-        file = File.new_for_path (check);
-        if (file.query_exists())
-            return check;
-
-        check = Config.PACKAGE_DATA_DIR + "/" + name;
-        file = File.new_for_path (check);
-        if (file.query_exists())
-            return check;
-
-        error("Unable to find asset file: " + check);
+        string[] checks = {"./" + name,
+                           "src/" + name,
+                            "../src/" + name,
+                            Config.PACKAGE_DATA_DIR + "/" + name};
+        foreach(string check in checks) {                   
+            File file = File.new_for_path (check);
+            if (file.query_exists())
+                return check;
+        }
+        error("Unable to find asset file: " + name);
     }
 
     public static void handle_log (string? log_domain, LogLevelFlags log_levels, string message) {
