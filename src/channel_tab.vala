@@ -122,6 +122,7 @@ public class ChannelTab : GLib.Object {
 
 	public void user_leave_channel(string name, string msg) {
 		if (users.contains(fix_user_name(name))) {
+			last_user = "";
 			users.remove(fix_user_name(name));
 			idle_use_names_changed();
 			space();
@@ -130,6 +131,7 @@ public class ChannelTab : GLib.Object {
 	}
 
 	public void user_join_channel(string name) {
+		last_user = "";
 		string uname = fix_user_name(name);
 		if (!users.contains(uname))
 			users.add(uname);
