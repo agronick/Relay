@@ -575,12 +575,9 @@ public class MainWindow : Object
         bool opened_tab = false;
 
         foreach (var server in SqlClient.servers.entries) {
-            if(server.value.autoconnect) {
+            var to_connect = server.value.get_autoconnect_channels();
+            if(to_connect.size > 0) {
                 opened_tab = true;
-                LinkedList<string> to_connect = new LinkedList<string>();
-                foreach (var chan in server.value.channels) {
-                    to_connect.add(chan.channel);
-                }
                 add_server(server.value, to_connect);
             }
         }

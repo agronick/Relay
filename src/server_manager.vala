@@ -35,7 +35,6 @@ public class ServerManager : Object
     Entry pass;
     Entry nick;
     Switch encrypt;
-    Switch autoconnect;
     TextView connect_cmds;
     Grid form;
     SqlClient.Server current_server = null;
@@ -53,6 +52,7 @@ public class ServerManager : Object
             error("Unable to load UI file " + Relay.get_asset_file(MainWindow.UI_FILE_SERVERS));
         }
 
+
         window = builder.get_object ("window") as Gtk.Window;
         var box = builder.get_object ("port_wrap") as Box;
         var remove_channel = builder.get_object ("remove_channel") as Button;
@@ -69,9 +69,11 @@ public class ServerManager : Object
         nick = builder.get_object ("nick") as Entry;
         connect_cmds = builder.get_object ("connect_cmds") as TextView;
         encrypt = builder.get_object ("encrypt") as Switch;
-        autoconnect = builder.get_object ("autoconnect") as Switch;
         form = builder.get_object ("form") as Grid;
 
+        var channels_placeholder = new Label(_("No Channels"));
+        channels.set_placeholder(channels_placeholder);
+        channels_placeholder.show_all();
 
         servers.set_selection_mode(SelectionMode.BROWSE);
         servers.row_activated.connect(save_changes);
@@ -143,7 +145,6 @@ public class ServerManager : Object
         current_server.nickname = nick.get_text();
         current_server.port = port.get_value_as_int();
         current_server.encryption = encrypt.get_active();
-        current_server.autoconnect = autoconnect.get_active();
         current_server.connect_cmds = connect_cmds.buffer.text;
 
         current_server.update();
@@ -207,20 +208,37 @@ public class ServerManager : Object
         port.set_value(svr.port);
         nick.set_text(svr.nickname);
         encrypt.set_state(svr.encryption);
-        autoconnect.set_state(svr.autoconnect);
         connect_cmds.buffer.text = svr.connect_cmds;
 
         foreach (Widget lbr in channels.get_children()) {
             channels.remove(lbr);
         }
 
-
         foreach (SqlClient.Channel chn in svr.channels) {
-            var lbr = get_list_box_row(chn.channel);
+            var lbr = get_channel_list_box_row(chn);
             channels.insert(lbr, -1);
         }
 
         channels.show_all();
+    }
+
+    private ListBoxRow get_channel_list_box_row (SqlClient.Channel channel) {
+        var box = new Box(Orientation.HORIZONTAL, 1);
+        var lbr = new ListBoxRow();
+        var lbl = new Label(channel.channel);
+        var ac_switch = new Switch();
+        var switch_box = new Box(Orientation.HORIZONTAL, 1);
+        lbl.set_halign(Align.START);
+        switch_box.pack_start(ac_switch);
+        box.pack_start(lbl, true, true, 0);
+        box.pack_end(switch_box, false, false, 0);
+        ac_switch.state = channel.autoconnect;
+        ac_switch.state_set.connect(channel.update_autoconnect);
+        lbr.add(box);
+        lbr.show_all();
+        box.set_data("ac_switch", ac_switch);
+        lbr.name = channel.channel;
+        return lbr;
     }
 
     private ListBoxRow get_list_box_row (string name) {
@@ -250,6 +268,8 @@ public class ServerManager : Object
         var widget = channels.get_selected_row();
         channels.remove(widget);
         var channel = current_server.find_channel_by_name(widget.name);
+        if (channel == null)
+            return false;
         channel.delete_channel();
         current_server.channels = SqlClient.servers[current_server.id].channels;
         return false;
@@ -278,15 +298,15 @@ public class ServerManager : Object
             msg.show ();
             return false;
         }
-
-        var lbr = get_list_box_row(chan_name);
-        new_channel.set_text("");
-        channels.add(lbr);
-        channels.show_all();
         var channel = new SqlClient.Channel();
         channel.server_id = current_server.id;
         channel.channel = chan_name;
         channel.add_channel();
+
+        var lbr = get_channel_list_box_row(channel);
+        new_channel.set_text("");
+        channels.add(lbr);
+        channels.show_all();
         current_server.channels = SqlClient.servers[current_server.id].channels;
         return false;
     }

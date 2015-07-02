@@ -300,7 +300,7 @@ public class Connection : Object
     public void do_exit () {
         exit = true;
         input_stream.clear_pending();
-        send_output("QUIT :Relay, a simple beautiful IRC client");
+        send_output("QUIT :" + _("Relay, an IRC client for the modern desktop"));
 		if (!input_stream.is_closed())
 			try{
     			input_stream.close();

@@ -248,7 +248,7 @@ public class ChannelTab : GLib.Object {
         Adjustment position = sw.get_vadjustment();
         if (!(position is Adjustment))
             return;
-        if (position.value > position.upper - position.page_size - 20) {
+        if (position.value > position.upper - position.page_size - 50) {
             Idle.add( () => {
                 position.set_value(position.upper - position.page_size);
                 sw.set_vadjustment(position);

@@ -20,6 +20,7 @@ using Gee;
 
 public class SqlClient : Object
 {
+    public const string DB_FILE = "relay02.db";
     static SqlClient self = null;
     public static Sqlite.Database db;
     public static HashMap<int, Server> servers = new HashMap<int, Server>();
@@ -49,7 +50,7 @@ public class SqlClient : Object
             error("Unable to create database. Can not write to " + confbase + ". Program will not function.");
         }
 
-        string conffile = confbase + "/relay.db";
+        string conffile = confbase + "/" + DB_FILE;
 
         int ec = Sqlite.Database.open_v2(conffile, out db);
         if (ec != Sqlite.OK) {
@@ -160,6 +161,9 @@ public class SqlClient : Object
                 case "channel":
                     chn.channel = values[i];
                     break;
+                case "autoconnect":
+                    chn.autoconnect = to_bool(values[i]);
+                    break;
             }
         }
 
@@ -219,6 +223,15 @@ public class SqlClient : Object
 			return null;
 		}
 
+        public LinkedList<string> get_autoconnect_channels() {
+            var returns = new LinkedList<string>();
+            foreach(var channel in channels) {
+                if (channel.autoconnect)
+                    returns.add(channel.channel);
+            }
+            return returns;
+        }
+        
         public int update () {
             var svr = this;
             Sqlite.Statement stmt;
@@ -288,6 +301,7 @@ public class SqlClient : Object
         public int id = -1;
         public int server_id;
         public string channel;
+        public bool autoconnect;
 
         public void delete_channel () {
             string sql = "DELETE FROM channels WHERE server_id=" + this.server_id.to_string() + " AND channel=$NAME";
@@ -305,6 +319,13 @@ public class SqlClient : Object
             string sql = "INSERT INTO channels (server_id, channel) VALUES(" + this.server_id.to_string() + ", $CHANNEL)";
             channel_query(sql);
             servers[server_id].channels.add(this);
+        }
+
+        public bool update_autoconnect (bool state) {
+            string sql = "UPDATE channels SET autoconnect = " + bool_to (state).to_string() + " WHERE server_id = " + server_id.to_string() + " AND channel = $NAME";
+			channel_query(sql);
+            autoconnect = state;
+            return autoconnect;
         }
 
         private void channel_query (string sql) {
@@ -340,7 +361,8 @@ public class SqlClient : Object
         CREATE TABLE IF NOT EXISTS "channels" (
         "id" INTEGER PRIMARY KEY AUTOINCREMENT,
         "server_id" INTEGER,
-        "channel" TEXT
+        "channel" TEXT,
+        "autoconnect" BOOL
         );
         """;
 
