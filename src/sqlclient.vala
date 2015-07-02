@@ -173,7 +173,9 @@ public class SqlClient : Object
         return 0;
     }
 
-    public static bool to_bool (string input) {
+    public static bool to_bool (string? input) {
+        if (input == null)
+            return false;
         return (input == "1");
     }
 

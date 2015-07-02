@@ -89,7 +89,9 @@ public class IRC{
 	public const string ERR_NONONREG = "486";
 
 	public static int compare(string a, string b) {
-		return GLib.strcmp(a, b);                                                                                                                                                                                                                                                                                                                                                       
+		var a1 = a[0].tolower().to_string() + a;
+		var b1 = b[0].tolower().to_string() + b;
+		return GLib.strcmp(a1, b1);                                                                                                                                                                                                                                                                                                                                                       
 	}
 
 	public static string remove_user_prefix (string name) {

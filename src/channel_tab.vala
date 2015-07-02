@@ -117,13 +117,13 @@ public class ChannelTab : GLib.Object {
 		if (index != -1)
 			users[index] = fix_user_name(new_name);
 
-		user_names_changed(tab_index);
+		idle_use_names_changed();
 	}
 
 	public void user_leave_channel(string name, string msg) {
 		if (users.contains(fix_user_name(name))) {
 			users.remove(fix_user_name(name));
-			user_names_changed(tab_index);
+			idle_use_names_changed();
 			space();
 			add_with_tag(name + _(" has left: ") + msg + "\n", full_width_tag);
 		}
@@ -133,9 +133,16 @@ public class ChannelTab : GLib.Object {
 		string uname = fix_user_name(name);
 		if (!users.contains(uname))
 			users.add(uname);
-		user_names_changed(tab_index);
+		idle_use_names_changed();
 		space();
 		add_with_tag(uname + _(" has joined: ") + channel_name + "\n", full_width_tag);
+	}
+
+	private void idle_use_names_changed(){
+		Idle.add( ()=> {
+			user_names_changed(tab_index);
+			return false;
+		});
 	}
 	
     public void set_output(TextView _output) {

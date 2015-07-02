@@ -108,7 +108,7 @@ public class MainWindow : Object
                 channel_subject = new Gtk.Button.from_icon_name("text-x-generic", Gtk.IconSize.LARGE_TOOLBAR);
             channel_subject.tooltip_text = _("Channel subject");
             var subject_popover = new Gtk.Popover(channel_subject);
-            subject_popover.set_property("transitions-enabled", true);
+            //subject_popover.set_property("transitions-enabled", true);
             channel_subject.clicked.connect(() => {
                 subject_popover.show_all();
             });  
@@ -131,13 +131,10 @@ public class MainWindow : Object
             channel_users.tooltip_text = _("Channel users");
             channel_users.hide();
             users_popover = new Gtk.Popover(channel_users);
-            users_popover.set_property("transitions-enabled", true);
+            //users_popover.set_property("transitions-enabled", true);
             channel_users.clicked.connect(() => {
                 users_popover.show_all();
             });
-            channel_users.clicked.connect(() => {
-                users_popover.show_all();
-            });  
 
             users_scrolled = new Gtk.ScrolledWindow (null, null);
             users_scrolled.vscrollbar_policy = PolicyType.NEVER;
@@ -273,6 +270,7 @@ public class MainWindow : Object
                     if (name.length > 2) {
                         var server = new SqlClient.Server();
                         server.host = name;
+                        server.nickname = server.username = Environment.get_user_name();
                         add_server(server);
                         dialog.close();
                     }
