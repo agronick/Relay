@@ -4,12 +4,14 @@ DEPENDENCIES
 To compile you will need the following dependencies:
 (These are listed as Ubuntu packages. You may need to adjust for your distribution.)
 
+automake
 libglib2.0-dev
 libx11-dev
 valac-0.26 
 libgranite-dev
 libsqlite3-dev
 libgee-0.8-dev
+libc6-dev
 
 (Other versions of valac may work. But newer versions seems to have a bug that prevents compiling)
 

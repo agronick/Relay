@@ -31,7 +31,6 @@ bin_PROGRAMS = relay
 
 relay_SOURCES = \
     config.vapi \
-    connection.vala \
     main_window.vala \
     sqlclient.vala \
     server_manager.vala \
@@ -39,16 +38,16 @@ relay_SOURCES = \
     message.vala \
     irc.vala \
     relay.vala \
+    connection.vala \
     rich_text.vala
 
 relay_VALAFLAGS =  \
-    -X -DGETTEXT_PACKAGE="relay" --target-glib 2.32 --pkg x11 --pkg gtk+-3.0 --pkg glib-2.0 --pkg granite --pkg sqlite3
-
+    -X -DGETTEXT_PACKAGE="relay" --target-glib 2.32  --pkg gee-0.8 --pkg x11 --pkg gtk+-3.0 --pkg glib-2.0 --pkg granite --pkg sqlite3
 
 relay_LDFLAGS = \
-	-lX11 -lm -Wl,--export-dynamic
+	 -lm -lX11 -lglib-2.0 -Wl,--as-needed
 
-relay_LDADD = $(RELAY_LIBS)
+relay_LDADD = /usr/lib/*/libm.so /usr/lib/*/libX11.so $(RELAY_LIBS)
  
 
 
