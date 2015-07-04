@@ -290,7 +290,7 @@ public class ChannelTab : GLib.Object {
 				add_with_tag(text, tag, retry_count++);
 				return false;
 			}
-            output.buffer.insert_with_tags(end, text, text.length, tag, null);
+            output.buffer.insert_with_tags(ref end, text, text.length, tag, null);
 			if (rich_text.has_links) {
 				for (int i = 0; i < rich_text.link_locations_start.size; i++)
 				{
