@@ -3,12 +3,12 @@
 /*
  * channeltab.vala
  * Copyright (C) 2015 Kyle Agronick <stack@kyle-ele>
- *
+	 *
  * KyRC is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+	 *
  * KyRC is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -17,24 +17,25 @@
  * You should have received a copy of the GNU General Public License along
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 using Granite;
 using Gtk;
 using Gee;
 using Gdk;
 
 public class ChannelTab : GLib.Object {
-    public int tab_index { get; set; }
-    public Connection connection { get; set; }
-    public string channel_name { get; set; }
-    public Granite.Widgets.Tab tab;
-    public bool is_server_tab = false;
-    public bool has_subject = false;
-    public string channel_subject = "";
-    public bool is_locked = false;
+	public int tab_index { get; set; }
+	public Connection connection { get; set; }
+	public string channel_name { get; set; }
+	public Granite.Widgets.Tab tab;
+	public bool is_server_tab = false;
+	public bool has_subject = false;
+	public string channel_subject = "";
+	public bool is_locked = false;
 	public ArrayList<string> users = new ArrayList<string>();
 	public LinkedList<string> blocked_users = new LinkedList<string>();
-    private TextView output;
-	
+	private TextView output;
+
 	public static TimeVal timeval = TimeVal();
 	public static int timestamp_seconds = 180;
 	private long last_timestamp = 0;
@@ -42,43 +43,43 @@ public class ChannelTab : GLib.Object {
 	string date_format = "%A, %B %e";
 	string time_format = Granite.DateTime.get_default_time_format(true, true);
 
-    TextTag user_other_tag;
-    TextTag user_self_tag;
-    TextTag std_message_tag;
-    TextTag full_width_tag;
+	TextTag user_other_tag;
+	TextTag user_self_tag;
+	TextTag std_message_tag;
+	TextTag full_width_tag;
 	TextTag error_tag;
 	TextTag link_tag;
 	TextTag name_hilight_tag;
 	TextTag timestamp_tag;
 	TextTag spacing_tag;
 
-    public signal void new_subject(int tab_id, string subject);
+	public signal void new_subject(int tab_id, string subject);
 	public signal void user_names_changed(int tab_id);
 
-    public void add_text (string msg) {
-        connection.send_output(msg);
-    }
+	public void add_text (string msg) {
+		connection.send_output(msg);
+	}
 
-    // Constructor
-    public ChannelTab (Connection? param_server = null, string param_channel_name = "", int param_tab_index = -1) {
-        connection = param_server;
-        channel_name = param_channel_name;
-        tab_index = param_tab_index;
-    }  
+	// Constructor
+	public ChannelTab (Connection? param_server = null, string param_channel_name = "", int param_tab_index = -1) {
+		connection = param_server;
+		channel_name = param_channel_name;
+		tab_index = param_tab_index;
+	}  
 
-    public void set_tab (Widgets.Tab t, int index) { 
-        tab_index = index;
-        tab = t;
-    }
+	public void set_tab (Widgets.Tab t, int index) { 
+		tab_index = index;
+		tab = t;
+	}
 
-    public void set_topic (string subject, bool append = false) {
-        has_subject = true;
-        channel_subject = append ? channel_subject + subject + "\n" : subject;
+	public void set_topic (string subject, bool append = false) {
+		has_subject = true;
+		channel_subject = append ? channel_subject + subject + "\n" : subject;
 		Idle.add( () => { 
-    		new_subject (tab_index, subject);
+			new_subject (tab_index, subject);
 			return false;
 		});
-    }
+	}
 
 	public void add_block_list (string name) {
 		blocked_users.add(name);
@@ -92,7 +93,7 @@ public class ChannelTab : GLib.Object {
 		if(IRC.user_prefixes.index_of_char(name[0]) != -1)
 			blocked_users.remove(IRC.remove_user_prefix(name));
 	}
-	
+
 	public void add_users_message (Message message) {
 		var names = message.message.split(" ");
 		foreach (var name in names) {
@@ -146,40 +147,40 @@ public class ChannelTab : GLib.Object {
 			return false;
 		});
 	}
-	
-    public void set_output(TextView _output) {
-        output = _output;
-        output.buffer.changed.connect(do_autoscroll);
-        update_tag_table();
-    }
 
-    public TextView get_output () {
-        return output;
-    }
+	public void set_output(TextView _output) {
+		output = _output;
+		output.buffer.changed.connect(do_autoscroll);
+		update_tag_table();
+	}
 
-    public void send_text_out (string message) {
-        string formatted_message = "";
-        if (message.length > 4 && message[0:4] == "/msg") {
+	public TextView get_output () {
+		return output;
+	}
+
+	public void send_text_out (string message) {
+		string formatted_message = "";
+		if (message.length > 4 && message[0:4] == "/msg") {
 			formatted_message =  parse_message_cmd(message);
 		} else if (message.length > 5 && message[0:5] == "/nick") {
 			formatted_message = parse_nick_change(message);
 		} else {
-		    if (is_server_tab) {
-		        formatted_message = format_server_msg(message);
-		    } else {
-		        formatted_message = format_channel_msg(message);
-		    }
-		    if (formatted_message.strip().length == 0)
-		        return;
+			if (is_server_tab) {
+				formatted_message = format_server_msg(message);
+			} else {
+				formatted_message = format_channel_msg(message);
+			}
+			if (formatted_message.strip().length == 0)
+				return;
 		}
-        connection.send_output(formatted_message);
-    }
+		connection.send_output(formatted_message);
+	}
 
-    public string format_channel_msg (string message) { 
+	public string format_channel_msg (string message) { 
 		if (message[0] == '/')
 			return message.substring(1);
-        return "PRIVMSG " + channel_name + " :" + message.escape("");
-    }
+		return "PRIVMSG " + channel_name + " :" + message.escape("");
+	}
 
 	public string parse_nick_change (string message) {
 		string[] split = message.split(" ");
@@ -187,30 +188,30 @@ public class ChannelTab : GLib.Object {
 		return "NICK " + split[1];
 	}
 
-    public string format_server_msg (string message) {
-        if (message[0] != '/')
-            return "";
-        return message.substring(1); 
-    }
- 
-    public void display_message (Message message) {   
+	public string format_server_msg (string message) {
+		if (message[0] != '/')
+			return "";
+		return message.substring(1); 
+	}
+
+	public void display_message (Message message) {   
 		message.message = message.get_msg_txt();
-        message.message += "\n";
-        
-        switch (message.command) {
-            case "PRIVMSG": 
+		message.message += "\n";
+
+		switch (message.command) {
+			case "PRIVMSG": 
 				handle_private_message(message);
-                break;
-            case "NOTICE":
-            case IRC.RPL_MOTD:
-            case IRC.RPL_MOTDSTART:
-                add_with_tag(message.message, full_width_tag);
-                break;
+				break;
+			case "NOTICE":
+			case IRC.RPL_MOTD:
+			case IRC.RPL_MOTDSTART:
+				add_with_tag(message.message, full_width_tag);
+				break;
 			default: 
 				add_with_tag(message.message, full_width_tag);
 				break;
-        } 
-    }
+		} 
+	}
 
 	public void display_error (Message message) {
 		tab.working = false;
@@ -234,7 +235,7 @@ public class ChannelTab : GLib.Object {
 				space();
 			last_user = user;
 		}
-		
+
 		add_with_tag(user, message.internal ? user_self_tag : user_other_tag);
 		add_with_tag(message.message, std_message_tag);
 	}
@@ -251,22 +252,22 @@ public class ChannelTab : GLib.Object {
 		}
 		return false;
 	}
-    
-    public void do_autoscroll () {
-        ScrolledWindow sw = (ScrolledWindow) output.get_parent();
-        Adjustment position = sw.get_vadjustment();
-        if (!(position is Adjustment))
-            return;
-        if (position.value > position.upper - position.page_size - 50) {
-            Idle.add( () => {
-                position.set_value(position.upper - position.page_size);
-                sw.set_vadjustment(position);
-                return false;
-            });
-        }
-    }       
- 
-    private void add_with_tag (string? text, TextTag? tag, int retry_count = 0) {
+
+	public void do_autoscroll () {
+		ScrolledWindow sw = (ScrolledWindow) output.get_parent();
+		Adjustment position = sw.get_vadjustment();
+		if (!(position is Adjustment))
+			return;
+		if (position.value > position.upper - position.page_size - 50) {
+			Idle.add( () => {
+				position.set_value(position.upper - position.page_size);
+				sw.set_vadjustment(position);
+				return false;
+			});
+		}
+	}       
+
+	private void add_with_tag (string? text, TextTag? tag, int retry_count = 0) {
 		if(text == null || 
 		   tag == null || 
 		   retry_count > 4 ||
@@ -278,23 +279,23 @@ public class ChannelTab : GLib.Object {
 			rich_text.parse_links();
 			rich_text.parse_name(connection.server.nickname);
 		}
-		
-        while (is_locked) {
-            Thread.usleep(111);
-        } 
-        Idle.add( () => {
-    		is_locked = true;
-            TextIter? end;
-            output.buffer.get_end_iter(out end);
+
+		while (is_locked) {
+			Thread.usleep(111);
+		} 
+		Idle.add( () => {
+			is_locked = true;
+			TextIter? end;
+			output.buffer.get_end_iter(out end);
 			if (end == null) {
 				add_with_tag(text, tag, retry_count++);
 				return false;
 			}
-            output.buffer.insert_with_tags(end, text, text.length, tag, null);
+			output.buffer.insert_with_tags_by_name(end, text, text.length, tag.name);
 			if (rich_text.has_links) {
 				for (int i = 0; i < rich_text.link_locations_start.size; i++)
 				{
-		    		output.buffer.get_end_iter(out end);
+					output.buffer.get_end_iter(out end);
 					TextIter start = end;
 					start.set_offset(start.get_offset() - rich_text.link_locations_start[i]);
 					end.set_offset(end.get_offset() - rich_text.link_locations_end[i]);
@@ -304,47 +305,47 @@ public class ChannelTab : GLib.Object {
 			if (rich_text.has_names) {
 				for (int i = 0; i < rich_text.name_location_start.size; i++)
 				{
-		    		output.buffer.get_end_iter(out end);
+					output.buffer.get_end_iter(out end);
 					TextIter start = end;
 					start.set_offset(start.get_offset() - rich_text.name_location_start[i]);
 					end.set_offset(end.get_offset() - rich_text.name_location_end[i]);
 					output.buffer.apply_tag(name_hilight_tag, start, end);
 				}
 			}
-    		is_locked = false;
-            return false;
-        });
+			is_locked = false;
+			return false;
+		});
 		is_locked = false;
-    }
+	}
 
 
-    private void update_tag_table () { 
-        user_other_tag = output.buffer.create_tag("user_other");
-        user_self_tag = output.buffer.create_tag("user_self");
-        std_message_tag = output.buffer.create_tag("std_message");
-        full_width_tag = output.buffer.create_tag("full_width");
-        error_tag = output.buffer.create_tag("error");
-        link_tag = output.buffer.create_tag("link");
+	private void update_tag_table () { 
+		user_other_tag = output.buffer.create_tag("user_other");
+		user_self_tag = output.buffer.create_tag("user_self");
+		std_message_tag = output.buffer.create_tag("std_message");
+		full_width_tag = output.buffer.create_tag("full_width");
+		error_tag = output.buffer.create_tag("error");
+		link_tag = output.buffer.create_tag("link");
 		name_hilight_tag = output.buffer.create_tag("name_hilight");
 		timestamp_tag = output.buffer.create_tag("timestamp");
 		spacing_tag = output.buffer.create_tag("spacing");
 
-        var color = new Gdk.RGBA();
-        color.parse("#4EC9DE");
-        user_other_tag.foreground_rgba = color;
-        user_other_tag.left_margin = 0;
+		var color = new Gdk.RGBA();
+		color.parse("#4EC9DE");
+		user_other_tag.foreground_rgba = color;
+		user_other_tag.left_margin = 0;
 		user_other_tag.weight = Pango.Weight.SEMIBOLD;
-        
-        color.parse("#AE81FF");
-        user_self_tag.foreground_rgba = color;
-        user_self_tag.left_margin = 0;
+
+		color.parse("#AE81FF");
+		user_self_tag.foreground_rgba = color;
+		user_self_tag.left_margin = 0;
 		user_self_tag.weight = Pango.Weight.SEMIBOLD;
 
-        color.parse("#F8F8F2");
-        std_message_tag.foreground_rgba = color;
-        std_message_tag.indent = 0;
+		color.parse("#F8F8F2");
+		std_message_tag.foreground_rgba = color;
+		std_message_tag.indent = 0;
 
-        full_width_tag.left_margin = 0;
+		full_width_tag.left_margin = 0;
 
 		color.parse("#C54725");
 		error_tag.foreground_rgba = color;
@@ -370,7 +371,7 @@ public class ChannelTab : GLib.Object {
 		timestamp_tag.pixels_below_lines = 1;
 
 		spacing_tag.size_points = 2;
-    }
+	}
 
 	public bool hover_hand(GLib.Object event_object, Gdk.Event event, TextIter end) {
 		//TODO: Make this work or remove it
@@ -398,7 +399,7 @@ public class ChannelTab : GLib.Object {
 
 			tv.buffer.get_iter_at_offset(out end, end.get_offset() - 1);
 			tv.buffer.get_iter_at_offset(out start, start.get_offset() + 1);
-			
+
 			string link = start.get_text(end);
 			stdout.printf("LINK IS " + link + start.get_char().to_string() + end.get_char().to_string() +  "\n");
 			Granite.Services.System.open_uri(link);
