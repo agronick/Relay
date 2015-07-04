@@ -70,7 +70,7 @@ public class Connection : Object
 		do{
 			size_t size;
 			try{
-				line = input_stream.read_line_utf8(out size);
+				line = input_stream.read_line(out size);
 				handle_input(line);
 			}catch(IOError e) {
 				warning("IO error while reading");

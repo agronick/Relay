@@ -355,7 +355,6 @@ public class ChannelTab : GLib.Object {
 		link_tag.foreground_rgba = color;
 		link_tag.underline_set = true;
 
-		link_tag.event.connect(hover_hand);
 		link_tag.event.connect(link_clicked);
 
 		color.parse("#F1AB25");
@@ -371,18 +370,6 @@ public class ChannelTab : GLib.Object {
 		timestamp_tag.pixels_below_lines = 1;
 
 		spacing_tag.size_points = 2;
-	}
-
-	public bool hover_hand(GLib.Object event_object, Gdk.Event event, TextIter end) {
-		//TODO: Make this work or remove it
-		TextView tv = (TextView) event_object;
-		if (event.type == EventType.ENTER_NOTIFY) {
-			stdout.printf("Entered");
-			MainWindow.window.get_window().set_cursor(new Cursor.for_display(Display.get_default(), CursorType.HAND1));
-		} else if (event.type == EventType.LEAVE_NOTIFY) {
-			MainWindow.window.get_window().set_cursor(new Cursor.for_display(Display.get_default(), CursorType.XTERM));
-		}
-		return false;
 	}
 
 	public bool link_clicked(GLib.Object event_object, Gdk.Event event, TextIter end) {
