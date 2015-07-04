@@ -212,7 +212,7 @@ public class ServerManager : Object
 		pass.set_text(svr.password);
 		port.set_value(svr.port);
 		nick.set_text(svr.nickname);
-		encrypt.set_state(svr.encryption);
+		encrypt.state_set(svr.encryption);
 		connect_cmds.buffer.text = svr.connect_cmds;
 
 		foreach (Widget lbr in channels.get_children()) {
