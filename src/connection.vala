@@ -1,17 +1,22 @@
-/***
-  Copyright (C) 2011-2012 Application Name Developers
-  This program is free software: you can redistribute it and/or modify it
-  under the terms of the GNU Lesser General Public License version 3, as published
-  by the Free Software Foundation.
 
-  This program is distributed in the hope that it will be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranties of
-  MERCHANTABILITY, SATISFACTORY QUALITY, or FITNESS FOR A PARTICULAR
-  PURPOSE. See the GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License along
-  with this program. If not, see
-***/
+/* -*- Mode: vala; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*-  */
+/*
+ * connection.vala
+ * Copyright (C) 2015 Kyle Agronick <stack@kyle-ele>
+	 *
+ * KyRC is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+	 *
+ * KyRC is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 using GLib;
 using Gtk;
@@ -20,196 +25,195 @@ using Gee;
 public class Connection : Object
 {
 
-    public static const uint16 DEFAULT_PORT = 6667;
-    public DataInputStream input_stream;
-    public DataOutputStream output_stream;
+	public static const uint16 DEFAULT_PORT = 6667;
+	public DataInputStream input_stream;
+	public DataOutputStream output_stream;
 	public SqlClient.Server server;
-    public bool exit = false;
-    public bool encrypted = false;
-    private weak MainWindow backref;
-    public ChannelTab server_tab;
-    public HashMap<string, ChannelTab> channel_tabs = new HashMap<string, ChannelTab>();
-    public LinkedList<string> channel_autoconnect = new LinkedList<string>();
- 
-    public signal void new_topic(ChannelTab tab, string topic);
+	public bool exit = false;
+	public bool encrypted = false;
+	private weak MainWindow backref;
+	public ChannelTab server_tab;
+	public HashMap<string, ChannelTab> channel_tabs = new HashMap<string, ChannelTab>();
+	public LinkedList<string> channel_autoconnect = new LinkedList<string>();
+
+	public signal void new_topic(ChannelTab tab, string topic);
 
 
-    public Connection(MainWindow back) {
-        backref = back;
-    }
+	public Connection(MainWindow back) {
+		backref = back;
+	}
 
-    public bool connect_to_server (SqlClient.Server _server) {
-        server = _server;
-        server_tab = add_channel_tab(server.host);
-        server_tab.is_server_tab = true; 
+	public bool connect_to_server (SqlClient.Server _server) {
+		server = _server;
+		server_tab = add_channel_tab(server.host);
+		server_tab.is_server_tab = true; 
 
-        new Thread<int>("Connection " + server.host, do_connect);
+		new Thread<int>("Connection " + server.host, do_connect);
 
-        return true;
-    }
+		return true;
+	}
 
-    private int do_connect () {
-        SocketClient client = new SocketClient ();
-        client.tls = encrypted;
-        // Resolve hostname to IP address:
-        Resolver resolver = Resolver.get_default ();
-        GLib.List<InetAddress> addresses = resolver.lookup_by_name(server.host, null);
-        InetAddress address = addresses.nth_data (0);
-        SocketConnection conn = client.connect (new InetSocketAddress (address, DEFAULT_PORT));
-        input_stream = new DataInputStream (conn.input_stream);
-        output_stream = new DataOutputStream (conn.output_stream);
+	private int do_connect () {
+		SocketClient client = new SocketClient ();
+		client.tls = encrypted;
+		// Resolve hostname to IP address:
+		Resolver resolver = Resolver.get_default ();
+		GLib.List<InetAddress> addresses = resolver.lookup_by_name(server.host, null);
+		InetAddress address = addresses.nth_data (0);
+		SocketConnection conn = client.connect (new InetSocketAddress (address, DEFAULT_PORT));
+		input_stream = new DataInputStream (conn.input_stream);
+		output_stream = new DataOutputStream (conn.output_stream);
 
-        do_register();
+		do_register();
 
-        string? line = "";
-        do{
-            size_t size;
-            try{
-                line = input_stream.read_line(out size);
-                debug("RAW INPUT " + line);
-                handle_input(line);
-            }catch(IOError e) {
-                warning("IO error while reading");
-            }
-        }while (line != null && !exit);
+		string? line = "";
+		do{
+			size_t size;
+			try{
+				line = input_stream.read_line_utf8(out size);
+				handle_input(line);
+			}catch(IOError e) {
+				warning("IO error while reading");
+			}
+		}while (line != null && !exit);
 
 
-        return 1;
-    }
+		return 1;
+	}
 
-    public ChannelTab? add_channel_tab (string? name) {
-        if (name == null || name.strip() == "")
-            return null;
-        if (name == server.username || name == server.nickname)
-            return server_tab;
-        if (channel_tabs.has_key(name))
-            return channel_tabs[name];
-        var newTab = new ChannelTab(this, name);
-        backref.add_tab(newTab); 
-        channel_tabs[name] = newTab;
-        return newTab;
-    }
+	public ChannelTab? add_channel_tab (string? name) {
+		if (name == null || name.strip() == "")
+			return null;
+		if (name == server.username || name == server.nickname)
+			return server_tab;
+		if (channel_tabs.has_key(name))
+			return channel_tabs[name];
+		var newTab = new ChannelTab(this, name);
+		backref.add_tab(newTab); 
+		channel_tabs[name] = newTab;
+		return newTab;
+	}
 
-    private ChannelTab find_channel_tab (string name) {
-        if (channel_tabs.has_key(name))
-            return channel_tabs[name];
+	private ChannelTab find_channel_tab (string name) {
+		if (channel_tabs.has_key(name))
+			return channel_tabs[name];
 
-        return server_tab;
-    }
+		return server_tab;
+	}
 
-    private void handle_input (string? msg) {
-        if (msg == null) {
-            stop();
-            return;
-        }  
-        
-        Message message = new Message (msg);
-        switch (message.command) {
-            case "PING":
-                handle_ping(ref message);
-                return;
-            case "PONG":
-                info(msg);
-                return;
-            case IRC.RPL_TOPIC:
-                ChannelTab tab = add_channel_tab(message.parameters[1]);
+	private void handle_input (string? msg) {
+		if (msg == null) {
+			stop();
+			return;
+		}  
+
+		Message message = new Message (msg);
+		switch (message.command) {
+			case "PING":
+				handle_ping(ref message);
+				return;
+			case "PONG":
+				info(msg);
+				return;
+			case IRC.RPL_TOPIC:
+				ChannelTab tab = add_channel_tab(message.parameters[1]);
 				if (tab != null)
 					tab.set_topic(message.get_msg_txt());
-                return;
-            case IRC.PRIVATE_MESSAGE: 
-                ChannelTab tab = add_channel_tab(message.parameters[0]);
+				return;
+			case IRC.PRIVATE_MESSAGE: 
+				ChannelTab tab = add_channel_tab(message.parameters[0]);
 				if (tab != null)
 					backref.add_text(tab, message);
-                return;
-            case IRC.RPL_LUSERCLIENT:
-            case "NOTICE":
-            case IRC.RPL_MOTD:
-            case IRC.RPL_MOTDSTART:
-            case IRC.RPL_YOURHOST:
-            case IRC.RPL_LUSEROP:
-            case IRC.RPL_LUSERUNKNOWN:
-            case IRC.RPL_LUSERCHANNELS:
-            case IRC.RPL_UMODEIS: //maybe atab
-            case IRC.RPL_SERVLIST:
-            case IRC.RPL_ENDOFSTATS:
-            case IRC.RPL_STATSLINKINFO:
-                server_tab.display_message(message);
-                return;
-            case IRC.RPL_CREATED:
-            case IRC.RPL_LUSERME:
-                debug("SETTING TOPIC " + message.get_msg_txt());
-                server_tab.set_topic(message.get_msg_txt(), true);
+				return;
+			case IRC.RPL_LUSERCLIENT:
+			case "NOTICE":
+			case IRC.RPL_MOTD:
+			case IRC.RPL_MOTDSTART:
+			case IRC.RPL_YOURHOST:
+			case IRC.RPL_LUSEROP:
+			case IRC.RPL_LUSERUNKNOWN:
+			case IRC.RPL_LUSERCHANNELS:
+				case IRC.RPL_UMODEIS: //maybe atab
+				case IRC.RPL_SERVLIST:
+			case IRC.RPL_ENDOFSTATS:
+			case IRC.RPL_STATSLINKINFO:
+				server_tab.display_message(message);
+				return;
+			case IRC.RPL_CREATED:
+			case IRC.RPL_LUSERME:
+				debug("SETTING TOPIC " + message.get_msg_txt());
+				server_tab.set_topic(message.get_msg_txt(), true);
 				backref.add_text(server_tab, message);
-                return;
+				return;
 			case IRC.RPL_WELCOME:
-                run_on_connect_cmds();
+				run_on_connect_cmds();
 				do_autoconnect();
 				server_tab.tab.working = false;
-                break;
+				break;
 			case IRC.RPL_NAMREPLY:
 				var tab = find_channel_tab(message.parameters[2]);
 				if (tab == server_tab)
 					return;
 				tab.add_users_message(message);
 				break;
-            case IRC.QUIT_MSG:
-            case IRC.PART_MSG:
-                debug(message.user_name + " has left");
-                foreach(var t in channel_tabs.entries) {
-                    if (t != null && message.user_name != null && message.user_name.length > 0)
-                        t.value.user_leave_channel(message.user_name, message.get_msg_txt());
-                }
-                return;
-			case IRC.USER_NAME_CHANGED:
-                foreach(var t in channel_tabs.entries) {
-                    if (t != null && message.user_name != null && message.user_name.length > 0)
-                        t.value.user_name_change(message.user_name, message.get_msg_txt());
-                }
+			case IRC.QUIT_MSG:
+			case IRC.PART_MSG:
+				debug(message.user_name + " has left");
+				foreach(var t in channel_tabs.entries) {
+					if (t != null && message.user_name != null && message.user_name.length > 0)
+						t.value.user_leave_channel(message.user_name, message.get_msg_txt());
+				}
 				return;
-            case IRC.JOIN_MSG:
-                var tab = add_channel_tab(message.get_msg_txt()); 
-                if (tab != null && message.user_name != null && message.user_name.length > 0)
-                    tab.user_join_channel(message.user_name);
-                return;
-            case IRC.RPL_ENDOFNAMES:
-                ChannelTab tab = find_channel_tab(message.parameters[1]);
-                tab.user_names_changed(tab.tab_index);
-                break;
-			//Errors
+			case IRC.USER_NAME_CHANGED:
+				foreach(var t in channel_tabs.entries) {
+					if (t != null && message.user_name != null && message.user_name.length > 0)
+						t.value.user_name_change(message.user_name, message.get_msg_txt());
+				}
+				return;
+			case IRC.JOIN_MSG:
+				var tab = add_channel_tab(message.get_msg_txt()); 
+				if (tab != null && message.user_name != null && message.user_name.length > 0)
+					tab.user_join_channel(message.user_name);
+				return;
+			case IRC.RPL_ENDOFNAMES:
+				ChannelTab tab = find_channel_tab(message.parameters[1]);
+				tab.user_names_changed(tab.tab_index);
+				break;
+				//Errors
 			case IRC.ERR_NICKNAMEINUSE:
-            case IRC.ERR_NONICKNAMEGIVEN:
-                string error_msg = message.get_msg_txt();
-                if (message.get_msg_txt().length < 3)
-                    error_msg = _("The name you chose is in use.");
-                error_msg = server.host + "\n" + error_msg;
+			case IRC.ERR_NONICKNAMEGIVEN:
+				string error_msg = message.get_msg_txt();
+				if (message.get_msg_txt().length < 3)
+					error_msg = _("The name you chose is in use.");
+				error_msg = server.host + "\n" + error_msg;
 				name_in_use(error_msg);
 				break;
-            case IRC.ERR_NOSUCHNICK:
-            case IRC.ERR_NOSUCHCHANNEL:
-            case IRC.ERR_WASNOSUCHNICK:
-            case IRC.ERR_UNKNOWNCOMMAND:
-            case IRC.ERR_NOMOTD:
-            case IRC.ERR_USERNOTINCHANNEL:
-            case IRC.ERR_NOTONCHANNEL:
-            case IRC.ERR_NOTREGISTERED:
-            case IRC.ERR_NEEDMOREPARAMS:
-            case IRC.ERR_UNKNOWNMODE:
-            case IRC.ERR_ALREADYONCHANNEL:
-            case IRC.ERR_CHANOPRIVSNEEDED:
+			case IRC.ERR_NOSUCHNICK:
+			case IRC.ERR_NOSUCHCHANNEL:
+			case IRC.ERR_WASNOSUCHNICK:
+			case IRC.ERR_UNKNOWNCOMMAND:
+			case IRC.ERR_NOMOTD:
+			case IRC.ERR_USERNOTINCHANNEL:
+			case IRC.ERR_NOTONCHANNEL:
+			case IRC.ERR_NOTREGISTERED:
+			case IRC.ERR_NEEDMOREPARAMS:
+			case IRC.ERR_UNKNOWNMODE:
+			case IRC.ERR_ALREADYONCHANNEL:
+			case IRC.ERR_CHANOPRIVSNEEDED:
 			case IRC.ERR_NONONREG:
 				backref.add_text(find_channel_tab(message.parameters[0]), message, true);
-                break;
-            default:
-                debug("Unhandled message: " + msg);
-                return;
-        } 
-    }
+				break;
+			default:
+				debug("Unhandled message: " + msg);
+				return;
+		} 
+	}
 
 	public void do_register () {
-        send_output("PASS  " + ((server.password.length > 0) ? server.password : "-p"));
-        send_output("NICK " + server.nickname);
-        send_output("USER " + server.username + " 0 * :" + server.realname);
-        send_output("MODE " + server.username + " +i");
+		send_output("PASS  " + ((server.password.length > 0) ? server.password : "-p"));
+		send_output("NICK " + server.nickname);
+		send_output("USER " + server.username + " 0 * :" + server.realname);
+		send_output("MODE " + server.username + " +i");
 	}
 
 	public void do_autoconnect () {
@@ -218,16 +222,16 @@ public class Connection : Object
 		}
 	}
 
-    public void run_on_connect_cmds() {
-        if(server.connect_cmds.length > 0) {
-            string cmd = server.connect_cmds + "\n";
-            string[] cmds = server.connect_cmds.split("\n");
-            foreach(string run in cmds) {
-                if (run.length > 1)
-                    server_tab.send_text_out(run);
-            }
-        }
-    }
+	public void run_on_connect_cmds() {
+		if(server.connect_cmds.length > 0) {
+			string cmd = server.connect_cmds + "\n";
+			string[] cmds = server.connect_cmds.split("\n");
+			foreach(string run in cmds) {
+				if (run.length > 1)
+					server_tab.send_text_out(run);
+			}
+		}
+	}
 
 	public void name_in_use (string message) {
 		debug("At name in use");
@@ -259,56 +263,56 @@ public class Connection : Object
 				case Gtk.ResponseType.CANCEL:
 					dialog.close();
 					server_tab.tab.close();
-                    foreach (var tab in channel_tabs.entries) {
-                        tab.value.tab.close();
-                    }
+					foreach (var tab in channel_tabs.entries) {
+						tab.value.tab.close();
+					}
 					break;
 			}
 		});
 	}
 
-    private void handle_ping (ref Message msg) {
-        send_output("PONG " + msg.message);
-    }
+	private void handle_ping (ref Message msg) {
+		send_output("PONG " + msg.message);
+	}
 
-    public void stop () {
-        exit = true;
-        input_stream.clear_pending();
-        try{
-            input_stream.close();
-        } catch (GLib.IOError e){}
-        output_stream.clear_pending();
-        try{
-            output_stream.flush();
-            output_stream.close();
-        } catch (GLib.Error e){}
-    }
+	public void stop () {
+		exit = true;
+		input_stream.clear_pending();
+		try{
+			input_stream.close();
+		} catch (GLib.IOError e){}
+		output_stream.clear_pending();
+		try{
+			output_stream.flush();
+			output_stream.close();
+		} catch (GLib.Error e){}
+	}
 
 	public void join (string channel) {
 		send_output("JOIN " + channel);
 	}
 
-    public void send_output (string output) {
-        debug("Sending out " + output + "  " + server.host + "\n");
-        try{
+	public void send_output (string output) {
+		debug("Sending out " + output + "  " + server.host + "\n");
+		try{
 			if (output_stream == null || output_stream.is_closed())
 				return;
-            output_stream.put_string(output + "\r\n");
-        }catch(GLib.Error e){}
-    }
+			output_stream.put_string(output + "\r\n");
+		}catch(GLib.Error e){}
+	}
 
-    public void do_exit () {
-        exit = true;
-        input_stream.clear_pending();
-        send_output("QUIT :" + _("Relay, an IRC client for the modern desktop"));
+	public void do_exit () {
+		exit = true;
+		input_stream.clear_pending();
+		send_output("QUIT :" + _("Relay, an IRC client for the modern desktop"));
 		if (!input_stream.is_closed())
 			try{
-    			input_stream.close();
+				input_stream.close();
 			}catch (IOError e) {}
 		if (!output_stream.is_closed())
 			try{
-   				output_stream.close();
+				output_stream.close();
 			}catch (IOError e) {}
-    }
+	}
 
 }
