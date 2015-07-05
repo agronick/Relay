@@ -176,7 +176,7 @@ public class MainWindow : Object
 
 			set_up_add_sever(builder);
 
-			toolbar.set_title("Relay");
+			toolbar.set_title(app.program_name);
 			toolbar.show_all();
 
 			toolbar.show_close_button = true;
@@ -326,6 +326,8 @@ public class MainWindow : Object
 			channel_users.hide();
 			input.hide();
 			toolbar.set_title(app.program_name);
+			toolbar.set_has_subtitle(false);
+			toolbar.set_subtitle("");
 			return;
 		}
 
@@ -345,13 +347,17 @@ public class MainWindow : Object
 
 		if (using_tab.is_server_tab) {
 			toolbar.set_title(using_tab.tab.label);
+			toolbar.set_has_subtitle(false);
+			toolbar.set_subtitle("");
 			channel_users.hide();
-		} else
-			toolbar.set_title(using_tab.tab.label + _(" on ") + using_tab.connection.server.host);
-
-		input.placeholder_text = using_tab.tab.label;
-
-		make_user_popover(using_tab);
+		} else {
+			toolbar.set_title(using_tab.tab.label);
+			toolbar.set_subtitle(using_tab.connection.server.host);
+			toolbar.has_subtitle = (using_tab.tab.label != using_tab.connection.server.host);
+			
+			input.placeholder_text = using_tab.tab.label;
+			make_user_popover(using_tab);
+		}
 	}
 
 	private void make_user_popover (ChannelTab using_tab) {
@@ -621,6 +627,8 @@ public class MainWindow : Object
 		tab.icon = null;
 		tab.label = _("Welcome");
 		toolbar.set_title(app.program_name);
+		toolbar.set_subtitle("");
+		toolbar.set_has_subtitle(false);
 		tab.page = welcome;
 		tabs.insert_tab(tab, -1);
 
