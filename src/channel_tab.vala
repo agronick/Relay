@@ -1,7 +1,7 @@
 
 /* -*- Mode: vala; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*-  */
 /*
- * channeltab.vala
+ * channel_tab.vala
  * Copyright (C) 2015 Kyle Agronick <stack@kyle-ele>
 	 *
  * KyRC is free software: you can redistribute it and/or modify it
@@ -60,7 +60,6 @@ public class ChannelTab : GLib.Object {
 		connection.send_output(msg);
 	}
 
-	// Constructor
 	public ChannelTab (Connection? param_server = null, string param_channel_name = "", int param_tab_index = -1) {
 		connection = param_server;
 		channel_name = param_channel_name;
@@ -85,7 +84,9 @@ public class ChannelTab : GLib.Object {
 		blocked_users.add(name);
 
 		if (IRC.user_prefixes.index_of_char(name[0]) != -1)
-			blocked_users.add(IRC.remove_user_prefix(name));	}
+			blocked_users.add(IRC.remove_user_prefix(name));	
+
+	}
 
 	public void remove_block_list (string name) {
 		blocked_users.remove(name);
@@ -127,7 +128,8 @@ public class ChannelTab : GLib.Object {
 			users.remove(fix_user_name(name));
 			idle_use_names_changed();
 			space();
-			add_with_tag(name + _(" has left: ") + msg + "\n", full_width_tag);
+			string colon = (msg.strip().length > 0) ? ": " + msg : "";
+			add_with_tag(name + _(" has left") + colon + "\n", full_width_tag);
 		}
 	}
 
