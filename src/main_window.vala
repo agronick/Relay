@@ -49,7 +49,6 @@ public class MainWindow : Object
 	Label users_header;
 	Popover users_popover;
 	ScrolledWindow users_scrolled;
-	Button add_server_button;
 	HeaderBar toolbar;
 	string channel_user_selected = "";
 	Relay app;
@@ -218,7 +217,7 @@ public class MainWindow : Object
 			output.set_wrap_mode (Gtk.WrapMode.WORD_CHAR);
 			output.set_left_margin(IRC.USER_WIDTH);
 			output.set_indent(IRC.USER_WIDTH * -1);
-			output.modify_font(FontDescription.from_string("Inconsolata 9"));
+			output.override_font(FontDescription.from_string("Inconsolata 9"));
 			ScrolledWindow scrolled = new Gtk.ScrolledWindow (null, null);
 			scrolled.shadow_type = ShadowType.IN;
 			scrolled.margin = 3;

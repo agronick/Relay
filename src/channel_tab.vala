@@ -330,7 +330,7 @@ public class ChannelTab : GLib.Object {
 		timestamp_tag = output.buffer.create_tag("timestamp");
 		spacing_tag = output.buffer.create_tag("spacing");
 
-		var color = new Gdk.RGBA();
+		var color = Gdk.RGBA();
 		color.parse("#4EC9DE");
 		user_other_tag.foreground_rgba = color;
 		user_other_tag.left_margin = 0;

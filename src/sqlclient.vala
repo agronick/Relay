@@ -210,7 +210,6 @@ public class SqlClient : Object
 			string sql = "INSERT INTO servers (host, port) VALUES('', " + Connection.DEFAULT_PORT.to_string() + ")";
 			db.exec(sql);
 			this.id = (int)db.last_insert_rowid ();
-			stderr.printf("new server id " + this.id.to_string());
 			servers[this.id]=this;
 			return this.id;
 		}

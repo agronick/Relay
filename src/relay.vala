@@ -74,7 +74,7 @@ public class Relay : Granite.Application {
     public override void activate () {
 
         if (has_activated) {
-            window.window.present();
+            MainWindow.window.present();
             return;
         }
 

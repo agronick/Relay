@@ -38,17 +38,20 @@ public class Message : GLib.Object {
 
     public Message (string _message = "") {
         if (regex == null) {
-            try{
+            try {
                 regex = new Regex(regex_string, RegexCompileFlags.OPTIMIZE );
                 fix_message = new Regex(replace_string, RegexCompileFlags.OPTIMIZE );
-            }catch(RegexError e){
+            } catch (RegexError e){
                 error("There was a regex error that should never happen");
             }
         }
         if (_message.length == 0)
             return;
-
-        message = fix_message.replace_literal(_message, _message.length, 0, "");
+		try{
+    		message = fix_message.replace_literal(_message, _message.length, 0, "");
+		}catch(RegexError e) {
+			message = _message;
+		}
         parse_regex();
     }
 

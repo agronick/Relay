@@ -35,8 +35,10 @@ public class RichText : GLib.Object {
     public RichText (string _text) {
         text = _text;
 
+        try{
         if (parse_url == null)
             parse_url = new Regex(url_string, RegexCompileFlags.OPTIMIZE);
+        } catch (RegexError e) {}
     }
 
     public void parse_links() {

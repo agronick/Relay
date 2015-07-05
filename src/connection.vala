@@ -54,29 +54,33 @@ public class Connection : Object
 	}
 
 	private int do_connect () {
-		SocketClient client = new SocketClient ();
-		client.tls = encrypted;
-		// Resolve hostname to IP address:
-		Resolver resolver = Resolver.get_default ();
-		GLib.List<InetAddress> addresses = resolver.lookup_by_name(server.host, null);
-		InetAddress address = addresses.nth_data (0);
-		SocketConnection conn = client.connect (new InetSocketAddress (address, DEFAULT_PORT));
-		input_stream = new DataInputStream (conn.input_stream);
-		output_stream = new DataOutputStream (conn.output_stream);
+		try{
+			SocketClient client = new SocketClient ();
+			client.tls = encrypted;
+			// Resolve hostname to IP address:
+			Resolver resolver = Resolver.get_default ();
+			GLib.List<InetAddress> addresses = resolver.lookup_by_name(server.host, null);
+			InetAddress address = addresses.nth_data (0);
+			SocketConnection conn = client.connect (new InetSocketAddress (address, DEFAULT_PORT));
+			input_stream = new DataInputStream (conn.input_stream);
+			output_stream = new DataOutputStream (conn.output_stream);
 
-		do_register();
+			do_register();
 
-		string? line = "";
-		do{
-			size_t size;
-			try{
-				line = input_stream.read_line(out size);
-				handle_input(line);
-			}catch(IOError e) {
-				warning("IO error while reading");
-			}
-		}while (line != null && !exit);
-
+			string? line = "";
+			do{
+				size_t size;
+				try{
+					line = input_stream.read_line(out size);
+					handle_input(line);
+				}catch(IOError e) {
+					warning("IO error while reading");
+				}
+			}while (line != null && !exit);
+		} catch (GLib.Error e) {
+			warning("Could not connect" + e.message);
+			return 0;
+		}
 
 		return 1;
 	}
@@ -224,7 +228,6 @@ public class Connection : Object
 
 	public void run_on_connect_cmds() {
 		if(server.connect_cmds.length > 0) {
-			string cmd = server.connect_cmds + "\n";
 			string[] cmds = server.connect_cmds.split("\n");
 			foreach(string run in cmds) {
 				if (run.length > 1)
@@ -254,7 +257,7 @@ public class Connection : Object
 					string name = server_name.get_text().strip();
 					if (name.length > 0) {
 						server.nickname = server.username = server_name.get_text();
-						if (server.realname.size() == 0)
+						if (server.realname.length == 0)
 							server.realname = server.nickname;
 						do_register();
 						dialog.close();
