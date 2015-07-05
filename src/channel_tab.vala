@@ -288,12 +288,17 @@ public class ChannelTab : GLib.Object {
 		Idle.add( () => {
 			is_locked = true;
 			TextIter? end;
+			TextIter end_after;
 			output.buffer.get_end_iter(out end);
 			if (end == null) {
 				add_with_tag(text, tag, retry_count++);
 				return false;
 			}
-			output.buffer.insert_with_tags_by_name(end, text, text.length, tag.name);
+			output.buffer.insert_text(ref end, text, text.length);
+			end_after = end;
+			end.backward_chars(text.length);
+			end_after.forward_chars(text.length);
+			output.buffer.apply_tag(tag, end, end_after);
 			if (rich_text.has_links) {
 				for (int i = 0; i < rich_text.link_locations_start.size; i++)
 				{
