@@ -45,6 +45,7 @@ public class MainWindow : Object
 	Icon channel_tab_icon_new_msg;
 	TextView subject_text;
 	Box users_list;
+	bool update_users_on_close = false;
 	Gtk.Menu user_menu;
 	Label users_header;
 	Popover users_popover;
@@ -138,6 +139,12 @@ public class MainWindow : Object
 			//users_popover.set_property("transitions-enabled", true);
 			channel_users.clicked.connect(() => {
 				users_popover.show_all();
+			});
+			users_popover.closed.connect( () => {
+				if (update_users_on_close) {
+					user_names_changed(current_tab);
+					update_users_on_close = false;
+				}
 			});
 
 			users_scrolled = new Gtk.ScrolledWindow (null, null);
@@ -348,6 +355,11 @@ public class MainWindow : Object
 	}
 
 	private void make_user_popover (ChannelTab using_tab) {
+		if (users_popover.is_visible()) {
+			update_users_on_close = true;
+			return;
+		}
+		
 		//Make users
 		foreach (var box in users_list.get_children())
 			users_list.remove(box);
