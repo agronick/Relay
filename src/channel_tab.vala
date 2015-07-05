@@ -288,22 +288,20 @@ public class ChannelTab : GLib.Object {
 		Idle.add( () => {
 			is_locked = true;
 			TextIter? end;
-			TextIter end_after;
 			output.buffer.get_end_iter(out end);
 			if (end == null) {
 				add_with_tag(text, tag, retry_count++);
 				return false;
 			}
 			output.buffer.insert_text(ref end, text, text.length);
-			end_after = end;
-			end.backward_chars(text.length);
-			end_after.forward_chars(text.length);
-			output.buffer.apply_tag(tag, end, end_after);
+			TextIter start = end;
+			start.backward_chars(text.length);
+			output.buffer.apply_tag(tag, start, end);
 			if (rich_text.has_links) {
 				for (int i = 0; i < rich_text.link_locations_start.size; i++)
 				{
 					output.buffer.get_end_iter(out end);
-					TextIter start = end;
+					start = end;
 					start.set_offset(start.get_offset() - rich_text.link_locations_start[i]);
 					end.set_offset(end.get_offset() - rich_text.link_locations_end[i]);
 					output.buffer.apply_tag(link_tag, start, end);
@@ -313,7 +311,7 @@ public class ChannelTab : GLib.Object {
 				for (int i = 0; i < rich_text.name_location_start.size; i++)
 				{
 					output.buffer.get_end_iter(out end);
-					TextIter start = end;
+					start = end;
 					start.set_offset(start.get_offset() - rich_text.name_location_start[i]);
 					end.set_offset(end.get_offset() - rich_text.name_location_end[i]);
 					output.buffer.apply_tag(name_hilight_tag, start, end);
