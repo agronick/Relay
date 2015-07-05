@@ -333,7 +333,7 @@ public class MainWindow : Object
 		ChannelTab using_tab = outputs[current_tab];
 
 		if (using_tab.has_subject) 
-			new_subject (current_tab, using_tab.channel_subject);
+			new_subject (current_tab, using_tab.channel_subject.validate(-1) ? using_tab.channel_subject : using_tab.channel_subject.escape(""));
 		else
 			channel_subject.hide();
 
@@ -345,7 +345,7 @@ public class MainWindow : Object
 
 		input.placeholder_text = using_tab.tab.label;
 
-		make_user_popover (using_tab);
+		make_user_popover(using_tab);
 	}
 
 	private void make_user_popover (ChannelTab using_tab) {
@@ -472,7 +472,7 @@ public class MainWindow : Object
 	public void send_text_out (string text) {
 		if(current_tab == -1 || !outputs.has_key(current_tab))
 			return;
-		var output = outputs[current_tab];  
+		var output = outputs[current_tab]; 
 		output.send_text_out(text);
 
 		var message = new Message();

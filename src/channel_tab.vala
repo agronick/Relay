@@ -179,7 +179,7 @@ public class ChannelTab : GLib.Object {
 	public string format_channel_msg (string message) { 
 		if (message[0] == '/')
 			return message.substring(1);
-		return "PRIVMSG " + channel_name + " :" + message.escape("");
+		return "PRIVMSG " + channel_name + " :" + message;
 	}
 
 	public string parse_nick_change (string message) {
