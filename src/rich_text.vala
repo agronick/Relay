@@ -62,17 +62,20 @@ public class RichText : GLib.Object {
         }
     }
 
+    string spacers = " :/\\{}[];$#@!)(*&^";
     public void parse_name (string? name) {
         if (name == null || name.length == 0)
             return;
         int location = text.index_of(name);
-        while (location > -1) {
-            name_location_start.add(text.length - location - name.length);
-            name_location_end.add((text.length - location));
-            names.add(name);
-            location += name.length;
-            has_names = true;
-            location = text.index_of(name, location);
+        while (location > -1 && ((location - 1 == 0 ||  spacers.index_of_char(text.get_char(location - 1)) != -1  )  && 
+                (location + name.length == text.length - 1 || spacers.index_of_char(text.get_char(location + name.length)) != -1))) {
+            
+                name_location_start.add(text.length - location - name.length);
+                name_location_end.add((text.length - location));
+                names.add(name);
+                location += name.length;
+                has_names = true;
+                location = text.index_of(name, location);
         } 
     }
 }
