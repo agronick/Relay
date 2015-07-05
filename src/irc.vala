@@ -22,6 +22,7 @@ public class IRC{
 	public const int USER_LENGTH = 18;
 	public const int USER_WIDTH = 126;
 	public const string user_prefixes = "~&@%+";
+    public const string spacers = " :/\\{}[];$#@!)(*&^\n\t\r";
 
 	//Replies
 	public const string RPL_WELCOME = "001";
@@ -87,6 +88,8 @@ public class IRC{
 	public const string ERR_ALREADYONCHANNEL = "479";
 	public const string ERR_CHANOPRIVSNEEDED = "482";
 	public const string ERR_NONONREG = "486";
+
+	
 
 	public static int compare(string a, string b) {
 		var a1 = a[0].tolower().to_string() + a;

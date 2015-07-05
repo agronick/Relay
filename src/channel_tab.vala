@@ -367,7 +367,6 @@ public class ChannelTab : GLib.Object {
 		color.parse("#3D81C4");
 		link_tag.foreground_rgba = color;
 		link_tag.underline_set = true;
-
 		link_tag.event.connect(link_clicked);
 
 		color.parse("#2B94E0");
@@ -376,6 +375,7 @@ public class ChannelTab : GLib.Object {
 		
 		color.parse("#DEFF67");
 		other_name_hilight_tag.foreground_rgba = color;
+		other_name_hilight_tag.event.connect(user_name_clicked);
 
 		color.parse("#D5D5D5");
 		timestamp_tag.foreground_rgba = color;
@@ -395,7 +395,7 @@ public class ChannelTab : GLib.Object {
 
 			get_tag_selection(tv, ref start, ref end);
 
-			string name = start.get_text(end)  + ": ";
+			string name = start.get_text(end)  + ": ";			
 
 			if (MainWindow.current_tab == tab_index)
 				MainWindow.fill_input(name);
@@ -408,7 +408,7 @@ public class ChannelTab : GLib.Object {
 			TextView tv = (TextView) event_object;
 			TextIter start = end;
 
-			get_tag_selection(tv, ref start, ref end);
+			get_tag_selection(tv, ref start, ref end, true);
 
 			string link = start.get_text(end);
 			Granite.Services.System.open_uri(link);
@@ -416,15 +416,15 @@ public class ChannelTab : GLib.Object {
 		return false;
 	}
 
-	public void get_tag_selection(TextView tv, ref TextIter start, ref TextIter end) {
-			string delimiters = " \n\t\r";
+	public void get_tag_selection(TextView tv, ref TextIter start, ref TextIter end, bool is_link = false) {
+			string selectors = is_link ? " \n\t\r" : IRC.spacers;
 		
-			while (delimiters.index_of_char(end.get_char()) == -1)
+			while (selectors.index_of_char(end.get_char()) == -1)
 				tv.buffer.get_iter_at_offset(out end, end.get_offset() + 1);
 
-			while (delimiters.index_of_char(start.get_char()) == -1)
+			while (selectors.index_of_char(start.get_char()) == -1)
 				tv.buffer.get_iter_at_offset(out start, start.get_offset() - 1);
-
+		
 			tv.buffer.get_iter_at_offset(out start, start.get_offset() + 1);
 	}
 
