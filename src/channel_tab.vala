@@ -32,7 +32,7 @@ public class ChannelTab : GLib.Object {
 	public bool has_subject = false;
 	public string channel_subject = "";
 	public bool is_locked = false;
-	public ArrayList<string> users = new ArrayList<string>();
+	public LinkedList<string> users = new LinkedList<string>();
 	public LinkedList<string> blocked_users = new LinkedList<string>();
 	private TextView output;
 
@@ -52,6 +52,7 @@ public class ChannelTab : GLib.Object {
 	TextTag name_hilight_tag;
 	TextTag timestamp_tag;
 	TextTag spacing_tag;
+	TextTag other_name_hilight_tag;
 
 	public signal void new_subject(int tab_id, string subject);
 	public signal void user_names_changed(int tab_id);
@@ -279,7 +280,10 @@ public class ChannelTab : GLib.Object {
 		var rich_text = new RichText(text);
 		if (tag == full_width_tag || tag == std_message_tag) {
 			rich_text.parse_links();
-			rich_text.parse_name(connection.server.nickname);
+			if (tag == std_message_tag) {
+				foreach (var usr in users)
+					rich_text.parse_name(usr);
+			}
 		}
 
 		while (is_locked) {
@@ -308,13 +312,15 @@ public class ChannelTab : GLib.Object {
 				}
 			}
 			if (rich_text.has_names) {
-				for (int i = 0; i < rich_text.name_location_start.size; i++)
+				for (int i = 0; i < rich_text.names.size; i++)
 				{
 					output.buffer.get_end_iter(out end);
 					start = end;
 					start.set_offset(start.get_offset() - rich_text.name_location_start[i]);
 					end.set_offset(end.get_offset() - rich_text.name_location_end[i]);
-					output.buffer.apply_tag(name_hilight_tag, start, end);
+					output.buffer.apply_tag(
+					             (rich_text.names[i] == connection.server.nickname) ? name_hilight_tag : other_name_hilight_tag, 
+					             start, end);
 				}
 			}
 			is_locked = false;
@@ -334,6 +340,7 @@ public class ChannelTab : GLib.Object {
 		name_hilight_tag = output.buffer.create_tag("name_hilight");
 		timestamp_tag = output.buffer.create_tag("timestamp");
 		spacing_tag = output.buffer.create_tag("spacing");
+		other_name_hilight_tag =  output.buffer.create_tag("other_name");
 
 		var color = Gdk.RGBA();
 		color.parse("#4EC9DE");
@@ -363,9 +370,12 @@ public class ChannelTab : GLib.Object {
 
 		link_tag.event.connect(link_clicked);
 
-		color.parse("#F1AB25");
+		color.parse("#2B94E0");
 		name_hilight_tag.foreground_rgba = color;
 		name_hilight_tag.weight = Pango.Weight.SEMIBOLD;
+		
+		color.parse("#DEFF67");
+		other_name_hilight_tag.foreground_rgba = color;
 
 		color.parse("#D5D5D5");
 		timestamp_tag.foreground_rgba = color;

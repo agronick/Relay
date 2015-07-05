@@ -27,8 +27,9 @@ public class RichText : GLib.Object {
     private static const string url_string = """(https?|ftp):\/\/[^\s\/$.?#].[^\s]*""";
     public LinkedList<int> link_locations_start;
     public LinkedList<int> link_locations_end;
-    public LinkedList<int> name_location_start;
-    public LinkedList<int> name_location_end;
+    public LinkedList<int> name_location_start = new LinkedList<int>();
+    public LinkedList<int> name_location_end = new LinkedList<int>();
+    public LinkedList<string> names = new LinkedList<string>();
     public bool has_links = false;
     public bool has_names = false;
 
@@ -64,12 +65,11 @@ public class RichText : GLib.Object {
     public void parse_name (string? name) {
         if (name == null || name.length == 0)
             return;
-        name_location_start = new LinkedList<int>();
-        name_location_end = new LinkedList<int>();
         int location = text.index_of(name);
         while (location > -1) {
             name_location_start.add(text.length - location - name.length);
             name_location_end.add((text.length - location));
+            names.add(name);
             location += name.length;
             has_names = true;
             location = text.index_of(name, location);
