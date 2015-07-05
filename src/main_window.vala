@@ -54,7 +54,7 @@ public class MainWindow : Object
 	Relay app;
 
 	Gee.HashMap<int, ChannelTab> outputs = new Gee.HashMap<int, ChannelTab> ();
-	Gee.HashMap<string, Connection> clients = new Gee.HashMap<string, Connection> (); 
+	Gee.HashMap<string, Connection> clients = new Gee.HashMap<string, Connection> ();
 	Granite.Widgets.SourceList servers = new Granite.Widgets.SourceList();
 
 	public static bool on_elementary = false;
@@ -71,7 +71,7 @@ public class MainWindow : Object
 			builder.add_from_file (Relay.get_asset_file(UI_FILE));
 			builder.connect_signals (this);
 
-			toolbar = new HeaderBar (); 
+			toolbar = new HeaderBar ();
 			tabs = new Granite.Widgets.DynamicNotebook();
 			tabs.allow_drag = true;
 			tabs.show_icons = true;
@@ -80,7 +80,7 @@ public class MainWindow : Object
 			window.destroy.connect(relay_close_program);
 			application.add_window(window);
 			var nb_wrapper = builder.get_object("notebook_wrapper") as Box;
-			nb_wrapper.pack_start(tabs, true, true, 0); 
+			nb_wrapper.pack_start(tabs, true, true, 0);
 			tabs.set_size_request(500, 20);
 			tabs.show_all();
 			channel_tab_icon_new_msg = new Image.from_icon_name("mail-unread", IconSize.MENU).gicon;
@@ -115,7 +115,7 @@ public class MainWindow : Object
 			//subject_popover.set_property("transitions-enabled", true);
 			channel_subject.clicked.connect(() => {
 				subject_popover.show_all();
-			});  
+			});
 			channel_subject.set_no_show_all(true);
 			channel_subject.hide();
 			var scrolled = new Gtk.ScrolledWindow(null, null);
@@ -170,6 +170,7 @@ public class MainWindow : Object
 			set_up_add_sever(builder);
 
 			toolbar.set_title("Relay");
+			toolbar.set_subtitle(null);
 			toolbar.show_all();
 
 			toolbar.show_close_button = true;
@@ -178,11 +179,11 @@ public class MainWindow : Object
 
 			tabs.new_tab_requested.connect(new_tab_requested);
 			tabs.tab_removed.connect(tab_remove);
-			tabs.tab_switched.connect(tab_switch); 
+			tabs.tab_switched.connect(tab_switch);
 
 			SqlClient.get_instance();
 
-			refresh_server_list(); 
+			refresh_server_list();
 
 			load_autoconnect();
 		}
@@ -206,12 +207,12 @@ public class MainWindow : Object
 
 	public static int index = 0;
 	public void add_tab (ChannelTab new_tab) {
-		Idle.add( () => { 
-			new_tab.tab = new Widgets.Tab(); 
+		Idle.add( () => {
+			new_tab.tab = new Widgets.Tab();
 
 			if (new_tab.is_server_tab)
 				new_tab.tab.working = true;
-			TextView output = new TextView(); 
+			TextView output = new TextView();
 			output.set_editable(false);
 			output.set_cursor_visible(false);
 			output.set_wrap_mode (Gtk.WrapMode.WORD_CHAR);
@@ -227,14 +228,14 @@ public class MainWindow : Object
 			ptabs.set_tab(0, Pango.TabAlign.LEFT, IRC.USER_WIDTH);
 			output.tabs = ptabs;
 
-			new_tab.tab.restore_data = new_tab.tab.label = new_tab.channel_name; 
+			new_tab.tab.restore_data = new_tab.tab.label = new_tab.channel_name;
 			new_tab.tab.page = scrolled;
 			new_tab.new_subject.connect(new_subject);
 			new_tab.user_names_changed.connect(user_names_changed);
-			tabs.insert_tab(new_tab.tab, -1); 
+			tabs.insert_tab(new_tab.tab, -1);
 
 			new_tab.set_output(output);
-			outputs.set(index, new_tab); 
+			outputs.set(index, new_tab);
 
 			tabs.show_all();
 
@@ -286,12 +287,12 @@ public class MainWindow : Object
 		});
 	}
 
-	private void tab_remove (Widgets.Tab tab) {  
+	private void tab_remove (Widgets.Tab tab) {
 		if (tab.label == _("Welcome"))
 			return;
 
 		int id = lookup_channel_id(tab);
-		Connection tab_server = outputs[id].connection; 
+		Connection tab_server = outputs[id].connection;
 
 		if (!outputs[id].is_server_tab)
 			tab_server.send_output("PART " + outputs[id].channel_name);
@@ -319,6 +320,7 @@ public class MainWindow : Object
 			channel_users.hide();
 			input.hide();
 			toolbar.set_title(app.program_name);
+			toolbar.set_subtitle(null);
 			return;
 		}
 
@@ -331,16 +333,18 @@ public class MainWindow : Object
 			return;
 		ChannelTab using_tab = outputs[current_tab];
 
-		if (using_tab.has_subject) 
+		if (using_tab.has_subject)
 			new_subject (current_tab, using_tab.channel_subject.validate(-1) ? using_tab.channel_subject : using_tab.channel_subject.escape(""));
 		else
 			channel_subject.hide();
 
 		if (using_tab.is_server_tab) {
 			toolbar.set_title(using_tab.tab.label);
+			toolbar.set_subtitle(null);
 			channel_users.hide();
 		} else
-			toolbar.set_title(using_tab.tab.label + _(" on ") + using_tab.connection.server.host);
+			toolbar.set_title(using_tab.tab.label);
+			toolbar.set_subtitle(using_tab.connection.server.host);
 
 		input.placeholder_text = using_tab.tab.label;
 
@@ -401,7 +405,7 @@ public class MainWindow : Object
 
 		users_header.set_text(_("Total users: ") + i.to_string());
 
-		int cols = (int) Math.ceilf((float)i / (float)PER_BOX); 
+		int cols = (int) Math.ceilf((float)i / (float)PER_BOX);
 		users_scrolled.min_content_width = (cols > MAX_COLS) ? BOX_WIDTH * MAX_COLS : cols * BOX_WIDTH;
 		users_list.pack_start(listbox, true, true, 0);
 	}
@@ -430,7 +434,7 @@ public class MainWindow : Object
 
 	public void add_server (SqlClient.Server server, LinkedList<string>? connect_channels = null) {
 		var connection = new Connection(this);
-		clients.set(server.host, connection); 
+		clients.set(server.host, connection);
 
 		if (connect_channels != null)
 			connection.channel_autoconnect = connect_channels;
@@ -473,7 +477,7 @@ public class MainWindow : Object
 	public void send_text_out (string text) {
 		if (current_tab == -1 || !outputs.has_key(current_tab))
 			return;
-		var output = outputs[current_tab]; 
+		var output = outputs[current_tab];
 		output.send_text_out(text);
 
 		var message = new Message();
@@ -483,8 +487,8 @@ public class MainWindow : Object
 		message.message = text;
 		message.command = "PRIVMSG";
 		message.internal = true;
-		add_text(output, message); 
-		return; 
+		add_text(output, message);
+		return;
 	}
 
 	private void item_activated () {
@@ -505,13 +509,13 @@ public class MainWindow : Object
 			SqlClient.Channel channel = current_selected_item.get_data<SqlClient.Channel>("channel");
 			var server = SqlClient.servers[channel.server_id];
 			foreach (var tab in outputs.entries) {
-				if (!tab.value.is_server_tab && 
+				if (!tab.value.is_server_tab &&
 				    tab.value.tab.label == channel.channel &&
 				    server.host == tab.value.connection.server.host) {
 					tabs.current = tab.value.tab;
 					return;
 				}
-			} 
+			}
 			//Has existing server but no channel
 			foreach (var con in clients.entries) {
 				if (con.key == server.host) {
@@ -524,7 +528,7 @@ public class MainWindow : Object
 			channels.add(channel.channel);
 			add_server(SqlClient.servers[channel.server_id], channels);
 		}
-	} 
+	}
 
 	public void user_names_changed (int tab_id) {
 		if (current_tab == tab_id) {
@@ -557,7 +561,7 @@ public class MainWindow : Object
 	}
 
 	public int lookup_channel_id (Widgets.Tab tab) {
-		foreach (var output in outputs.entries) { 
+		foreach (var output in outputs.entries) {
 			if (output.value.tab == tab) {
 				return output.key;
 			}
@@ -571,8 +575,8 @@ public class MainWindow : Object
 		}
 
 		subject_text.buffer.set_text(message);
-		channel_subject.set_no_show_all(false); 
-		channel_subject.show_all(); 
+		channel_subject.set_no_show_all(false);
+		channel_subject.show_all();
 	}
 
 	public static void fill_input (string message) {
@@ -609,6 +613,7 @@ public class MainWindow : Object
 		tab.icon = null;
 		tab.label = _("Welcome");
 		toolbar.set_title(app.program_name);
+		toolbar.set_subtitle(null);
 		tab.page = welcome;
 		tabs.insert_tab(tab, -1);
 
@@ -647,12 +652,12 @@ public class MainWindow : Object
 		string output;
 		output = GLib.Environment.get_variable("XDG_CURRENT_DESKTOP");
 
-		if (output != null && output.contains ("Pantheon")) {  
+		if (output != null && output.contains ("Pantheon")) {
 			on_elementary = true;
 		}
 	}
 
-	public void relay_close_program () { 
+	public void relay_close_program () {
 		foreach(var client in clients.entries) {
 			client.value.do_exit();
 		}
