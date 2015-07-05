@@ -63,8 +63,9 @@ public class Message : GLib.Object {
         return prefix.split("!")[0];
     }
 
-    public void user_name_set (string name) { 
-        user_name = name;
+    public void user_name_set (string? name) { 
+		if (name != null)
+    		user_name = name;
     }
 
     //Use this function to add padding to the user name
@@ -88,9 +89,9 @@ public class Message : GLib.Object {
                 parameters = mi.fetch_named ("params").split(" ") ;
                 message = mi.fetch_named ("trail");
 
-                if(message != null)
+                if (message != null)
                     message = message.replace("\t", "");
-                if(command in user_cmds)
+                if (command in user_cmds)
                     user_name_set(prefix.split("!")[0]);
 
                 return false;

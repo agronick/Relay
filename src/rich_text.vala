@@ -41,7 +41,7 @@ public class RichText : GLib.Object {
         } catch (RegexError e) {}
     }
 
-    public void parse_links() {
+    public void parse_links () {
         link_locations_start = new LinkedList<int>();
         link_locations_end = new LinkedList<int>();
 
@@ -49,7 +49,7 @@ public class RichText : GLib.Object {
         string lookup = text;
         int last_offset = 0;
 
-        while(parse_url.match_all(lookup, 0, out match_info)) {
+        while (parse_url.match_all (lookup, 0, out match_info)) {
             int start;
             int end;
             match_info.fetch_pos(0, out start, out end);
@@ -61,8 +61,8 @@ public class RichText : GLib.Object {
         }
     }
 
-    public void parse_name(string name) {
-        if (name.length == 0)
+    public void parse_name (string? name) {
+        if (name == null || name.length == 0)
             return;
         name_location_start = new LinkedList<int>();
         name_location_end = new LinkedList<int>();

@@ -223,7 +223,7 @@ public class SqlClient : Object
 
 		public Channel? find_channel_by_name (string name) {
 			foreach(Channel chan in channels) {
-				if(chan.channel == name)
+				if (chan.channel == name)
 					return chan;
 			}
 			return null;
@@ -312,7 +312,7 @@ public class SqlClient : Object
 		public void delete_channel () {
 			string sql = "DELETE FROM channels WHERE server_id=" + this.server_id.to_string() + " AND channel=$NAME";
 			channel_query(sql);
-			if(!servers.has_key(server_id)) {
+			if (!servers.has_key(server_id)) {
 				warning("No server with key " + server_id.to_string());
 				return;
 			}

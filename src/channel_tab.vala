@@ -91,14 +91,14 @@ public class ChannelTab : GLib.Object {
 	public void remove_block_list (string name) {
 		blocked_users.remove(name);
 
-		if(IRC.user_prefixes.index_of_char(name[0]) != -1)
+		if (IRC.user_prefixes.index_of_char(name[0]) != -1)
 			blocked_users.remove(IRC.remove_user_prefix(name));
 	}
 
 	public void add_users_message (Message message) {
 		var names = message.message.split(" ");
 		foreach (var name in names) {
-			if(name.length == 0)
+			if (name.length == 0)
 				continue;
 
 			name = fix_user_name(name);
@@ -270,7 +270,7 @@ public class ChannelTab : GLib.Object {
 	}       
 
 	private void add_with_tag (string? text, TextTag? tag, int retry_count = 0) {
-		if(text == null || 
+		if (text == null || 
 		   tag == null || 
 		   retry_count > 4 ||
 		   (text.strip() == "" && tag != spacing_tag))
@@ -409,10 +409,10 @@ public class ChannelTab : GLib.Object {
 	public void get_tag_selection(TextView tv, ref TextIter start, ref TextIter end) {
 			string delimiters = " \n\t\r";
 		
-			while(delimiters.index_of_char(end.get_char()) == -1)
+			while (delimiters.index_of_char(end.get_char()) == -1)
 				tv.buffer.get_iter_at_offset(out end, end.get_offset() + 1);
 
-			while(delimiters.index_of_char(start.get_char()) == -1)
+			while (delimiters.index_of_char(start.get_char()) == -1)
 				tv.buffer.get_iter_at_offset(out start, start.get_offset() - 1);
 
 			tv.buffer.get_iter_at_offset(out start, start.get_offset() + 1);

@@ -95,7 +95,7 @@ public class IRC{
 	}
 
 	public static string remove_user_prefix (string name) {
-		if(user_prefixes.index_of_char(name[0]) != -1)
+		if (user_prefixes.index_of_char(name[0]) != -1)
 			return name.substring(1);
 		return name;
 	}

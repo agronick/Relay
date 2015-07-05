@@ -106,7 +106,7 @@ public class MainWindow : Object
 			});
 
 			//Channel subject button
-			if(on_elementary)
+			if (on_elementary)
 				channel_subject = new Gtk.Button.from_icon_name("help-info-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
 			else
 				channel_subject = new Gtk.Button.from_icon_name("text-x-generic", Gtk.IconSize.LARGE_TOOLBAR);
@@ -287,7 +287,7 @@ public class MainWindow : Object
 	}
 
 	private void tab_remove (Widgets.Tab tab) {  
-		if(tab.label == _("Welcome"))
+		if (tab.label == _("Welcome"))
 			return;
 
 		int id = lookup_channel_id(tab);
@@ -471,7 +471,7 @@ public class MainWindow : Object
 	}
 
 	public void send_text_out (string text) {
-		if(current_tab == -1 || !outputs.has_key(current_tab))
+		if (current_tab == -1 || !outputs.has_key(current_tab))
 			return;
 		var output = outputs[current_tab]; 
 		output.send_text_out(text);
@@ -586,7 +586,7 @@ public class MainWindow : Object
 
 		foreach (var server in SqlClient.servers.entries) {
 			var to_connect = server.value.get_autoconnect_channels();
-			if(to_connect.size > 0) {
+			if (to_connect.size > 0) {
 				opened_tab = true;
 				add_server(server.value, to_connect);
 			}
