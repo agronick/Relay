@@ -71,7 +71,7 @@ public class Message : GLib.Object {
     public string user_name_get () {
         string name = user_name;
         if (name.length >= IRC.USER_LENGTH) 
-            name = user_name.substring(0, IRC.USER_LENGTH - 4) + "...";
+            name = user_name.substring(0, IRC.USER_LENGTH - 3) + "...";
         int length = IRC.USER_LENGTH - name.length;
         return name + string.nfill(length, ' ');
     }

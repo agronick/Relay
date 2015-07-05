@@ -37,8 +37,8 @@ public class MainWindow : Object
 
 
 	public static Window window;
+	public static Entry input;
 	Granite.Widgets.DynamicNotebook tabs;
-	Entry input;
 	Paned pannel;
 	Button channel_subject;
 	Button channel_users;
@@ -384,6 +384,8 @@ public class MainWindow : Object
 				if (event.button == 3) {
 					channel_user_selected = user;
 					user_menu.popup (null, null, null, event.button, event.time);
+				} else if (event.button == 1) {
+					MainWindow.fill_input(user + ": ");
 				}
 				return true;
 			});
@@ -571,6 +573,12 @@ public class MainWindow : Object
 		subject_text.buffer.set_text(message);
 		channel_subject.set_no_show_all(false); 
 		channel_subject.show_all(); 
+	}
+
+	public static void fill_input (string message) {
+		MainWindow.input.set_text(message);
+		MainWindow.input.is_focus = true;
+		MainWindow.input.select_region(message.length, message.length);
 	}
 
 	private void load_autoconnect () {

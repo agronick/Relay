@@ -1,3 +1,8 @@
+2015-07-05  Kyle Agronick  <agronick@gmail.com>
+
+    Added the ability to click a user name on the user popover or the chat window
+    and have their name fill the main text entry
+
 2015-06-30  Kyle Agronick  <agronick@gmail.com>
 
     Packaging for inital public beta release

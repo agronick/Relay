@@ -340,6 +340,7 @@ public class ChannelTab : GLib.Object {
 		user_other_tag.foreground_rgba = color;
 		user_other_tag.left_margin = 0;
 		user_other_tag.weight = Pango.Weight.SEMIBOLD;
+		user_other_tag.event.connect(user_name_clicked);
 
 		color.parse("#AE81FF");
 		user_self_tag.foreground_rgba = color;
@@ -377,12 +378,37 @@ public class ChannelTab : GLib.Object {
 		spacing_tag.size_points = 2;
 	}
 
-	public bool link_clicked(GLib.Object event_object, Gdk.Event event, TextIter end) {
+	public bool user_name_clicked (GLib.Object event_object, Gdk.Event event, TextIter end) {
 		if (event.type == EventType.BUTTON_RELEASE) {
 			TextView tv = (TextView) event_object;
-			string delimiters = " \n\t\r";
 			TextIter start = end;
 
+			get_tag_selection(tv, ref start, ref end);
+
+			string name = start.get_text(end)  + ": ";
+
+			if (MainWindow.current_tab == tab_index)
+				MainWindow.fill_input(name);
+		}
+		return false;
+	}
+
+	public bool link_clicked (GLib.Object event_object, Gdk.Event event, TextIter end) {
+		if (event.type == EventType.BUTTON_RELEASE) {
+			TextView tv = (TextView) event_object;
+			TextIter start = end;
+
+			get_tag_selection(tv, ref start, ref end);
+
+			string link = start.get_text(end);
+			Granite.Services.System.open_uri(link);
+		}
+		return false;
+	}
+
+	public void get_tag_selection(TextView tv, ref TextIter start, ref TextIter end) {
+			string delimiters = " \n\t\r";
+		
 			while(delimiters.index_of_char(end.get_char()) == -1)
 				tv.buffer.get_iter_at_offset(out end, end.get_offset() + 1);
 
@@ -391,12 +417,6 @@ public class ChannelTab : GLib.Object {
 
 			tv.buffer.get_iter_at_offset(out end, end.get_offset() - 1);
 			tv.buffer.get_iter_at_offset(out start, start.get_offset() + 1);
-
-			string link = start.get_text(end);
-			stdout.printf("LINK IS " + link + start.get_char().to_string() + end.get_char().to_string() +  "\n");
-			Granite.Services.System.open_uri(link);
-		}
-		return false;
 	}
 
 	private string parse_message_cmd(string message) {
