@@ -25,13 +25,5 @@ cd build
 make
 sudo make install
 
-Troubleshooting:
-If you experience issues with the line 
-output.buffer.insert_with_tags_by_name(end, text, text.length, tag.name);
-in channel_tab.vala
-
-You have a newer version of libgtk-3-dev than what ships with Elementary OS Freya. You can change this line to:
-output.buffer.insert_with_tags_by_name(ref end, text, text.length, tag.name);
-
 You can test the program by running
 src/relay
