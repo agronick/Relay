@@ -415,7 +415,6 @@ public class ChannelTab : GLib.Object {
 			while(delimiters.index_of_char(start.get_char()) == -1)
 				tv.buffer.get_iter_at_offset(out start, start.get_offset() - 1);
 
-			tv.buffer.get_iter_at_offset(out end, end.get_offset() - 1);
 			tv.buffer.get_iter_at_offset(out start, start.get_offset() + 1);
 	}
 
