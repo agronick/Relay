@@ -92,7 +92,7 @@ public class MainWindow : Object
 			//Slide out panel button
 			Button select_channel;
 			if (Relay.on_ubuntu)
-				select_channel = new Button.from_stock("network-server");
+				select_channel = new Button.from_icon_name("network-server", IconSize.LARGE_TOOLBAR);
 			else {
 				Image icon = new Image.from_file(Relay.get_asset_file("assets/server_icon.png"));
 				select_channel = new Gtk.Button();
@@ -111,9 +111,9 @@ public class MainWindow : Object
 
 			//Channel subject button
 			if (Relay.on_elementary)
-				channel_subject = new Gtk.Button.from_icon_name("help-info-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
+				channel_subject = new Gtk.Button.from_icon_name("help-info-symbolic", IconSize.SMALL_TOOLBAR);
 			else
-				channel_subject = new Gtk.Button.from_icon_name("text-x-generic", Gtk.IconSize.LARGE_TOOLBAR);
+				channel_subject = new Gtk.Button.from_icon_name("text-x-generic", IconSize.LARGE_TOOLBAR);
 			channel_subject.tooltip_text = _("Channel subject");
 			var subject_popover = new Gtk.Popover(channel_subject);
 			//subject_popover.set_property("transitions-enabled", true);
