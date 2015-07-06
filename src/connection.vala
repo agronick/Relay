@@ -66,7 +66,7 @@ public class Connection : Object
 			output_stream = new DataOutputStream (conn.output_stream);
 
 			if (server.username.strip().length == 0) 
-				server.usernname = Environment.get_user_name();
+				server.username = Environment.get_user_name();
 			if (server.nickname.strip().length == 0)
 				server.nickname = Environment.get_user_name();
 				
