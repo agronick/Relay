@@ -58,7 +58,6 @@ public class MainWindow : Object
 	Gee.HashMap<string, Connection> clients = new Gee.HashMap<string, Connection> (); 
 	Granite.Widgets.SourceList servers = new Granite.Widgets.SourceList();
 
-	public static bool on_elementary = false;
 	public static int current_tab = -1;
 
 	public MainWindow (Relay application) {
@@ -66,7 +65,6 @@ public class MainWindow : Object
 		try
 		{
 			app = application;
-			check_elementary();
 
 			var builder = new Builder ();
 			builder.add_from_file (Relay.get_asset_file(UI_FILE));
@@ -92,9 +90,14 @@ public class MainWindow : Object
 			server_list_container.pack_start(servers, true, true, 0);
 
 			//Slide out panel button
-			Image icon = new Image.from_file(Relay.get_asset_file("assets/server_icon.png"));
-			var select_channel = new Gtk.Button();
-			select_channel.image = icon;
+			Button select_channel;
+			if (Relay.on_ubuntu)
+				select_channel = new Button.from_stock("network-server");
+			else {
+				Image icon = new Image.from_file(Relay.get_asset_file("assets/server_icon.png"));
+				select_channel = new Gtk.Button();
+				select_channel.image = icon;
+			}
 			select_channel.tooltip_text = _("Open server/channel view");
 			toolbar.pack_start(select_channel);
 			select_channel.button_release_event.connect(slide_panel);
@@ -107,7 +110,7 @@ public class MainWindow : Object
 			});
 
 			//Channel subject button
-			if (on_elementary)
+			if (Relay.on_elementary)
 				channel_subject = new Gtk.Button.from_icon_name("help-info-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
 			else
 				channel_subject = new Gtk.Button.from_icon_name("text-x-generic", Gtk.IconSize.LARGE_TOOLBAR);
@@ -227,7 +230,8 @@ public class MainWindow : Object
 			output.override_font(FontDescription.from_string("Inconsolata 9"));
 			ScrolledWindow scrolled = new Gtk.ScrolledWindow (null, null);
 			scrolled.shadow_type = ShadowType.IN;
-			scrolled.margin = 3;
+			if (!Relay.on_ubuntu)
+				scrolled.margin = 3;
 			scrolled.add(output);
 
 			var ptabs = new Pango.TabArray(1, true);
@@ -661,15 +665,6 @@ public class MainWindow : Object
 			});
 			return false;
 		});
-	}
-
-	private void check_elementary () {
-		string output;
-		output = GLib.Environment.get_variable("XDG_CURRENT_DESKTOP");
-
-		if (output != null && output.contains ("Pantheon")) {  
-			on_elementary = true;
-		}
 	}
 
 	public void relay_close_program () { 
