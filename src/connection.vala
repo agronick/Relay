@@ -152,7 +152,6 @@ public class Connection : Object
 				return;
 			case IRC.RPL_CREATED:
 			case IRC.RPL_LUSERME:
-				debug("SETTING TOPIC " + message.get_msg_txt());
 				server_tab.set_topic(message.get_msg_txt(), true);
 				backref.add_text(server_tab, message);
 				return;

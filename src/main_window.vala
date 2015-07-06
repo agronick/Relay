@@ -260,7 +260,7 @@ public class MainWindow : Object
 			index++;
 			return false;
 		});
-		if (!new_tab.is_server_tab) {
+		if (new_tab.channel_name != new_tab.connection.server.host) {
 			new_tab.connection.send_output("TOPIC " + new_tab.channel_name);
 		}
 	}

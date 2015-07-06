@@ -17,6 +17,8 @@ libtool-bin
 
 (sudo apt-get install libtool-bin libgtk-3-dev libc6-dev libgee-0.8-dev libsqlite3-dev libgranite-dev valac-0.26 libx11-dev libglib2.0-dev automake)
 
+(sudo apt-get install libtool libgtk-3-dev libc6-dev libgee-0.8-dev libsqlite3-dev libgranite-dev valac-0.26 libx11-dev libglib2.0-dev automake)
+
 (Other versions of valac may work. But newer versions seems to have a bug that prevents compiling)
 
 --------------------------------------------------------------------------------
