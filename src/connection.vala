@@ -65,6 +65,11 @@ public class Connection : Object
 			input_stream = new DataInputStream (conn.input_stream);
 			output_stream = new DataOutputStream (conn.output_stream);
 
+			if (server.username.strip().length == 0) 
+				server.usernname = Environment.get_user_name();
+			if (server.nickname.strip().length == 0)
+				server.nickname = Environment.get_user_name();
+				
 			do_register();
 
 			string? line = "";
@@ -150,8 +155,8 @@ public class Connection : Object
 				backref.add_text(server_tab, message);
 				return;
 			case IRC.RPL_WELCOME:
-				run_on_connect_cmds();
 				do_autoconnect();
+				run_on_connect_cmds();
 				server_tab.tab.working = false;
 				break;
 			case IRC.RPL_NAMREPLY:
