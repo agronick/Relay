@@ -144,7 +144,7 @@ public class Relay : Granite.Application {
 
 		if (output != null && output.contains ("Pantheon")) {  
 			on_elementary = true;
-		}else if (output != null && output.contains ("Unity")) {
+		}else if (output != null && (output.contains ("Unity") || output.contains ("XFCE"))) {
             on_ubuntu = true;
         }
 	}
