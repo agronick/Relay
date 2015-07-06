@@ -69,6 +69,8 @@ public class Connection : Object
 				server.username = Environment.get_user_name();
 			if (server.nickname.strip().length == 0)
 				server.nickname = Environment.get_user_name();
+			if (server.realname.strip().length == 0)
+				server.realname = server.nickname;
 				
 			do_register();
 
