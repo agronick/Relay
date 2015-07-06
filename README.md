@@ -4,6 +4,10 @@
 Relay is an IRC client that attemps to be small, quick, easy to use, elegant, and functional. 
 The Github and Launchpad repos are mirrored. You can find up-to-date information about Relay on Launchpad and Github.
 
+If Relay displays with a light interface please open up an issue and let me know what displays when you type
+`echo $XDG_CURRENT_DESKTOP`. I will need to add some code to detect and load a suitable dark theme preloaded
+in your distro. That you.
+
 ![screenshot](http://bit.ly/1M6dYGZ)
 
 * **Installation and Licensing**  
