@@ -1,9 +1,10 @@
-#Relay
-Created by Kyle Agronick <agronick@gmail.com>
+# ![logo](http://bit.ly/1JIDVio  "Relay")  Relay 
+*Created by Kyle Agronick <agronick@gmail.com>*
 
 Relay is an IRC client that attemps to be small, quick, easy to use, elegant, and functional. 
-The Github and Launchpad repos are mirrored. You can find up-to-date information about Relay
-on Launchpad and Github.
+The Github and Launchpad repos are mirrored. You can find up-to-date information about Relay on Launchpad and Github.
+
+![screenshot](http://bit.ly/1M6dYGZ)
 
 * **Installation and Licensing**  
 Please consult the `INSTALL` and `COPYING` files for more information.
