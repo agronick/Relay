@@ -20,6 +20,7 @@
 
 using GLib;
 using Gtk;
+using Gdk;
 using Gee;
 using Granite;
 using Pango;
@@ -36,7 +37,7 @@ public class MainWindow : Object
 	public const string UI_FILE_SERVERS = "ui/server_window.ui";
 
 
-	public static Window window;
+	public static Gtk.Window window;
 	public static Entry input;
 	Granite.Widgets.DynamicNotebook tabs;
 	Paned pannel;
@@ -77,7 +78,7 @@ public class MainWindow : Object
 			tabs.allow_drag = true;
 			tabs.show_icons = true;
 
-			window = builder.get_object ("window") as Window;
+			window = builder.get_object ("window") as Gtk.Window;
 			window.destroy.connect(relay_close_program);
 			application.add_window(window);
 			var nb_wrapper = builder.get_object("notebook_wrapper") as Box;
@@ -219,6 +220,11 @@ public class MainWindow : Object
 			if (new_tab.is_server_tab)
 				new_tab.tab.working = true;
 			TextView output = new TextView(); 
+			
+			var bg = Gdk.RGBA();
+			bg.parse("#383E41");
+			output.override_background_color(StateFlags.NORMAL, bg);
+			
 			output.set_editable(false);
 			output.set_cursor_visible(false);
 			output.set_wrap_mode (Gtk.WrapMode.WORD_CHAR);
