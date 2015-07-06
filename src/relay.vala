@@ -25,8 +25,13 @@ public class Relay : Granite.Application {
         private MainWindow window = null;
         public string[] args;
         public static bool has_activated = false;
+	    public static bool on_elementary = false;
+	    public static bool on_ubuntu = false;
+        public static string path;
 
+    
         construct {
+            
             program_name = "Relay";
             exec_name = "relay";
 
@@ -57,11 +62,15 @@ public class Relay : Granite.Application {
             Intl.textdomain(Config.GETTEXT_PACKAGE); 
             Intl.bind_textdomain_codeset(Config.GETTEXT_PACKAGE, "utf-8"); 
             Intl.bindtextdomain(Config.GETTEXT_PACKAGE, "./locale");
+            
         }
 
 
     /* Method definitions */
     public static void main (string[] args) {
+
+        path = args[0];
+        
         X.init_threads ();
         Gtk.Settings.get_default().set("gtk-application-prefer-dark-theme", true);
         
@@ -79,8 +88,13 @@ public class Relay : Granite.Application {
         }
 
         has_activated = true;
+        
+		check_elementary();
 
         Gtk.Settings.get_default().gtk_application_prefer_dark_theme = true;
+        if (on_ubuntu) {
+            Gtk.Settings.get_default().gtk_icon_theme_name = "Adwaita";
+        }
 
         window = new MainWindow(this);
         Gtk.main ();
@@ -90,7 +104,8 @@ public class Relay : Granite.Application {
         string[] checks = {"./" + name,
                            "src/" + name,
                             "../src/" + name,
-                            Config.PACKAGE_DATA_DIR + "/" + name};
+                            Config.PACKAGE_DATA_DIR + "/" + name,
+                            "./*/src/" + name,};
         foreach(string check in checks) {                   
             File file = File.new_for_path (check);
             if (file.query_exists())
@@ -121,5 +136,16 @@ public class Relay : Granite.Application {
         }
         GLib.stdout.printf(prefix + message + suffix + "\n");
     }
+
+	private void check_elementary () {
+		string output;
+		output = GLib.Environment.get_variable("XDG_CURRENT_DESKTOP");
+
+		if (output != null && output.contains ("Pantheon")) {  
+			on_elementary = true;
+		}else if (output != null && output.contains ("Unity")) {
+            on_ubuntu = true;
+        }
+	}
 }
 
