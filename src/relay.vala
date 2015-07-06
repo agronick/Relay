@@ -90,11 +90,12 @@ public class Relay : Granite.Application {
         has_activated = true;
         
 		check_elementary();
+        
+        if (on_ubuntu) {
+            Gtk.Settings.get_default().gtk_theme_name = "Adwaita";
+        }
 
         Gtk.Settings.get_default().gtk_application_prefer_dark_theme = true;
-        if (on_ubuntu) {
-            Gtk.Settings.get_default().gtk_icon_theme_name = "Adwaita";
-        }
 
         window = new MainWindow(this);
         Gtk.main ();
