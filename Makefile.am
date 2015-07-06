@@ -3,14 +3,14 @@
 
 SUBDIRS = src 
 
+ACLOCAL_AMFLAGS=-I m4
+
 dist_doc_DATA = \
-	README \
+	README.md \
 	COPYING \
 	AUTHORS \
 	ChangeLog \
 	INSTALL
-
-
 
 # Remove doc directory on uninstall
 uninstall-local:
