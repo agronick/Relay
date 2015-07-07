@@ -60,7 +60,9 @@ public class Message : GLib.Object {
             return "";
         if (command == IRC.PRIVATE_MESSAGE)
             usr_private_message = true;
-        return prefix.split("!")[0];
+		if (prefix != null)
+    		return prefix.split("!")[0];
+		return "";
     }
 
     public void user_name_set (string? name) { 
@@ -86,13 +88,15 @@ public class Message : GLib.Object {
             regex.replace_eval (message, -1, 0, 0, (mi, s) => {
                 prefix = mi.fetch_named ("prefix");
                 command = mi.fetch_named ("command");
-                parameters = mi.fetch_named ("params").split(" ") ;
+                parameters = mi.fetch_named ("params").split(" ");
                 message = mi.fetch_named ("trail");
 
                 if (message != null)
                     message = message.replace("\t", "");
-                if (command in user_cmds)
-                    user_name_set(prefix.split("!")[0]);
+				if (prefix != null) {
+		            if (command in user_cmds)
+		                user_name_set(prefix.split("!")[0]);
+				}
 
                 return false;
             });
