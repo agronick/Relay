@@ -48,7 +48,8 @@ public class Message : GLib.Object {
         if (_message.length == 0)
             return;
 		try{
-    		message = fix_message.replace_literal(_message, _message.length, 0, "");
+			message = _message.validate() ? _message : _message.escape("\b\f\n\r\t\'");
+    		message = fix_message.replace_literal(message, message.length, 0, "");
 		}catch(RegexError e) {
 			message = _message;
 		}
