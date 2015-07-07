@@ -47,7 +47,7 @@ relay_VALAFLAGS =  \
 relay_LDFLAGS = \
 	 -lm -lX11 -lglib-2.0 -Wl,--as-needed
 
-relay_LDADD = /usr/lib/*/libm.so /usr/lib/*/libX11.so $(RELAY_LIBS)
+relay_LDADD = -lm -lX11 $(RELAY_LIBS)
  
 
 

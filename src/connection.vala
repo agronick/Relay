@@ -233,7 +233,7 @@ public class Connection : Object
 	}
 
 	public void run_on_connect_cmds() {
-		if (server.connect_cmds.length > 0) {
+		if (server.connect_cmds != null && server.connect_cmds.length > 0) {
 			string[] cmds = server.connect_cmds.split("\n");
 			foreach(string run in cmds) {
 				if (run.length > 1)

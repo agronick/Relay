@@ -34,6 +34,8 @@ public class MainWindow : Object
 	//const string UI_FILE = Config.PACKAGE_DATA_DIR + "/ui/" + "relay.ui";
 	public const string UI_FILE = "ui/relay.ui";
 	public const string UI_FILE_SERVERS = "ui/server_window.ui";
+	public const string channel_open = "user-idle";
+	public const string channel_closed = "user-offline";
 
 
 	public static Window window;
@@ -53,6 +55,9 @@ public class MainWindow : Object
 	HeaderBar toolbar;
 	string channel_user_selected = "";
 	Relay app;
+	HashMap<string, Widgets.SourceList.Item> items_sidebar;
+	Gtk.Menu tab_rightclick;
+	Gtk.Menu tab_channel_list;
 
 	Gee.HashMap<int, ChannelTab> outputs = new Gee.HashMap<int, ChannelTab> ();
 	Gee.HashMap<string, Connection> clients = new Gee.HashMap<string, Connection> (); 
@@ -72,15 +77,16 @@ public class MainWindow : Object
 
 			toolbar = new HeaderBar (); 
 			tabs = new Granite.Widgets.DynamicNotebook();
+			tabs.add_button_tooltip = _("Connect to a server");
 			tabs.allow_drag = true;
 			tabs.show_icons = true;
 
 			window = builder.get_object ("window") as Window;
 			window.destroy.connect(relay_close_program);
+			window.set_size_request(900, 600);
 			application.add_window(window);
 			var nb_wrapper = builder.get_object("notebook_wrapper") as Box;
 			nb_wrapper.pack_start(tabs, true, true, 0); 
-			tabs.set_size_request(500, 20);
 			tabs.show_all();
 			channel_tab_icon_new_msg = new Image.from_icon_name("mail-unread", IconSize.MENU).gicon;
 
@@ -195,11 +201,45 @@ public class MainWindow : Object
 			refresh_server_list(); 
 
 			load_autoconnect();
+
+			tab_rightclick = new Gtk.Menu();
+			Gtk.MenuItem close_all = new Gtk.MenuItem.with_label("Close All");
+			close_all.activate.connect( ()=> {
+				outputs.entries.foreach( (item)=> {
+					if(item != null)
+						tabs.remove_tab(item.value.tab);
+					return true;
+				});
+			});
+			
+			Gtk.MenuItem channel_list_menu = new Gtk.MenuItem.with_label("Switch");
+			tab_channel_list = new Gtk.Menu();
+			channel_list_menu.set_submenu(tab_channel_list);
+			
+			tab_rightclick.add(channel_list_menu);
+			tab_rightclick.add(close_all);
+
+			tab_rightclick.show_all();
 		}
 		catch (Error e) {
 			error("Could not load UI: %s\n", e.message);
 		}
 
+	}
+
+	public void rebuild_channel_list_menu() {
+		tab_channel_list.forall( (widget) => {
+			tab_channel_list.remove(widget);
+		});
+		foreach (var tab in outputs.entries) {
+			Gtk.MenuItem item = new Gtk.MenuItem.with_label(tab.value.tab.label);
+			item.activate.connect( ()=> {
+				tabs.current = tab.value.tab;
+			});
+			tab_channel_list.add(item);
+			item.show_all();
+		}
+		tab_channel_list.show_all();
 	}
 
 	public Gtk.Popover make_popover (Button parent) {
@@ -209,15 +249,17 @@ public class MainWindow : Object
 		return popover;
 	}
 
-	private static Granite.Widgets.SourceList.Item current_selected_item;
-	private void set_item_selected (Granite.Widgets.SourceList.Item? item) {
+	private static Widgets.SourceList.Item current_selected_item;
+	private void set_item_selected (Widgets.SourceList.Item? item) {
 		current_selected_item = item;
 	}
 
 	public static int index = 0;
 	public void add_tab (ChannelTab new_tab) {
 		Idle.add( () => { 
-			new_tab.tab = new Widgets.Tab(); 
+			new_tab.tab = new Widgets.Tab();
+			new_tab.tab.menu = tab_rightclick;
+			new_tab.tab.ellipsize_mode = EllipsizeMode.NONE;
 
 			if (new_tab.is_server_tab)
 				new_tab.tab.working = true;
@@ -229,7 +271,6 @@ public class MainWindow : Object
 			output.set_indent(IRC.USER_WIDTH * -1);
 			output.override_font(FontDescription.from_string("Inconsolata 9"));
 			ScrolledWindow scrolled = new Gtk.ScrolledWindow (null, null);
-			scrolled.shadow_type = ShadowType.IN;
 			if (!Relay.on_ubuntu)
 				scrolled.margin = 3;
 			scrolled.add(output);
@@ -258,8 +299,19 @@ public class MainWindow : Object
 			new_tab.tab.icon = null;
 
 			index++;
+			try{
+			if (items_sidebar.has_key(new_tab.tab.label))
+				items_sidebar[new_tab.tab.label].icon = Icon.new_for_string(channel_open);
+			} catch (Error e) {
+				items_sidebar[new_tab.tab.label].icon = null;
+				warning(e.message);
+			}
+
+			rebuild_channel_list_menu();
 			return false;
 		});
+
+		
 		if (new_tab.channel_name != new_tab.connection.server.host) {
 			new_tab.connection.send_output("TOPIC " + new_tab.channel_name);
 		}
@@ -320,6 +372,15 @@ public class MainWindow : Object
 		//Remove the tab from the list of tabs
 		outputs.unset(id);
 
+		//Change the icon in the sidebar
+		try{
+			if (items_sidebar.has_key(tab.label))
+				items_sidebar[tab.label].icon = Icon.new_for_string(channel_closed);
+		} catch (Error e) {
+			items_sidebar[tab.label].icon = null;
+			warning(e.message);
+		}
+		
 		if (tabs.n_tabs == 0)
 			show_welcome_screen();
 	}
@@ -463,20 +524,38 @@ public class MainWindow : Object
 	public void refresh_server_list () {
 		var root = servers.root;
 		root.clear();
+
+		items_sidebar = new HashMap<string, Widgets.SourceList.Item>();
+		
 		foreach (var svr in SqlClient.servers.entries) {
-			var s =  new Granite.Widgets.SourceList.ExpandableItem(svr.value.host);
+			var s =  new Widgets.SourceList.ExpandableItem(svr.value.host);
 			root.add(s);
-			var chn = new Granite.Widgets.SourceList.Item (svr.value.host);
+			var chn = new Widgets.SourceList.Item(svr.value.host);
 			chn.set_data<string>("type", "server");
 			chn.set_data<SqlClient.Server>("server", svr.value);
 			chn.activated.connect(item_activated);
+			try {
+				chn.icon = Icon.new_for_string(channel_closed);
+			} catch (Error e) {
+				warning(e.message);
+				chn.icon = null;
+			}			
 			s.add(chn);
+			items_sidebar[svr.value.host] = chn;
+			
 			foreach (var c in svr.value.channels) {
-				chn = new Widgets.SourceList.Item (c.channel);
+				chn = new Widgets.SourceList.Item(c.channel);
 				chn.set_data<string>("type", "channel");
 				chn.set_data<SqlClient.Channel>("channel", c);
 				chn.activated.connect(item_activated);
+				try {
+					chn.icon = Icon.new_for_string(channel_closed);
+				} catch (Error e) {
+					warning(e.message);
+					chn.icon = null;
+				}			
 				s.add(chn);
+				items_sidebar[c.channel] = chn;
 			}
 		}
 	}
@@ -537,7 +616,10 @@ public class MainWindow : Object
 			//Has existing server but no channel
 			foreach (var con in clients.entries) {
 				if (con.key == server.host) {
-					con.value.join(channel.channel);
+					if (con.value.server_tab.tab.working)
+						con.value.channel_autoconnect.add(channel.channel);
+					else
+						con.value.join(channel.channel);
 					return;
 				}
 			}
