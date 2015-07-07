@@ -8,6 +8,8 @@ If Relay displays with a light interface please open up an issue and let me know
 `echo $XDG_CURRENT_DESKTOP`. I will need to add some code to detect and load a suitable dark theme preloaded
 in your distro. Thank you.
 
+New changes are being made all the time! Make sure to update often with `git pull`! Then just follow the installation steps.
+
 ![screenshot](http://bit.ly/1M6dYGZ)
 
 * **Installation and Licensing**  
