@@ -254,6 +254,10 @@ public class MainWindow : Object
 		current_selected_item = item;
 	}
 
+	/* 
+	 *  The connection calls this method to create a tab anytime a
+	 *  channel or server is opened
+	 */
 	public static int index = 0;
 	public void add_tab (ChannelTab new_tab) {
 		Idle.add( () => { 
@@ -561,9 +565,10 @@ public class MainWindow : Object
 	}
 
 	public void add_text (ChannelTab tab, Message message, bool error = false) {
-		if (error)
+		if (error) {
+			message.message = _("Error: ") + message.message;
 			tab.display_error(message);
-		else
+		} else
 			tab.display_message(message);
 
 		if (current_tab != tab.tab_index) {

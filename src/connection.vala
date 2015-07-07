@@ -214,6 +214,13 @@ public class Connection : Object
 				backref.add_text(find_channel_tab(message.parameters[0]), message, true);
 				break;
 			default:
+				int mode = int.parse(message.command);
+				if ((mode <= 533 && mode >= 400) || 
+				    (mode >= 712 && mode <= 715) || 
+				    (mode >= 972)) {
+					backref.add_text(server_tab, message, true);
+					return;
+				}
 				debug("Unhandled message: " + msg);
 				return;
 		} 
