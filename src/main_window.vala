@@ -78,6 +78,7 @@ public class MainWindow : Object
 			toolbar = new HeaderBar (); 
 			tabs = new Granite.Widgets.DynamicNotebook();
 			tabs.add_button_tooltip = _("Connect to a server");
+			tabs.add_button_visible = false;
 			tabs.allow_drag = true;
 			tabs.show_icons = true;
 
@@ -192,7 +193,6 @@ public class MainWindow : Object
 			window.set_titlebar(toolbar);
 			window.show_all();
 
-			tabs.new_tab_requested.connect(new_tab_requested);
 			tabs.tab_removed.connect(tab_remove);
 			tabs.tab_switched.connect(tab_switch); 
 
@@ -203,7 +203,7 @@ public class MainWindow : Object
 			load_autoconnect();
 
 			tab_rightclick = new Gtk.Menu();
-			Gtk.MenuItem close_all = new Gtk.MenuItem.with_label("Close All");
+			Gtk.MenuItem close_all = new Gtk.MenuItem.with_label(_("Close All"));
 			close_all.activate.connect( ()=> {
 				outputs.entries.foreach( (item)=> {
 					if(item != null)
@@ -211,13 +211,16 @@ public class MainWindow : Object
 					return true;
 				});
 			});
+			Gtk.MenuItem new_tab = new Gtk.MenuItem.with_label(_("New Tab"));
+			new_tab.activate.connect(new_tab_requested);
 			
-			Gtk.MenuItem channel_list_menu = new Gtk.MenuItem.with_label("Switch");
+			Gtk.MenuItem channel_list_menu = new Gtk.MenuItem.with_label(_("Switch"));
 			tab_channel_list = new Gtk.Menu();
 			channel_list_menu.set_submenu(tab_channel_list);
 			
 			tab_rightclick.add(channel_list_menu);
 			tab_rightclick.add(close_all);
+			tab_rightclick.add(new_tab);
 
 			tab_rightclick.show_all();
 		}
