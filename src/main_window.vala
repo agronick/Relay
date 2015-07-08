@@ -781,7 +781,6 @@ public class MainWindow : Object
 					});
 					return;
 				case 1:
-					debug("New tab");
 					new_tab_requested();
 					return;
 				case 2:
