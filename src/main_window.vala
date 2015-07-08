@@ -58,6 +58,9 @@ public class MainWindow : Object
 	HashMap<string, Widgets.SourceList.Item> items_sidebar;
 	Gtk.Menu tab_rightclick;
 	Gtk.Menu tab_channel_list;
+	DragFile drag_file;
+	public static Button paste;
+	public static Box paste_box;
 
 	Gee.HashMap<int, ChannelTab> outputs = new Gee.HashMap<int, ChannelTab> ();
 	Gee.HashMap<string, Connection> clients = new Gee.HashMap<string, Connection> (); 
@@ -130,7 +133,7 @@ public class MainWindow : Object
 			//subject_popover.set_property("transitions-enabled", true);
 			channel_subject.clicked.connect(() => {
 				subject_popover.show_all();
-			});  
+			});
 			channel_subject.set_no_show_all(true);
 			channel_subject.hide();
 			var scrolled = new Gtk.ScrolledWindow(null, null);
@@ -195,18 +198,38 @@ public class MainWindow : Object
 			set_up_add_sever(builder);
 
 			toolbar.set_title(app.program_name);
-			toolbar.show_all();
 
 			toolbar.show_close_button = true;
 			window.set_titlebar(toolbar);
 			window.show_all();
+			
+			toolbar.show_all();
 
-			var drag_file = new DragFile();
-			window.drag_data_received.connect(drag_file.drop_file);
-			Gtk.drag_dest_set(window, 
-			                  Gtk.DestDefaults.ALL | DestDefaults.HIGHLIGHT | DestDefaults.DROP,
+			/*
+			 * Hastebin code
+			 */ 
+			paste_box = new Box(Gtk.Orientation.HORIZONTAL, 0);
+			paste = new Button();
+			paste_box.pack_start(paste);
+			paste_box.show_all();
+			paste.focus_on_click = false;
+			var paste_img = new Image.from_file(Relay.get_asset_file("./assets/paste.png"));
+			paste.set_image(paste_img);
+			paste.set_tooltip_text(_("Drag a files here to upload to pastebin"));
+			paste.activate();
+			toolbar.pack_end(paste_box);
+			drag_file = new DragFile();
+			drag_file.attach_spinner(paste_box);
+			drag_file.attach_button(paste);
+			Gtk.drag_dest_set(paste, 
+			                  Gtk.DestDefaults.ALL,
 			                  targets, Gdk.DragAction.LINK);
 			drag_file.file_uploaded.connect(file_uploaded);
+			paste.drag_data_received.connect(drag_file.drop_file);
+			paste.enter_notify_event.connect((event) => {
+				paste.activate();
+				return true;
+			});
 
 			tabs.tab_removed.connect(tab_remove);
 			tabs.tab_switched.connect(tab_switch); 
@@ -238,6 +261,7 @@ public class MainWindow : Object
 			tab_rightclick.add(new_tab);
 
 			tab_rightclick.show_all();
+			
 		}
 		catch (Error e) {
 			error("Could not load UI: %s\n", e.message);
@@ -285,7 +309,7 @@ public class MainWindow : Object
 
 			if (new_tab.is_server_tab)
 				new_tab.tab.working = true;
-			TextView output = new TextView(); 
+			TextView output = new TextView();
 			output.set_editable(false);
 			output.set_cursor_visible(false);
 			output.set_wrap_mode (Gtk.WrapMode.WORD_CHAR);
@@ -415,6 +439,7 @@ public class MainWindow : Object
 			toolbar.set_title(app.program_name);
 			toolbar.set_has_subtitle(false);
 			toolbar.set_subtitle("");
+			//paste.hide();
 			return;
 		}
 
@@ -437,7 +462,9 @@ public class MainWindow : Object
 			toolbar.set_has_subtitle(false);
 			toolbar.set_subtitle("");
 			channel_users.hide();
+			//paste.hide();
 		} else {
+			//paste.show();
 			toolbar.set_title(using_tab.tab.label);
 			toolbar.set_subtitle(using_tab.connection.server.host);
 			toolbar.has_subtitle = (using_tab.tab.label != using_tab.connection.server.host);

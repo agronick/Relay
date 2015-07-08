@@ -89,7 +89,11 @@ public class Message : GLib.Object {
             regex.replace_eval (message, -1, 0, 0, (mi, s) => {
                 prefix = mi.fetch_named ("prefix");
                 command = mi.fetch_named ("command");
-                parameters = mi.fetch_named ("params").split(" ");
+				string params_string = mi.fetch_named ("params");
+				if(params_string != null && params_string.contains(" "))
+            		parameters = params_string.split(" ");
+				else
+					parameters = new string[0];
                 message = mi.fetch_named ("trail");
 
                 if (message != null)

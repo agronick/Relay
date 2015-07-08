@@ -8,7 +8,8 @@ ui_DATA = ui/relay.ui ui/server_window.ui ui/relay.png
 
 assetsdir = $(pkgdatadir)/assets
 assets_DATA = ui/relay.png \
-	assets/server_icon.png
+	assets/server_icon.png \
+    assets/paste.png
 
 appicondir = $(datadir)/icons/hicolor/scalable/apps
 appicon_DATA = ui/relay.png
@@ -39,7 +40,8 @@ relay_SOURCES = \
     irc.vala \
     relay.vala \
     connection.vala \
-    rich_text.vala
+    rich_text.vala \
+    drag_file.vala
 
 relay_VALAFLAGS =  \
     -X -DGETTEXT_PACKAGE="relay" --target-glib 2.32  --pkg gee-0.8 --pkg x11 --pkg gtk+-3.0 --pkg glib-2.0 --pkg granite --pkg sqlite3

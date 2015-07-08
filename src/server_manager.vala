@@ -130,7 +130,7 @@ public class ServerManager : Object
 
 
 	public void save_changes (ListBoxRow row) {
-		if (current_server == null || select_row == null)
+		if (current_server == null || select_row == null || row == null)
 			return;
 
 		string hostname = host.get_text().strip();
