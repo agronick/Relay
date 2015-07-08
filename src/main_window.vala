@@ -735,7 +735,7 @@ public class MainWindow : Object
 					});
 					return;
 				case 1:
-					tabs.new_tab_requested();
+					new_tab_requested();
 					return;
 				case 2:
 					slide_panel();
