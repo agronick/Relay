@@ -261,7 +261,7 @@ public class ChannelTab : GLib.Object {
 		Adjustment position = sw.get_vadjustment();
 		if (!(position is Adjustment))
 			return;
-		if (position.value > position.upper - position.page_size - 50) {
+		if (position.value > position.upper - position.page_size - 75) {
 			Idle.add( () => {
 				position.set_value(position.upper - position.page_size);
 				sw.set_vadjustment(position);
@@ -383,7 +383,7 @@ public class ChannelTab : GLib.Object {
 		timestamp_tag.size_points = 8;
 		timestamp_tag.family = "Liberation Sans";
 		timestamp_tag.pixels_above_lines = 7;
-		timestamp_tag.pixels_below_lines = 1;
+		timestamp_tag.pixels_below_lines = 3;
 
 		spacing_tag.size_points = 2;
 	}

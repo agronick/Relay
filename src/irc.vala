@@ -22,7 +22,7 @@ public class IRC{
 	public const int USER_LENGTH = 18;
 	public const int USER_WIDTH = 126;
 	public const string user_prefixes = "~&@%+";
-    public const string spacers = " :/\\{}[];$#@!)(*&^\n\t\r";
+	public const string spacers = " :/\\{}[];$#@!)(*&^\n\t\r";
 
 	//Replies
 	public const string RPL_WELCOME = "001";
@@ -51,21 +51,21 @@ public class IRC{
 	public const string RPL_MOTD = "372";
 	public const string RPL_MOTDSTART = "375";
 	public const string RPL_ENDOFMOTD = "376";
-    public const string RPL_LUSEROP = "252";
+	public const string RPL_LUSEROP = "252";
 	public const string RPL_UMODEIS = "221";
 	public const string RPL_SERVLIST = "234";
 	public const string RPL_ENDOFSTATS = "219";
 	public const string RPL_STATSCOMMANDS = "212";
 	public const string RPL_STATSLINKINFO = "211";
-             // "<integer> :operator(s) online"
-    public const string RPL_LUSERUNKNOWN = "253";
-             //"<integer> :unknown connection(s)"
-    public const string RPL_LUSERCHANNELS = "254";
-             //"<integer> :channels formed"
-    public const string RPL_LUSERME = "255";
-             //":I have <integer> clients and <integer> servers"
+	// "<integer> :operator(s) online"
+	public const string RPL_LUSERUNKNOWN = "253";
+	//"<integer> :unknown connection(s)"
+	public const string RPL_LUSERCHANNELS = "254";
+	//"<integer> :channels formed"
+	public const string RPL_LUSERME = "255";
+	//":I have <integer> clients and <integer> servers"
 	public const string RPL_LUSERCLIENT = "251";
-			//:There are <integer> users and <integer> services on <integer> servers"
+	//:There are <integer> users and <integer> services on <integer> servers"
 	public const string PRIVATE_MESSAGE = "PRIVMSG";
 	public const string USER_NAME_CHANGED = "NICK";
 	public const string QUIT_MSG = "QUIT";
@@ -89,7 +89,7 @@ public class IRC{
 	public const string ERR_CHANOPRIVSNEEDED = "482";
 	public const string ERR_NONONREG = "486";
 
-	
+
 
 	public static int compare(string a, string b) {
 		var a1 = a[0].tolower().to_string() + a;

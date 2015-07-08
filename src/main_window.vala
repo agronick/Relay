@@ -65,6 +65,10 @@ public class MainWindow : Object
 
 	public static int current_tab = -1;
 
+    private const Gtk.TargetEntry[] targets = {
+        {"text/uri-list",0,0}
+    };
+
 	public MainWindow (Relay application) {
 
 		try
@@ -156,6 +160,10 @@ public class MainWindow : Object
 					update_users_on_close = false;
 				}
 			});
+			toolbar.button_press_event.connect( ()=> {
+				toolbar.grab_focus();
+				return true;
+			});
 
 			users_scrolled = new Gtk.ScrolledWindow (null, null);
 			users_scrolled.vscrollbar_policy = PolicyType.NEVER;
@@ -192,6 +200,13 @@ public class MainWindow : Object
 			toolbar.show_close_button = true;
 			window.set_titlebar(toolbar);
 			window.show_all();
+
+			var drag_file = new DragFile();
+			window.drag_data_received.connect(drag_file.drop_file);
+			Gtk.drag_dest_set(window, 
+			                  Gtk.DestDefaults.ALL | DestDefaults.HIGHLIGHT | DestDefaults.DROP,
+			                  targets, Gdk.DragAction.LINK);
+			drag_file.file_uploaded.connect(file_uploaded);
 
 			tabs.tab_removed.connect(tab_remove);
 			tabs.tab_switched.connect(tab_switch); 
@@ -693,6 +708,10 @@ public class MainWindow : Object
 		MainWindow.input.select_region(message.length, message.length);
 	}
 
+	public void file_uploaded(string url) {
+		MainWindow.input.set_text(MainWindow.input.get_text() + " " + url);
+	}
+
 	private void load_autoconnect () {
 		bool opened_tab = false;
 
@@ -735,7 +754,8 @@ public class MainWindow : Object
 					});
 					return;
 				case 1:
-					tabs.new_tab_requested();
+					debug("New tab");
+					new_tab_requested();
 					return;
 				case 2:
 					slide_panel();
