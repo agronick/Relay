@@ -105,8 +105,8 @@ public class Relay : Granite.Application {
         string[] checks = {"./" + name,
                            "src/" + name,
                             "../src/" + name,
-                            Config.PACKAGE_DATA_DIR + "/" + name,
-                            "./*/src/" + name,};
+                            "./*/src/" + name,
+                            Config.PACKAGE_DATA_DIR + "/" + name,};
         foreach(string check in checks) {                   
             File file = File.new_for_path (check);
             if (file.query_exists())
@@ -148,5 +148,25 @@ public class Relay : Granite.Application {
             on_ubuntu = true;
         }
 	}
+
+	private static bool error_open = false;
+    public static void show_error_window (string error_msg) {
+		if (error_open)
+			return;
+        Idle.add( ()=> {
+            Gtk.MessageDialog dialog = new Gtk.MessageDialog (MainWindow.window, 
+                                                       Gtk.DialogFlags.MODAL, 
+                                                       Gtk.MessageType.WARNING, 
+                                                       Gtk.ButtonsType.OK, 
+                                                       _(error_msg));
+            dialog.response.connect ((response_id) => {
+			    error_open = false;
+                dialog.destroy();
+            });
+            dialog.show ();
+			error_open = true;
+            return false;
+        });
+    }
 }
 

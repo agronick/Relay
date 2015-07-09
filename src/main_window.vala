@@ -307,8 +307,13 @@ public class MainWindow : Object
 			new_tab.tab.menu = tab_rightclick;
 			new_tab.tab.ellipsize_mode = EllipsizeMode.NONE;
 
-			if (new_tab.is_server_tab)
+			if (new_tab.is_server_tab) {
 				new_tab.tab.working = true;
+				if (new_tab.connection.error_state) {
+					tabs.remove_tab(new_tab.tab);
+					return false;
+				}
+			}
 			TextView output = new TextView();
 			output.set_editable(false);
 			output.set_cursor_visible(false);

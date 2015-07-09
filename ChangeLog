@@ -1,3 +1,9 @@
+2015-07-06  Kyle Agronick  <agronick@gmail.com>
+
+    Stopped the tabs from becoming small
+    Put an icon on the sidebar indicating if the channel/server is open or now
+    Right click any tab to change tabs
+
 2015-07-05  Kyle Agronick  <agronick@gmail.com>
 
     Added the ability to click a user name on the user popover or the chat window

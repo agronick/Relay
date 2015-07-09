@@ -35,6 +35,7 @@ public class Connection : Object
 	public ChannelTab server_tab;
 	public HashMap<string, ChannelTab> channel_tabs = new HashMap<string, ChannelTab>();
 	public LinkedList<string> channel_autoconnect = new LinkedList<string>();
+	public bool error_state = false;
 
 	public signal void new_topic(ChannelTab tab, string topic);
 
@@ -85,6 +86,8 @@ public class Connection : Object
 				}
 			}while (line != null && !exit);
 		} catch (GLib.Error e) {
+			error_state = true;
+			Relay.show_error_window(e.message);
 			warning("Could not connect" + e.message);
 			return 0;
 		}
@@ -218,7 +221,8 @@ public class Connection : Object
 					message.command = "0";
 				else {
 					int mode = int.parse(message.command);
-					if ((mode <= 533 && mode >= 400) || 
+					if (message.command == "ERROR" || 
+					    (mode <= 533 && mode >= 400) || 
 						(mode >= 712 && mode <= 715) || 
 						(mode >= 972)) {
 						backref.add_text(server_tab, message, true);
@@ -318,7 +322,9 @@ public class Connection : Object
 			if (output_stream == null || output_stream.is_closed())
 				return;
 			output_stream.put_string(output + "\r\n");
-		}catch(GLib.Error e){}
+		}catch(GLib.Error e){
+			Relay.show_error_window(e.message);
+		}
 	}
 
 	public void do_exit () {
