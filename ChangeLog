@@ -1,3 +1,9 @@
+2015-07-08  Kyle Agronick  <agronick@gmail.com>
+
+    Added integration with Hastebin
+    Better error handling
+    Bug fixes
+
 2015-07-06  Kyle Agronick  <agronick@gmail.com>
 
     Stopped the tabs from becoming small
