@@ -81,6 +81,7 @@ public class Connection : Object
 				try{
 					line = input_stream.read_line(out size);
 					handle_input(line);
+					debug("Raw input " + line);
 				}catch(IOError e) {
 					warning("IO error while reading");
 				}
@@ -130,7 +131,7 @@ public class Connection : Object
 				info(msg);
 				return;
 			case IRC.RPL_TOPIC:
-				ChannelTab tab = add_channel_tab(message.parameters[1]);
+				ChannelTab tab = find_channel_tab(message.parameters[1]);
 				if (tab != null)
 					tab.set_topic(message.get_msg_txt());
 				return;
@@ -164,8 +165,8 @@ public class Connection : Object
 				server_tab.tab.working = false;
 				break;
 			case IRC.RPL_NAMREPLY:
-				var tab = find_channel_tab(message.parameters[2]);
-				if (tab == server_tab)
+				var tab = add_channel_tab(message.parameters[2]);
+				if (tab == null || tab == server_tab)
 					return;
 				tab.add_users_message(message);
 				break;
@@ -191,7 +192,7 @@ public class Connection : Object
 			case IRC.RPL_ENDOFNAMES:
 				ChannelTab tab = find_channel_tab(message.parameters[1]);
 				tab.user_names_changed(tab.tab_index);
-				break;
+				return;
 				//Errors
 			case IRC.ERR_NICKNAMEINUSE:
 			case IRC.ERR_NONICKNAMEGIVEN:
@@ -200,7 +201,7 @@ public class Connection : Object
 					error_msg = _("The name you chose is in use.");
 				error_msg = server.host + "\n" + error_msg;
 				name_in_use(error_msg);
-				break;
+				return;
 			case IRC.ERR_NOSUCHNICK:
 			case IRC.ERR_NOSUCHCHANNEL:
 			case IRC.ERR_WASNOSUCHNICK:
@@ -215,7 +216,7 @@ public class Connection : Object
 			case IRC.ERR_CHANOPRIVSNEEDED:
 			case IRC.ERR_NONONREG:
 				backref.add_text(find_channel_tab(message.parameters[0]), message, true);
-				break;
+				return;
 			default:
 				if (message.command == null)
 					message.command = "0";
@@ -259,42 +260,45 @@ public class Connection : Object
 
 	public void name_in_use (string message) {
 		debug("At name in use");
-		var dialog = new Dialog.with_buttons(_("Nickname in use"), MainWindow.window,
-		                                     DialogFlags.DESTROY_WITH_PARENT,
-		                                     _("Connect"), Gtk.ResponseType.ACCEPT,
-		                                     _("Cancel"), Gtk.ResponseType.CANCEL);
-		Gtk.Box content = dialog.get_content_area() as Gtk.Box;
-		content.pack_start(new Label(_(message)), false, false, 5);
-		var server_name = new Entry();
-		server_name.placeholder_text = _("New username");
-		server_name.activate.connect(() => {
-			dialog.response(Gtk.ResponseType.ACCEPT);
-		});
-		content.pack_start(server_name, false, false, 5);
-		dialog.show_all();
-		dialog.response.connect((id) => {
-			switch (id){
-				case Gtk.ResponseType.ACCEPT:
-					string name = server_name.get_text().strip();
-					if (name.length > 0) {
-						server.nickname = server.username = server_name.get_text();
-						if (server.realname.length == 0)
-							server.realname = server.nickname;
-						do_register();
+		Idle.add( ()=> {
+			var dialog = new Dialog.with_buttons(_("Nickname in use"), MainWindow.window,
+			                                     DialogFlags.DESTROY_WITH_PARENT,
+			                                     _("Connect"), Gtk.ResponseType.ACCEPT,
+			                                     _("Cancel"), Gtk.ResponseType.CANCEL);
+			Gtk.Box content = dialog.get_content_area() as Gtk.Box;
+			content.pack_start(new Label(_(message)), false, false, 5);
+			var server_name = new Entry();
+			server_name.placeholder_text = _("New username");
+			server_name.activate.connect(() => {
+				dialog.response(Gtk.ResponseType.ACCEPT);
+			});
+			content.pack_start(server_name, false, false, 5);
+			dialog.show_all();
+			dialog.response.connect((id) => {
+				switch (id){
+					case Gtk.ResponseType.ACCEPT:
+						string name = server_name.get_text().strip();
+						if (name.length > 0) {
+							server.nickname = server.username = server_name.get_text();
+							if (server.realname.length == 0)
+								server.realname = server.nickname;
+							do_register();
+							dialog.close();
+						}
+						break;
+					case Gtk.ResponseType.CANCEL:
 						dialog.close();
-					}
-					break;
-				case Gtk.ResponseType.CANCEL:
-					dialog.close();
-					server_tab.tab.close();
-					foreach (var tab in channel_tabs.entries) {
-						tab.value.tab.close();
-					}
-					break;
-			}
+						server_tab.tab.close();
+						foreach (var tab in channel_tabs.entries) {
+							tab.value.tab.close();
+						}
+						break;
+				}
+			});
+			return false;
 		});
 	}
-
+	
 	private void handle_ping (ref Message msg) {
 		send_output("PONG " + msg.message);
 	}
