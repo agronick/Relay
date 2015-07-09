@@ -444,7 +444,7 @@ public class MainWindow : Object
 			toolbar.set_title(app.program_name);
 			toolbar.set_has_subtitle(false);
 			toolbar.set_subtitle("");
-			//paste.hide();
+			paste.hide();
 			return;
 		}
 
@@ -467,9 +467,9 @@ public class MainWindow : Object
 			toolbar.set_has_subtitle(false);
 			toolbar.set_subtitle("");
 			channel_users.hide();
-			//paste.hide();
+			paste.hide();
 		} else {
-			//paste.show();
+			paste.show();
 			toolbar.set_title(using_tab.tab.label);
 			toolbar.set_subtitle(using_tab.connection.server.host);
 			toolbar.has_subtitle = (using_tab.tab.label != using_tab.connection.server.host);
