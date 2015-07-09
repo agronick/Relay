@@ -301,6 +301,8 @@ public class Connection : Object
 
 	public void stop () {
 		exit = true;
+		if (input_stream == null || output_stream == null)
+			return;
 		input_stream.clear_pending();
 		try{
 			input_stream.close();
