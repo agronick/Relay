@@ -174,7 +174,7 @@ public class Relay : Granite.Application {
 	    float p=d*0.3f;
 	    float a=c; 
 	    float s=p/4;
-	    double val = ((a*Math.pow(2,-10*t)) * Math.sin( (t*d-s)*(2*Math.PI)/p )) + c + b;
+	    double val = ((a*Math.pow(2,-16*t)) * Math.sin( (t*d-s)*(2*Math.PI)/p )) + c + b;
         return val;
     }
     

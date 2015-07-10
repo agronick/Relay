@@ -91,7 +91,6 @@ public class MainWindow : Object
 
 			window = builder.get_object ("window") as Gtk.Window;
 			window.destroy.connect(relay_close_program);
-			window.set_size_request(900, 600);
 			application.add_window(window);
 			var nb_wrapper = builder.get_object("notebook_wrapper") as Box;
 			nb_wrapper.pack_start(tabs, true, true, 0); 
@@ -351,8 +350,8 @@ public class MainWindow : Object
 
 			index++;
 			try{
-			if (items_sidebar.has_key(new_tab.tab.label))
-				items_sidebar[new_tab.tab.label].icon = Icon.new_for_string(channel_open);
+				if (items_sidebar.has_key(new_tab.tab.label))
+					items_sidebar[new_tab.tab.label].icon = Icon.new_for_string(channel_open);
 			} catch (Error e) {
 				items_sidebar[new_tab.tab.label].icon = null;
 				warning(e.message);
@@ -456,6 +455,10 @@ public class MainWindow : Object
 		if (!outputs.has_key(current_tab))
 			return;
 		ChannelTab using_tab = outputs[current_tab];
+
+
+		if (items_sidebar.has_key(using_tab.tab.label))
+			items_sidebar[using_tab.tab.label].badge = "";
 
 		if (using_tab.has_subject) 
 			new_subject (current_tab, using_tab.channel_subject.validate(-1) ? using_tab.channel_subject : using_tab.channel_subject.escape(""));
@@ -650,6 +653,9 @@ public class MainWindow : Object
 			tab.display_message(message);
 
 		if (current_tab != tab.tab_index) {
+			tab.message_count++;
+			if (items_sidebar.has_key(tab.tab.label) && !tab.is_server_tab)
+				items_sidebar[tab.tab.label].badge = tab.message_count.to_string();
 			tab.tab.icon = channel_tab_icon_new_msg;
 		}
 	}
@@ -735,16 +741,17 @@ public class MainWindow : Object
 		int add, end, go_to, pos;
 		bool opening;
 	    opening = (pannel.position < 10);
+		end = opening ? 550 : 618;
 			add = 1;
-			end = 500;
-			go_to = 150;
+			go_to = 180;
 		for (int i = pannel.position; i < end; i+= add) {
 			if (opening) {
 				pos = (int) Relay.ease_out_elastic(i, 0.0F, go_to, end);
 				if (i > 420) 
 					break;
-			} else 
+			} else {
 				pos = (int) Relay.ease_in_bounce(end - i, 0.0F, go_to, end);
+			}
 			
 			pannel.set_position(pos);
 			Thread.usleep(3600);

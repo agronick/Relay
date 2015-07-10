@@ -38,6 +38,7 @@ public class ChannelTab : GLib.Object {
 	public LinkedList<string> owners = new LinkedList<string>();
 	public LinkedList<string> blocked_users = new LinkedList<string>();
 	private TextView output;
+	public int message_count = 0;
 
 	public static TimeVal timeval = TimeVal();
 	public static int timestamp_seconds = 180;
