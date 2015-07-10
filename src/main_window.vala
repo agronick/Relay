@@ -20,6 +20,7 @@
 
 using GLib;
 using Gtk;
+using Gdk;
 using Gee;
 using Granite;
 using Pango;
@@ -38,7 +39,7 @@ public class MainWindow : Object
 	public const string channel_closed = "user-offline";
 
 
-	public static Window window;
+	public static Gtk.Window window;
 	public static Entry input;
 	Granite.Widgets.DynamicNotebook tabs;
 	Paned pannel;
@@ -68,15 +69,14 @@ public class MainWindow : Object
 
 	public static int current_tab = -1;
 
-    private const Gtk.TargetEntry[] targets = {
-        {"text/uri-list",0,0}
-    };
 
 	public MainWindow (Relay application) {
 
 		try
 		{
 			app = application;
+
+			servers.set_tooltip_text(_("Double click an item to connect"));
 
 			var builder = new Builder ();
 			builder.add_from_file (Relay.get_asset_file(UI_FILE));
@@ -89,7 +89,7 @@ public class MainWindow : Object
 			tabs.allow_drag = true;
 			tabs.show_icons = true;
 
-			window = builder.get_object ("window") as Window;
+			window = builder.get_object ("window") as Gtk.Window;
 			window.destroy.connect(relay_close_program);
 			window.set_size_request(900, 600);
 			application.add_window(window);
@@ -223,7 +223,7 @@ public class MainWindow : Object
 			drag_file.attach_button(paste);
 			Gtk.drag_dest_set(paste, 
 			                  Gtk.DestDefaults.ALL,
-			                  targets, Gdk.DragAction.LINK);
+			                  DragFile.TARGETS, Gdk.DragAction.LINK);
 			drag_file.file_uploaded.connect(file_uploaded);
 			paste.drag_data_received.connect(drag_file.drop_file);
 			paste.enter_notify_event.connect((event) => {
@@ -501,7 +501,35 @@ public class MainWindow : Object
 		int MAX_COLS = 4;
 		var listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
 		int i = 0;
-		foreach (var user in using_tab.users) {
+		int type_change = 0;
+		LinkedList<LinkedList<string>> user_types = new LinkedList<LinkedList<string>>();
+		user_types.add(using_tab.owners);
+		user_types.add(using_tab.ops);
+		user_types.add(using_tab.half_ops);
+		user_types.add(using_tab.users);
+		int total_size = using_tab.users.size + using_tab.owners.size + using_tab.ops.size + using_tab.half_ops.size;
+		foreach(LinkedList<string> type in user_types) {
+			foreach (string user in type) {
+				listbox.pack_start(make_user_eventbox(user, type_change), false, false, 0);
+				i++;
+				if (i % PER_BOX == 0 && total_size >= i) {
+					listbox.width_request = BOX_WIDTH;
+					users_list.pack_start(listbox, true, true, 0);
+					listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+				}
+			}
+			type_change++;
+		}
+		listbox.width_request = BOX_WIDTH;
+
+		users_header.set_text(_("Total users: ") + i.to_string());
+
+		int cols = (int) Math.ceilf((float)i / (float)PER_BOX); 
+		users_scrolled.min_content_width = (cols > MAX_COLS) ? BOX_WIDTH * MAX_COLS : cols * BOX_WIDTH;
+		users_list.pack_start(listbox, true, true, 0);
+	}
+
+	private EventBox make_user_eventbox (string user, int type = -1) {
 			var eb = new EventBox();
 			eb.enter_notify_event.connect( ()=> {
 				eb.set_state_flags(StateFlags.PRELIGHT | StateFlags.SELECTED, true);
@@ -512,8 +540,20 @@ public class MainWindow : Object
 				return false;
 			});
 			var label = new Label("");
-			string color = outputs[current_tab].blocked_users.contains(user) ? "red" : "white";
-			label.set_markup("<span foreground=\"" + color + "\">" + GLib.Markup.escape_text(user) + "</span>");
+			var color = RGBA();
+			if (type == 0) {
+				color.parse("#00D901");
+				label.set_tooltip_text(_("Owner"));
+			} else if (type == 1) {
+				color.parse("#F5E219");
+				label.set_tooltip_text(_("Operator"));
+			} else if (type == 2) {
+				color.parse("#9A19F5");
+				label.set_tooltip_text(_("Half Operator"));
+			} else
+				color.parse(outputs[current_tab].blocked_users.contains(user) ? "#FF0000" : "#FFFFFF");
+			label.set_text(user);
+			label.override_color(StateFlags.NORMAL, color);
 			label.width_chars = IRC.USER_LENGTH;
 			label.margin_top = label.margin_bottom = 4;
 			eb.add(label);
@@ -526,21 +566,7 @@ public class MainWindow : Object
 				}
 				return true;
 			});
-			listbox.pack_start(eb, false, false, 0);
-			i++;
-			if (i % PER_BOX == 0 && using_tab.users.size >= i) {
-				listbox.width_request = BOX_WIDTH;
-				users_list.pack_start(listbox, true, true, 0);
-				listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
-			}
-		}
-		listbox.width_request = BOX_WIDTH;
-
-		users_header.set_text(_("Total users: ") + i.to_string());
-
-		int cols = (int) Math.ceilf((float)i / (float)PER_BOX); 
-		users_scrolled.min_content_width = (cols > MAX_COLS) ? BOX_WIDTH * MAX_COLS : cols * BOX_WIDTH;
-		users_list.pack_start(listbox, true, true, 0);
+		return eb;
 	}
 
 	private bool click_private_message (Gdk.EventButton event) {
@@ -578,8 +604,9 @@ public class MainWindow : Object
 	public void refresh_server_list () {
 		var root = servers.root;
 		root.clear();
-
+		
 		items_sidebar = new HashMap<string, Widgets.SourceList.Item>();
+		Gtk.Menu? menu;
 		
 		foreach (var svr in SqlClient.servers.entries) {
 			var s =  new Widgets.SourceList.ExpandableItem(svr.value.host);
@@ -598,7 +625,7 @@ public class MainWindow : Object
 			items_sidebar[svr.value.host] = chn;
 			
 			foreach (var c in svr.value.channels) {
-				chn = new Widgets.SourceList.Item(c.channel);
+				chn = new Granite.Widgets.SourceList.Item(c.channel);
 				chn.set_data<string>("type", "channel");
 				chn.set_data<SqlClient.Channel>("channel", c);
 				chn.activated.connect(item_activated);
@@ -613,6 +640,7 @@ public class MainWindow : Object
 			}
 		}
 	}
+
 
 	public void add_text (ChannelTab tab, Message message, bool error = false) {
 		if (error) {
