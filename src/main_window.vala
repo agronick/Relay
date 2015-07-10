@@ -414,7 +414,7 @@ public class MainWindow : Object
 
 		//Remove server if no connections are left
 		if (tab_server.channel_tabs.size < 1) {
-			debug("Closing server");
+			info("Closing server");
 			tab_server.do_exit();
 			clients.unset(tab_server.server.host);
 		}
@@ -573,7 +573,7 @@ public class MainWindow : Object
 	}
 
 	private bool click_private_message (Gdk.EventButton event) {
-		debug("Selected user is " + channel_user_selected);
+		info("Selected user is " + channel_user_selected);
 		user_menu.popdown();
 		users_popover.set_visible(false);
 		ChannelTab using_tab = outputs[current_tab];
@@ -651,13 +651,15 @@ public class MainWindow : Object
 			tab.display_error(message);
 		} else
 			tab.display_message(message);
-
-		if (current_tab != tab.tab_index) {
-			tab.message_count++;
-			if (items_sidebar.has_key(tab.tab.label) && !tab.is_server_tab)
-				items_sidebar[tab.tab.label].badge = tab.message_count.to_string();
-			tab.tab.icon = channel_tab_icon_new_msg;
-		}
+		Idle.add( ()=> {
+			if (current_tab != tab.tab_index) {
+				tab.message_count++;
+				if (items_sidebar.has_key(tab.tab.label) && !tab.is_server_tab)
+					items_sidebar[tab.tab.label].badge = tab.message_count.to_string();
+				tab.tab.icon = channel_tab_icon_new_msg;
+			}
+			return false;
+		});
 	}
 
 	public void send_text_out (string text) {
