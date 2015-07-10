@@ -93,7 +93,9 @@ public class MainWindow : Object
 			tabs.show_icons = true;
 
 			window = builder.get_object ("window") as Gtk.Window;
+			window.set_realized(false);
 			window.set_titlebar(toolbar);
+			window.set_realized(true);
 			window.destroy.connect(relay_close_program);
 			application.add_window(window);
 			var nb_wrapper = builder.get_object("notebook_wrapper") as Box;
