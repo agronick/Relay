@@ -60,6 +60,7 @@ public class MainWindow : Object
 	Gtk.Menu tab_rightclick;
 	Gtk.Menu tab_channel_list;
 	DragFile drag_file;
+	Button settings_btn;
 	public static Button paste;
 	public static Box paste_box;
 
@@ -121,6 +122,8 @@ public class MainWindow : Object
 				send_text_out(input.get_text ());
 				input.set_text("");
 			});
+
+			settings_btn = builder.get_object("settings_btn") as Button;
 
 			//Channel subject button
 			if (Relay.on_elementary)
@@ -260,7 +263,8 @@ public class MainWindow : Object
 			tab_rightclick.add(new_tab);
 
 			tab_rightclick.show_all();
-			
+
+			set_up_css();
 		}
 		catch (Error e) {
 			error("Could not load UI: %s\n", e.message);
@@ -853,6 +857,19 @@ public class MainWindow : Object
 			});
 			return false;
 		});
+	}
+
+	public void set_up_css () {
+        string[] files = {
+            "/usr/share/themes/relay/apps.css",
+            "/usr/share/themes/relay/gtk-dark.css",
+            "/usr/share/themes/relay/gtk-widgets-dark.css"
+        };
+		var provider = new CssProvider();
+		foreach (string file in files) {
+			provider.load_from_path (file);
+		}
+		Gtk.StyleContext.add_provider_for_screen(window.screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_USER);
 	}
 
 	public void relay_close_program () { 
