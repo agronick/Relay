@@ -865,11 +865,10 @@ public class MainWindow : Object
             "/usr/share/themes/relay/gtk-dark.css",
             "/usr/share/themes/relay/gtk-widgets-dark.css"
         };
-		var provider = new CssProvider();
 		foreach (string file in files) {
-			provider.load_from_path (file);
+			var provider = Widgets.Utils.get_css_provider(file);
+			Gtk.StyleContext.add_provider_for_screen(window.screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_USER);
 		}
-		Gtk.StyleContext.add_provider_for_screen(window.screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_USER);
 	}
 
 	public void relay_close_program () { 
