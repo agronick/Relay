@@ -84,7 +84,8 @@ public class MainWindow : Object
 			builder.connect_signals (this);
 
 			toolbar = new HeaderBar (); 
-			toolbar.decoration_layout = "";
+			if (Relay.on_kde)
+				toolbar.decoration_layout = "";
 			tabs = new Granite.Widgets.DynamicNotebook();
 			tabs.add_button_tooltip = _("Connect to a server");
 			tabs.add_button_visible = false;
@@ -110,7 +111,7 @@ public class MainWindow : Object
 			if (Relay.on_ubuntu || Relay.on_kde)
 				select_channel = new Button.from_icon_name("network-server", IconSize.LARGE_TOOLBAR);
 			else {
-				Image icon = new Image.from_file(Relay.get_asset_file("assets/server_icon.png"));
+				Image icon = new Image.from_file(Relay.get_asset_file("assets/server_icon.svg"));
 				select_channel = new Gtk.Button();
 				select_channel.image = icon;
 			}
