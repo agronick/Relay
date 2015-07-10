@@ -11,6 +11,7 @@
     <property name="width_request">1111</property>
     <property name="height_request">500</property>
     <property name="visible">True</property>
+    <property name="app_paintable">True</property>
     <property name="can_focus">False</property>
     <property name="title" translatable="yes">Relay</property>
     <property name="window_position">center</property>
@@ -21,6 +22,7 @@
     <child>
       <object class="GtkPaned" id="pannel">
         <property name="visible">True</property>
+        <property name="app_paintable">True</property>
         <property name="can_focus">True</property>
         <child>
           <object class="GtkBox" id="box1">
