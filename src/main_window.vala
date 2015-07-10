@@ -111,6 +111,9 @@ public class MainWindow : Object
 			Button select_channel = new Gtk.Button();
 			select_channel.image = icon;
 			select_channel.tooltip_text = _("Open server/channel view");
+			var color = Gdk.RGBA();
+			color.parse("#FFFFFFFF");
+			select_channel.override_background_color(StateFlags.NORMAL,color);
 			toolbar.pack_start(select_channel);
 			select_channel.button_release_event.connect(slide_panel);
 			pannel.position = 1;
