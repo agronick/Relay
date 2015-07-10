@@ -11,28 +11,28 @@ assets_DATA = ui/relay.png \
 	assets/server_icon.png \
     assets/paste.png \
     assets/theme.css \
-    assets/check@2.svg \
-    assets/check-active@2.svg \
-    assets/check-active.svg \
-    assets/check-focus@2.svg \
-    assets/check-focus.svg \
-    assets/check.svg \
-    assets/pane-handle.svg \
-    assets/radio@2.svg \
-    assets/radio-active@2.svg \
-    assets/radio-active.svg \
-    assets/radio.svg \
-    assets/switch-off-dark@2.svg \
-    assets/switch-off-dark.svg \
-    assets/switch-off-disabled-dark@2.svg \
-    assets/switch-off-disabled-dark.svg \
-    assets/switch-on-dark@2.svg \
-    assets/switch-on-dark.svg \
-    assets/switch-slider-dark@2.svg \
-    assets/switch-slider-dark.svg \
-    assets/switch-slider-focus@2.svg \
-    assets/switch-slider-focus.svg \
-    assets/switch-slider.svg
+    assets/assets/check@2.svg \
+    assets/assets/check-active@2.svg \
+    assets/assets/check-active.svg \
+    assets/assets/check-focus@2.svg \
+    assets/assets/check-focus.svg \
+    assets/assets/check.svg \
+    assets/assets/pane-handle.svg \
+    assets/assets/radio@2.svg \
+    assets/assets/radio-active@2.svg \
+    assets/assets/radio-active.svg \
+    assets/assets/radio.svg \
+    assets/assets/switch-off-dark@2.svg \
+    assets/assets/switch-off-dark.svg \
+    assets/assets/switch-off-disabled-dark@2.svg \
+    assets/assets/switch-off-disabled-dark.svg \
+    assets/assets/switch-on-dark@2.svg \
+    assets/assets/switch-on-dark.svg \
+    assets/assets/switch-slider-dark@2.svg \
+    assets/assets/switch-slider-dark.svg \
+    assets/assets/switch-slider-focus@2.svg \
+    assets/assets/switch-slider-focus.svg \
+    assets/assets/switch-slider.svg
 
 
 appicondir = $(datadir)/icons/hicolor/scalable/apps
