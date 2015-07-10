@@ -91,6 +91,7 @@ public class MainWindow : Object
 			tabs.show_icons = true;
 
 			window = builder.get_object ("window") as Gtk.Window;
+			window.set_titlebar(toolbar);
 			window.destroy.connect(relay_close_program);
 			window.set_decorated(false);
 			application.add_window(window);
@@ -203,7 +204,6 @@ public class MainWindow : Object
 			toolbar.set_title(app.program_name);
 
 			toolbar.show_close_button = true;
-			window.set_titlebar(toolbar);
 			window.show_all();
 			
 			toolbar.show_all();
