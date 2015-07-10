@@ -325,8 +325,6 @@ public class MainWindow : Object
 			output.set_indent(IRC.USER_WIDTH * -1);
 			output.override_font(FontDescription.from_string("Inconsolata 9"));
 			ScrolledWindow scrolled = new Gtk.ScrolledWindow (null, null);
-			if (!Relay.on_ubuntu)
-				scrolled.margin = 3;
 			scrolled.add(output);
 
 			var ptabs = new Pango.TabArray(1, true);
@@ -860,15 +858,9 @@ public class MainWindow : Object
 	}
 
 	public void set_up_css () {
-        string[] files = {
-            "/usr/share/themes/relay/apps.css",
-            "/usr/share/themes/relay/gtk-dark.css",
-            "/usr/share/themes/relay/gtk-widgets-dark.css"
-        };
-		foreach (string file in files) {
-			var provider = Widgets.Utils.get_css_provider(file);
+			var provider = new CssProvider();
+			provider.load_from_path(Relay.get_asset_file("assets/theme.css"));    
 			Gtk.StyleContext.add_provider_for_screen(window.screen, provider, Gtk.STYLE_PROVIDER_PRIORITY_USER);
-		}
 	}
 
 	public void relay_close_program () { 
