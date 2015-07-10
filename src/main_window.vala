@@ -105,7 +105,7 @@ public class MainWindow : Object
 
 			//Slide out panel button
 			Button select_channel;
-			if (Relay.on_ubuntu)
+			if (Relay.on_ubuntu || Relay.on_kde)
 				select_channel = new Button.from_icon_name("network-server", IconSize.LARGE_TOOLBAR);
 			else {
 				Image icon = new Image.from_file(Relay.get_asset_file("assets/server_icon.png"));

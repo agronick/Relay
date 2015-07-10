@@ -27,6 +27,7 @@ public class Relay : Granite.Application {
         public static bool has_activated = false;
 	    public static bool on_elementary = false;
 	    public static bool on_ubuntu = false;
+        public static bool on_kde = false;
         public static string path;
 
     
@@ -89,11 +90,6 @@ public class Relay : Granite.Application {
         has_activated = true;
         
 		check_elementary();
-        
-        if (on_ubuntu) {
-            Gtk.Settings.get_default().gtk_theme_name = "Adwaita";
-        }
-
 
         window = new MainWindow(this);
         Gtk.main ();
@@ -144,6 +140,8 @@ public class Relay : Granite.Application {
 			on_elementary = true;
 		}else if (output != null && (output.contains ("Unity") || output.contains ("XFCE")))
             on_ubuntu = true;
+        else if (output == "KDE")
+            on_kde = true;
 	}
 
 	private static bool error_open = false;
