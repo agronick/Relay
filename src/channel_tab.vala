@@ -33,6 +33,9 @@ public class ChannelTab : GLib.Object {
 	public string channel_subject = "";
 	public bool is_locked = false;
 	public LinkedList<string> users = new LinkedList<string>();
+	public LinkedList<string> ops = new LinkedList<string>();
+	public LinkedList<string> half_ops = new LinkedList<string>();
+	public LinkedList<string> owners = new LinkedList<string>();
 	public LinkedList<string> blocked_users = new LinkedList<string>();
 	private TextView output;
 
@@ -102,9 +105,7 @@ public class ChannelTab : GLib.Object {
 			if (name.length == 0)
 				continue;
 
-			name = fix_user_name(name);
-			if (!users.contains(name))
-				users.add(name);
+			add_user(name);
 		}
 	}
 
@@ -136,12 +137,28 @@ public class ChannelTab : GLib.Object {
 
 	public void user_join_channel(string name) {
 		last_user = "";
-		string uname = fix_user_name(name);
-		if (!users.contains(uname))
-			users.add(uname);
+		string uname = add_user(name);
 		idle_use_names_changed();
 		space();
 		add_with_tag(uname + _(" has joined: ") + channel_name + "\n", full_width_tag);
+	}
+
+	public string add_user(string user) {
+		bool op = (user[0] == '@');
+		bool halfop = (user[0] == '%');
+		bool owner = (user[0] == '~');
+		string uname = fix_user_name(user);
+
+		if (op && !ops.contains(uname))
+			ops.add(uname);
+		else if (halfop && !half_ops.contains(uname))
+			half_ops.add(uname);
+		else if (owner && !owners.contains(uname))
+			owners.add(uname);
+		else if (!users.contains(uname))
+			users.add(uname);
+
+		return uname;
 	}
 
 	private void idle_use_names_changed(){
