@@ -77,13 +77,6 @@ public class Relay : Granite.Application {
         
         GLib.Log.set_default_handler(handle_log);
 
-        string[] files = {
-            "/usr/share/themes/relay/apps.css",
-            "/usr/share/themes/relay/gtk-dark.css",
-            "/usr/share/themes/relay/gtk-widgets-dark.css"
-        };
-        Gtk.rc_set_default_files(files);
-
         var main = new Relay();
         main.run(args);
     }
