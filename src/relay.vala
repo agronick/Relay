@@ -96,7 +96,7 @@ public class Relay : Granite.Application {
         }else if (on_kde)
             Gtk.Settings.get_default().gtk_theme_name = "oxygen-gtk";
 
-        Gtk.Settings.get_default().gtk_application_prefer_dark_theme = true;
+        Gtk.Settings.get_default().gtk_application_prefer_dark_theme = !on_kde;
         
         window = new MainWindow(this);
         Gtk.main ();
