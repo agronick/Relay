@@ -691,27 +691,37 @@ public class MainWindow : Object
 		}
 	}
 
+	int sliding = 0;
+	int64 start_time = 0;
 	public bool slide_panel () {
+		if (sliding > 1)
+			return false;
 		new Thread<int>("slider_move", move_slider_t);
 		return false;
 	}
 
 	public int move_slider_t () {
-		int add, end;
+		sliding++;
+		while (sliding > 1)
+			Thread.usleep(1000);
+		int add, end, go_to, pos;
 		bool opening;
-		if (pannel.position < 10) {
-			opening = true;
+	    opening = (pannel.position < 10);
 			add = 1;
-			end = 150;
-		} else {
-			opening = false;
-			add = -1;
-			end = 0;
-		}
-		for (int i = pannel.position; (opening) ? i < end : end < i; i+= add) {
-			pannel.set_position(i);
+			end = 500;
+			go_to = 150;
+		for (int i = pannel.position; i < end; i+= add) {
+			if (opening) {
+				pos = (int) Relay.ease_out_elastic(i, 0.0F, go_to, end);
+				if (i > 420) 
+					break;
+			} else 
+				pos = (int) Relay.ease_in_bounce(end - i, 0.0F, go_to, end);
+			
+			pannel.set_position(pos);
 			Thread.usleep(3600);
 		}
+		sliding--;
 		return 0;
 	}
 

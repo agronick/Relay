@@ -168,5 +168,70 @@ public class Relay : Granite.Application {
             return false;
         });
     }
+
+    public static double ease_out_elastic (float t,float b , float c, float d) {
+	    if (t==0) return b;  if ((t/=d)==1) return b+c;  
+	    float p=d*0.3f;
+	    float a=c; 
+	    float s=p/4;
+	    double val = ((a*Math.pow(2,-10*t)) * Math.sin( (t*d-s)*(2*Math.PI)/p )) + c + b;
+        return val;
+    }
+    
+    public static float ease_in_bounce (float t,float b , float c, float d) {
+	    return c - ease_out_bounce(d-t, 0, c, d) + b;
+    }
+    
+    public static float ease_out_bounce (float t,float b , float c, float d) {
+	    if ((t/=d) < (1/2.75f)) {
+		    return c*(7.5625f*t*t) + b;
+	    } else if (t < (2/2.75f)) {
+		    float postFix = t-=(1.5f/2.75f);
+		    return c*(7.5625f*(postFix)*t + 0.75f) + b;
+	    } else if (t < (2.5/2.75)) {
+			    float postFix = t-=(2.25f/2.75f);
+		    return c*(7.5625f*(postFix)*t + 0.9375f) + b;
+	    } else {
+		    float postFix = t-=(2.625f/2.75f);
+		    return c*(7.5625f*(postFix)*t + 0.984375f) + b;
+	    }
+    }
+
+
+/*
+     * easing functions terms of use
+TERMS OF USE - EASING EQUATIONS
+pen source under  the <a href="http://www.opensource.org/licenses/bsd-license.php">BSD License</a>. <br>
+
+Copyright © 2001 Robert Penner
+All rights reserved.
+Redistribution and use in source and binary forms,
+with or without modification, are permitted provided that the following
+conditions are met:
+
+Redistributions of source code must retain the above copyright  notice, this list of
+conditions and the following disclaimer.
+Redistributions in binary form must reproduce the above copyright notice, this list of
+conditions and the following disclaimer in the documentation and/or
+other materials provided with the distribution.
+
+Neither the name of the author nor the names of contributors may be used to
+endorse or promote products derived from this software without specific
+prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS
+AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
+NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+*/
+
 }
 
