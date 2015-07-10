@@ -107,14 +107,9 @@ public class MainWindow : Object
 			server_list_container.pack_start(servers, true, true, 0);
 
 			//Slide out panel button
-			Button select_channel;
-			if (Relay.on_ubuntu || Relay.on_kde)
-				select_channel = new Button.from_icon_name("network-server", IconSize.LARGE_TOOLBAR);
-			else {
-				Image icon = new Image.from_file(Relay.get_asset_file("assets/server_icon.svg"));
-				select_channel = new Gtk.Button();
-				select_channel.image = icon;
-			}
+			Image icon = new Image.from_file(Relay.get_asset_file("assets/server_icon.svg"));
+			Button select_channel = new Gtk.Button();
+			select_channel.image = icon;
 			select_channel.tooltip_text = _("Open server/channel view");
 			toolbar.pack_start(select_channel);
 			select_channel.button_release_event.connect(slide_panel);
