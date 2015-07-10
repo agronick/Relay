@@ -89,6 +89,7 @@ public class Connection : Object
 		} catch (GLib.Error e) {
 			error_state = true;
 			Relay.show_error_window(e.message);
+			server_tab.tab.close();
 			warning("Could not connect" + e.message);
 			return 0;
 		}
@@ -303,48 +304,51 @@ public class Connection : Object
 		send_output("PONG " + msg.message);
 	}
 
-	public void stop () {
-		exit = true;
-		if (input_stream == null || output_stream == null)
-			return;
-		input_stream.clear_pending();
-		try{
-			input_stream.close();
-		} catch (GLib.IOError e){}
-		output_stream.clear_pending();
-		try{
-			output_stream.flush();
-			output_stream.close();
-		} catch (GLib.Error e){}
-	}
-
 	public void join (string channel) {
 		send_output("JOIN " + channel);
 	}
 
 	public void send_output (string output) {
+		if (!is_stream_out(output_stream))
+			return;
 		debug("Sending out " + output + "  " + server.host + "\n");
 		try{
-			if (output_stream == null || output_stream.is_closed())
-				return;
 			output_stream.put_string(output + "\r\n");
 		}catch(GLib.Error e){
 			Relay.show_error_window(e.message);
 		}
 	}
 
-	public void do_exit () {
-		exit = true;
-		input_stream.clear_pending();
-		send_output("QUIT :" + _("Relay, an IRC client for the modern desktop"));
-		if (!input_stream.is_closed())
-			try{
-				input_stream.close();
-			}catch (IOError e) {}
-		if (!output_stream.is_closed())
-			try{
-				output_stream.close();
-			}catch (IOError e) {}
+	public bool is_stream_out (DataOutputStream? output) {
+		return !(!(output is DataOutputStream) || output == null || output.is_closed());
 	}
 
+	public bool is_stream_in (DataInputStream? input) {
+		return !(!(input is DataInputStream) || input == null || input.is_closed());
+	}
+
+	public void do_exit () {
+		exit = true;
+		send_output("QUIT :" + _("Relay, an IRC client for the modern desktop"));
+		stop();
+	}
+
+	public void stop () {
+		exit = true;
+
+		if (is_stream_in (input_stream)) {
+			input_stream.clear_pending();
+			try{
+				input_stream.close();
+			} catch (GLib.IOError e){}
+		}
+		if (is_stream_out(output_stream)) {
+			try{
+				output_stream.clear_pending();
+				output_stream.flush();
+				output_stream.close();
+			} catch (GLib.Error e){}
+		}
+		debug("Sucessfully stopped");
+	}
 }
