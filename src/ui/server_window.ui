@@ -71,9 +71,9 @@
             <child>
               <object class="GtkLabel" id="label1">
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Host</property>
-                <property name="selectable">True</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -95,9 +95,9 @@
             <child>
               <object class="GtkLabel" id="label2">
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Port</property>
-                <property name="selectable">True</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -107,9 +107,9 @@
             <child>
               <object class="GtkLabel" id="label3">
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Nickanme</property>
-                <property name="selectable">True</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -119,9 +119,9 @@
             <child>
               <object class="GtkLabel" id="label4">
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Realname</property>
-                <property name="selectable">True</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -131,9 +131,9 @@
             <child>
               <object class="GtkLabel" id="label5">
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Username</property>
-                <property name="selectable">True</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -143,9 +143,9 @@
             <child>
               <object class="GtkLabel" id="label6">
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Password</property>
-                <property name="selectable">True</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -204,9 +204,9 @@
             <child>
               <object class="GtkLabel" id="label7">
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Use encryption</property>
-                <property name="selectable">True</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -216,9 +216,9 @@
             <child>
               <object class="GtkLabel" id="label8">
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Channels</property>
-                <property name="selectable">True</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
@@ -412,9 +412,9 @@
             <child>
               <object class="GtkLabel" id="label11">
                 <property name="visible">True</property>
+                <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Send on connect</property>
-                <property name="selectable">True</property>
               </object>
               <packing>
                 <property name="left_attach">0</property>
