@@ -363,41 +363,41 @@ public class ChannelTab : GLib.Object {
 		other_name_hilight_tag =  output.buffer.create_tag("other_name");
 
 		var color = Gdk.RGBA();
-		color.parse("#4EC9DE");
+		color.parse(Relay.is_light_theme ? "#1D6A77" : "#4EC9DE");
 		user_other_tag.foreground_rgba = color;
 		user_other_tag.left_margin = 0;
 		user_other_tag.weight = Pango.Weight.SEMIBOLD;
 		user_other_tag.event.connect(user_name_clicked);
 
-		color.parse("#AE81FF");
+		color.parse(Relay.is_light_theme ? "#3B1C73" : "#AE81FF");
 		user_self_tag.foreground_rgba = color;
 		user_self_tag.left_margin = 0;
 		user_self_tag.weight = Pango.Weight.SEMIBOLD;
 
-		color.parse(Relay.is_light_theme() ? "#505050" :"#F8F8F2");
+		color.parse(Relay.is_light_theme ? "#505050" :"#F8F8F2");
 		std_message_tag.foreground_rgba = color;
 		std_message_tag.indent = 0;
 
 		full_width_tag.left_margin = 0;
 
-		color.parse("#C54725");
+		color.parse(Relay.is_light_theme ? "#752712" : "#C54725");
 		error_tag.foreground_rgba = color;
 		error_tag.left_margin = 0;
 
-		color.parse("#3D81C4");
+		color.parse(Relay.is_light_theme ? "#0000FF" : "#3D81C4");
 		link_tag.foreground_rgba = color;
 		link_tag.underline_set = true;
 		link_tag.event.connect(link_clicked);
 
-		color.parse("#2B94E0");
+		color.parse(Relay.is_light_theme ? "#3E749B" :"#2B94E0");
 		name_hilight_tag.foreground_rgba = color;
 		name_hilight_tag.weight = Pango.Weight.SEMIBOLD;
 		
-		color.parse("#DEFF67");
+		color.parse(Relay.is_light_theme ? "#748E16" :"#DEFF67");
 		other_name_hilight_tag.foreground_rgba = color;
 		other_name_hilight_tag.event.connect(user_name_clicked);
 
-		color.parse(Relay.is_light_theme() ? "#181818" : "#D5D5D5");
+		color.parse(Relay.is_light_theme ? "#181818" : "#D5D5D5");
 		timestamp_tag.foreground_rgba = color;
 		timestamp_tag.justification = Justification.RIGHT;
 		timestamp_tag.size_points = 8;

@@ -92,6 +92,8 @@ public class MainWindow : Object
 			tabs.show_icons = true;
 
 			window = builder.get_object ("window") as Gtk.Window;
+			Relay.set_color_mode(window.get_style_context().get_color(StateFlags.NORMAL));
+	
 			window.destroy.connect(relay_close_program);
 			application.add_window(window);
 			var nb_wrapper = builder.get_object("notebook_wrapper") as Box;
