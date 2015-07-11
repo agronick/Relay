@@ -73,7 +73,6 @@ public class Relay : Granite.Application {
         path = args[0];
         
         X.init_threads ();
-        Gtk.Settings.get_default().set("gtk-application-prefer-dark-theme", true);
         
         GLib.Log.set_default_handler(handle_log);
 
@@ -91,15 +90,14 @@ public class Relay : Granite.Application {
         has_activated = true;
         
 		check_elementary();
-        
-        if (on_ubuntu) {
+
+        if (on_ubuntu)
             Gtk.Settings.get_default().gtk_theme_name = "Adwaita";
-        } else if (on_kde) {
-            Gtk.Settings.get_default().gtk_theme_name = "Breeze";
-        }
+        }else if (on_kde)
+            Gtk.Settings.get_default().gtk_theme_name = "oxygen-gtk";
 
-        Gtk.Settings.get_default().gtk_application_prefer_dark_theme = true;
-
+        Gtk.Settings.get_default().gtk_application_prefer_dark_theme = !on_kde;
+        
         window = new MainWindow(this);
         Gtk.main ();
     }
@@ -147,11 +145,10 @@ public class Relay : Granite.Application {
 
 		if (output != null && output.contains ("Pantheon")) {  
 			on_elementary = true;
-		}else if (output != null && (output.contains ("Unity") || output.contains ("XFCE"))) {
+		}else if (output != null && (output.contains ("Unity") || output.contains ("XFCE")))
             on_ubuntu = true;
-        } else if (output == "KDE") {
+        else if (output == "KDE")
             on_kde = true;
-        }
 	}
 
 	private static bool error_open = false;
@@ -172,6 +169,11 @@ public class Relay : Granite.Application {
 			error_open = true;
             return false;
         });
+    }
+
+    //This may change in the future
+    public static bool is_light_theme () {
+        return on_kde;
     }
 
     public static double ease_out_elastic (float t,float b , float c, float d) {

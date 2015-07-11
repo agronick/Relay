@@ -374,7 +374,7 @@ public class ChannelTab : GLib.Object {
 		user_self_tag.left_margin = 0;
 		user_self_tag.weight = Pango.Weight.SEMIBOLD;
 
-		color.parse("#F8F8F2");
+		color.parse(Relay.is_light_theme() ? "#505050" :"#F8F8F2");
 		std_message_tag.foreground_rgba = color;
 		std_message_tag.indent = 0;
 
@@ -397,7 +397,7 @@ public class ChannelTab : GLib.Object {
 		other_name_hilight_tag.foreground_rgba = color;
 		other_name_hilight_tag.event.connect(user_name_clicked);
 
-		color.parse("#D5D5D5");
+		color.parse(Relay.is_light_theme() ? "#181818" : "#D5D5D5");
 		timestamp_tag.foreground_rgba = color;
 		timestamp_tag.justification = Justification.RIGHT;
 		timestamp_tag.size_points = 8;

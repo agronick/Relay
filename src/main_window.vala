@@ -546,16 +546,20 @@ public class MainWindow : Object
 		if (type == 0) {
 			color.parse("#00D901");
 			label.set_tooltip_text(_("Owner"));
+			label.override_color(StateFlags.NORMAL, color);
 		} else if (type == 1) {
 			color.parse("#F5E219");
 			label.set_tooltip_text(_("Operator"));
+			label.override_color(StateFlags.NORMAL, color);
 		} else if (type == 2) {
 			color.parse("#9A19F5");
 			label.set_tooltip_text(_("Half Operator"));
-		} else
-			color.parse(outputs[current_tab].blocked_users.contains(user) ? "#FF0000" : "#FFFFFF");
+			label.override_color(StateFlags.NORMAL, color);
+		} else if (outputs[current_tab].blocked_users.contains(user)) {
+			color.parse("#FF0000");
+			label.override_color(StateFlags.NORMAL, color);
+		}
 		label.set_text(user);
-		label.override_color(StateFlags.NORMAL, color);
 		label.width_chars = IRC.USER_LENGTH;
 		label.margin_top = label.margin_bottom = 4;
 		eb.add(label);
