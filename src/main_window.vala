@@ -60,8 +60,8 @@ public class MainWindow : Object
 	DragFile drag_file;
 	public static Button paste;
 	public static Box paste_box;
-	Icon inactive_channel = new Image.from_file(Relay.get_asset_file("assets/user-offline.svg")).gicon;
-	Icon active_channel = new Image.from_file(Relay.get_asset_file("assets/user-idle.svg")).gicon;
+	Icon inactive_channel;
+	Icon active_channel;
 
 	Gee.HashMap<int, ChannelTab> outputs = new Gee.HashMap<int, ChannelTab> ();
 	Gee.HashMap<string, Connection> clients = new Gee.HashMap<string, Connection> (); 
@@ -71,11 +71,11 @@ public class MainWindow : Object
 
 
 	public MainWindow (Relay application) {
-
-		try
-		{
+		try {
 			app = application;
 
+			inactive_channel = new Pixbuf.from_file(Relay.get_asset_file("assets/user-offline.svg"));
+			active_channel = new Pixbuf.from_file(Relay.get_asset_file("assets/user-idle.svg"));
 			servers.set_tooltip_text(_("Double click an item to connect"));
 
 			var builder = new Builder ();
@@ -99,7 +99,7 @@ public class MainWindow : Object
 			var nb_wrapper = builder.get_object("notebook_wrapper") as Box;
 			nb_wrapper.pack_start(tabs, true, true, 0); 
 			tabs.show_all();
-			channel_tab_icon_new_msg = new Image.from_file(Relay.get_asset_file("assets/mail-unread.svg")).gicon;
+			channel_tab_icon_new_msg = new Pixbuf.from_file(Relay.get_asset_file("assets/mail-unread.svg"));
 
 			//Slide out panel
 			pannel = builder.get_object("pannel") as Paned;
