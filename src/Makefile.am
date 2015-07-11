@@ -8,8 +8,19 @@ ui_DATA = ui/relay.ui ui/server_window.ui ui/relay.png
 
 assetsdir = $(pkgdatadir)/assets
 assets_DATA = ui/relay.png \
-	assets/server_icon.svg \
-    assets/paste.png
+    assets/connect-server.png \
+    assets/help-info-symbolic.svg \
+    assets/mail-unread.svg \
+    assets/manage-servers.png \
+    assets/paste.png \
+    assets/saved-server.png \
+    assets/server-icon.svg \
+    assets/system-users.svg \
+    assets/user-idle.svg \
+    assets/user-offline.svg \
+    assets/list-add-symbolic.svg \
+    assets/list-remove-symbolic.svg \
+
 
 appicondir = $(datadir)/icons/hicolor/scalable/apps
 appicon_DATA = ui/relay.png

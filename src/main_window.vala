@@ -35,8 +35,6 @@ public class MainWindow : Object
 	//const string UI_FILE = Config.PACKAGE_DATA_DIR + "/ui/" + "relay.ui";
 	public const string UI_FILE = "ui/relay.ui";
 	public const string UI_FILE_SERVERS = "ui/server_window.ui";
-	public const string channel_open = "user-idle";
-	public const string channel_closed = "user-offline";
 
 
 	public static Gtk.Window window;
@@ -62,6 +60,8 @@ public class MainWindow : Object
 	DragFile drag_file;
 	public static Button paste;
 	public static Box paste_box;
+	Icon inactive_channel = new Image.from_file(Relay.get_asset_file("assets/user-offline.svg")).gicon;
+	Icon active_channel = new Image.from_file(Relay.get_asset_file("assets/user-idle.svg")).gicon;
 
 	Gee.HashMap<int, ChannelTab> outputs = new Gee.HashMap<int, ChannelTab> ();
 	Gee.HashMap<string, Connection> clients = new Gee.HashMap<string, Connection> (); 
@@ -99,7 +99,7 @@ public class MainWindow : Object
 			var nb_wrapper = builder.get_object("notebook_wrapper") as Box;
 			nb_wrapper.pack_start(tabs, true, true, 0); 
 			tabs.show_all();
-			channel_tab_icon_new_msg = new Image.from_icon_name("mail-unread", IconSize.MENU).gicon;
+			channel_tab_icon_new_msg = new Image.from_file(Relay.get_asset_file("assets/mail-unread.svg")).gicon;
 
 			//Slide out panel
 			pannel = builder.get_object("pannel") as Paned;
@@ -107,7 +107,7 @@ public class MainWindow : Object
 			server_list_container.pack_start(servers, true, true, 0);
 
 			//Slide out panel button
-			Image icon = new Image.from_file(Relay.get_asset_file("assets/server_icon.svg"));
+			Image icon = new Image.from_file(Relay.get_asset_file("assets/server-icon.svg"));
 			Button select_channel = new Gtk.Button();
 			select_channel.image = icon;
 			var trans = RGBA();
@@ -126,10 +126,8 @@ public class MainWindow : Object
 			});
 
 			//Channel subject button
-			if (Relay.on_elementary)
-				channel_subject = new Gtk.Button.from_icon_name("help-info-symbolic", IconSize.SMALL_TOOLBAR);
-			else
-				channel_subject = new Gtk.Button.from_icon_name("text-x-generic", IconSize.LARGE_TOOLBAR);
+			channel_subject = new Button();
+			channel_subject.image = new Image.from_file(Relay.get_asset_file("assets/help-info-symbolic.svg"));
 			channel_subject.tooltip_text = _("Channel subject");
 			var subject_popover = new Gtk.Popover(channel_subject);
 			//subject_popover.set_property("transitions-enabled", true);
@@ -151,7 +149,8 @@ public class MainWindow : Object
 			toolbar.pack_end(channel_subject);
 
 			//Channel users button
-			channel_users = new Gtk.Button.from_icon_name("system-users", Gtk.IconSize.SMALL_TOOLBAR);
+			channel_users = new Button();
+			channel_users.image = new Image.from_file(Relay.get_asset_file("assets/system-users.svg"));
 			channel_users.tooltip_text = _("Channel users");
 			channel_users.hide();
 			users_popover = new Gtk.Popover(channel_users);
@@ -217,7 +216,7 @@ public class MainWindow : Object
 			paste.focus_on_click = false;
 			var paste_img = new Image.from_file(Relay.get_asset_file("./assets/paste.png"));
 			paste.set_image(paste_img);
-			paste.set_tooltip_text(_("Drag a files here to upload to pastebin"));
+			paste.set_tooltip_text(_("Drag a files here to upload to Hastebin.com"));
 			paste.activate();
 			toolbar.pack_end(paste_box);
 			drag_file = new DragFile();
@@ -352,13 +351,8 @@ public class MainWindow : Object
 			new_tab.tab.icon = null;
 
 			index++;
-			try{
-				if (items_sidebar.has_key(new_tab.tab.label))
-					items_sidebar[new_tab.tab.label].icon = Icon.new_for_string(channel_open);
-			} catch (Error e) {
-				items_sidebar[new_tab.tab.label].icon = null;
-				warning(e.message);
-			}
+			if (items_sidebar.has_key(new_tab.tab.label))
+				items_sidebar[new_tab.tab.label].icon = active_channel;
 
 			rebuild_channel_list_menu();
 			return false;
@@ -426,14 +420,9 @@ public class MainWindow : Object
 		outputs.unset(id);
 
 		//Change the icon in the sidebar
-		try{
-			if (items_sidebar.has_key(tab.label))
-				items_sidebar[tab.label].icon = Icon.new_for_string(channel_closed);
-		} catch (Error e) {
-			items_sidebar[tab.label].icon = null;
-			warning(e.message);
-		}
-
+		if (items_sidebar.has_key(tab.label))
+			items_sidebar[tab.label].icon = inactive_channel;
+		
 		if (tabs.n_tabs == 0)
 			show_welcome_screen();
 	}
@@ -616,7 +605,6 @@ public class MainWindow : Object
 		root.clear();
 
 		items_sidebar = new HashMap<string, Widgets.SourceList.Item>();
-		Gtk.Menu? menu;
 
 		foreach (var svr in SqlClient.servers.entries) {
 			var s =  new Widgets.SourceList.ExpandableItem(svr.value.host);
@@ -625,12 +613,7 @@ public class MainWindow : Object
 			chn.set_data<string>("type", "server");
 			chn.set_data<SqlClient.Server>("server", svr.value);
 			chn.activated.connect(item_activated);
-			try {
-				chn.icon = Icon.new_for_string(channel_closed);
-			} catch (Error e) {
-				warning(e.message);
-				chn.icon = null;
-			}			
+			chn.icon = inactive_channel;
 			s.add(chn);
 			items_sidebar[svr.value.host] = chn;
 
@@ -639,12 +622,7 @@ public class MainWindow : Object
 				chn.set_data<string>("type", "channel");
 				chn.set_data<SqlClient.Channel>("channel", c);
 				chn.activated.connect(item_activated);
-				try {
-					chn.icon = Icon.new_for_string(channel_closed);
-				} catch (Error e) {
-					warning(e.message);
-					chn.icon = null;
-				}			
+				chn.icon = inactive_channel;
 				s.add(chn);
 				items_sidebar[c.channel] = chn;
 			}
@@ -735,7 +713,6 @@ public class MainWindow : Object
 	}
 
 	int sliding = 0;
-	int64 start_time = 0;
 	public bool slide_panel () {
 		if (sliding > 1)
 			return false;
@@ -818,9 +795,9 @@ public class MainWindow : Object
 		var title = _("Welcome to Relay");
 		var message =  _("Lets get started");
 		var welcome = new Widgets.Welcome(title, message);
-		welcome.append("network-server", _("Manage"), _("Manage the servers you use"));
-		welcome.append("list-add", _("Connect"), _("Connect to a single server"));
-		welcome.append("network-wired", _("Saved"), _("Connect to a saved server"));
+		welcome.append_with_image(new Image.from_file(Relay.get_asset_file("assets/manage-servers.png")), _("Manage"), _("Manage the servers you use"));
+		welcome.append_with_image(new Image.from_file(Relay.get_asset_file("assets/connect-server.png")), _("Connect"), _("Connect to a single server"));
+		welcome.append_with_image(new Image.from_file(Relay.get_asset_file("assets/saved-server.png")), _("Saved"), _("Connect to a saved server"));
 
 		var tab = new Widgets.Tab();
 		tab.icon = null;

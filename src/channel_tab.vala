@@ -117,11 +117,16 @@ public class ChannelTab : GLib.Object {
 			return name;
 	}
 
-	public void user_name_change(string old_name, string new_name) {
-		int index = users.index_of(fix_user_name(old_name));
+	public void user_name_change(string _old_name, string _new_name) {
+		string old_name = fix_user_name(_old_name);
+		string new_name = fix_user_name(_new_name);
+		int index = users.index_of(old_name);
 		if (index != -1)
 			users[index] = fix_user_name(new_name);
+		if (connection.server.nickname == old_name || connection.server.nickname == new_name)
+			connection.server.nickname = fix_user_name(new_name);
 
+		add_with_tag(old_name + _(" is now known as ") + new_name + "\n", full_width_tag);
 		idle_use_names_changed();
 	}
 

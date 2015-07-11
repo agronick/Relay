@@ -85,8 +85,10 @@ public class ServerManager : Object
 		servers.row_activated.connect(populate_fields);
 		servers.row_selected.connect(clear_row);
 
-		var add_server = new Gtk.Button.from_icon_name("list-add-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
-		var remove_server = new Gtk.Button.from_icon_name("list-remove-symbolic", Gtk.IconSize.SMALL_TOOLBAR);
+		var add_server = new Gtk.Button();
+		add_server.image = new Image.from_file(Relay.get_asset_file("assets/list-add-symbolic.svg"));
+		var remove_server = new Gtk.Button();
+		remove_server.image = new Image.from_file(Relay.get_asset_file("assets/list-remove-symbolic.svg"));
 		server_btns.pack_end(add_server, false, false, 0);
 		server_btns.pack_end(remove_server, false, false, 0);
 
@@ -129,7 +131,7 @@ public class ServerManager : Object
 	}
 
 
-	public void save_changes (ListBoxRow row) {
+	public void save_changes (ListBoxRow? row) {
 		if (current_server == null || select_row == null || row == null)
 			return;
 
@@ -318,11 +320,13 @@ public class ServerManager : Object
 
 	private bool remove_server_clicked (Gdk.EventButton event) {
 		var widget = servers.get_selected_row();
+		if (widget == null)
+			return true;
 		servers.remove(widget);
 		set_forms_active(false);
 		current_server.remove_server();
 		current_server = null;
-		return false;
+		return true;
 	}
 
 	private void set_forms_active (bool active) {
