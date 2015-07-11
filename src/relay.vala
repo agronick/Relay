@@ -93,7 +93,7 @@ public class Relay : Granite.Application {
 
         if (on_ubuntu)
             Gtk.Settings.get_default().gtk_theme_name = "Adwaita";
-        }else if (on_kde)
+        else if (on_kde)
             Gtk.Settings.get_default().gtk_theme_name = "oxygen-gtk";
 
         Gtk.Settings.get_default().gtk_application_prefer_dark_theme = !on_kde;
