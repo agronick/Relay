@@ -210,8 +210,10 @@ public class ChannelTab : GLib.Object {
 	}
 
 	public string format_server_msg (string message) {
-		if (message[0] != '/')
+		if (message[0] != '/') {
+			add_with_tag(_("Start you command with a / to send it \n"), error_tag);
 			return "";
+		}
 		return message.substring(1); 
 	}
 

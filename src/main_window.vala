@@ -103,14 +103,13 @@ public class MainWindow : Object
 			server_list_container.pack_start(servers, true, true, 0);
 
 			//Slide out panel button
-			Button select_channel;
-			if (Relay.on_ubuntu)
-				select_channel = new Button.from_icon_name("network-server", IconSize.LARGE_TOOLBAR);
-			else {
-				Image icon = new Image.from_file(Relay.get_asset_file("assets/server_icon.png"));
-				select_channel = new Gtk.Button();
-				select_channel.image = icon;
-			}
+			Image icon = new Image.from_file(Relay.get_asset_file("assets/server_icon.svg"));
+			Button select_channel = new Gtk.Button();
+			select_channel.image = icon;
+			var trans = RGBA();
+			trans.parse("#FFFFFFFF");
+			select_channel.override_background_color(StateFlags.NORMAL, trans);
+
 			select_channel.tooltip_text = _("Open server/channel view");
 			toolbar.pack_start(select_channel);
 			select_channel.button_release_event.connect(slide_panel);
@@ -201,7 +200,7 @@ public class MainWindow : Object
 			toolbar.show_close_button = true;
 			window.set_titlebar(toolbar);
 			window.show_all();
-			
+
 			toolbar.show_all();
 
 			/*
@@ -250,17 +249,17 @@ public class MainWindow : Object
 			});
 			Gtk.MenuItem new_tab = new Gtk.MenuItem.with_label(_("New Tab"));
 			new_tab.activate.connect(new_tab_requested);
-			
+
 			Gtk.MenuItem channel_list_menu = new Gtk.MenuItem.with_label(_("Switch"));
 			tab_channel_list = new Gtk.Menu();
 			channel_list_menu.set_submenu(tab_channel_list);
-			
+
 			tab_rightclick.add(channel_list_menu);
 			tab_rightclick.add(close_all);
 			tab_rightclick.add(new_tab);
 
 			tab_rightclick.show_all();
-			
+
 		}
 		catch (Error e) {
 			error("Could not load UI: %s\n", e.message);
@@ -361,7 +360,7 @@ public class MainWindow : Object
 			return false;
 		});
 
-		
+
 		if (new_tab.channel_name != new_tab.connection.server.host) {
 			new_tab.connection.send_output("TOPIC " + new_tab.channel_name);
 		}
@@ -430,7 +429,7 @@ public class MainWindow : Object
 			items_sidebar[tab.label].icon = null;
 			warning(e.message);
 		}
-		
+
 		if (tabs.n_tabs == 0)
 			show_welcome_screen();
 	}
@@ -476,7 +475,7 @@ public class MainWindow : Object
 			toolbar.set_title(using_tab.tab.label);
 			toolbar.set_subtitle(using_tab.connection.server.host);
 			toolbar.has_subtitle = (using_tab.tab.label != using_tab.connection.server.host);
-			
+
 			input.placeholder_text = using_tab.tab.label;
 			make_user_popover(using_tab);
 		}
@@ -487,7 +486,7 @@ public class MainWindow : Object
 			update_users_on_close = true;
 			return;
 		}
-		
+
 		//Make users
 		foreach (var box in users_list.get_children())
 			users_list.remove(box);
@@ -533,42 +532,42 @@ public class MainWindow : Object
 	}
 
 	private EventBox make_user_eventbox (string user, int type = -1) {
-			var eb = new EventBox();
-			eb.enter_notify_event.connect( ()=> {
-				eb.set_state_flags(StateFlags.PRELIGHT | StateFlags.SELECTED, true);
-				return false;
-			});
-			eb.leave_notify_event.connect( ()=> {
-				eb.set_state_flags(StateFlags.NORMAL, true);
-				return false;
-			});
-			var label = new Label("");
-			var color = RGBA();
-			if (type == 0) {
-				color.parse("#00D901");
-				label.set_tooltip_text(_("Owner"));
-			} else if (type == 1) {
-				color.parse("#F5E219");
-				label.set_tooltip_text(_("Operator"));
-			} else if (type == 2) {
-				color.parse("#9A19F5");
-				label.set_tooltip_text(_("Half Operator"));
-			} else
-				color.parse(outputs[current_tab].blocked_users.contains(user) ? "#FF0000" : "#FFFFFF");
-			label.set_text(user);
-			label.override_color(StateFlags.NORMAL, color);
-			label.width_chars = IRC.USER_LENGTH;
-			label.margin_top = label.margin_bottom = 4;
-			eb.add(label);
-			eb.button_press_event.connect( (event)=> {
-				if (event.button == 3) {
-					channel_user_selected = user;
-					user_menu.popup (null, null, null, event.button, event.time);
-				} else if (event.button == 1) {
-					MainWindow.fill_input(user + ": ");
-				}
-				return true;
-			});
+		var eb = new EventBox();
+		eb.enter_notify_event.connect( ()=> {
+			eb.set_state_flags(StateFlags.PRELIGHT | StateFlags.SELECTED, true);
+			return false;
+		});
+		eb.leave_notify_event.connect( ()=> {
+			eb.set_state_flags(StateFlags.NORMAL, true);
+			return false;
+		});
+		var label = new Label("");
+		var color = RGBA();
+		if (type == 0) {
+			color.parse("#00D901");
+			label.set_tooltip_text(_("Owner"));
+		} else if (type == 1) {
+			color.parse("#F5E219");
+			label.set_tooltip_text(_("Operator"));
+		} else if (type == 2) {
+			color.parse("#9A19F5");
+			label.set_tooltip_text(_("Half Operator"));
+		} else
+			color.parse(outputs[current_tab].blocked_users.contains(user) ? "#FF0000" : "#FFFFFF");
+		label.set_text(user);
+		label.override_color(StateFlags.NORMAL, color);
+		label.width_chars = IRC.USER_LENGTH;
+		label.margin_top = label.margin_bottom = 4;
+		eb.add(label);
+		eb.button_press_event.connect( (event)=> {
+			if (event.button == 3) {
+				channel_user_selected = user;
+				user_menu.popup (null, null, null, event.button, event.time);
+			} else if (event.button == 1) {
+				MainWindow.fill_input(user + ": ");
+			}
+			return true;
+		});
 		return eb;
 	}
 
@@ -607,10 +606,10 @@ public class MainWindow : Object
 	public void refresh_server_list () {
 		var root = servers.root;
 		root.clear();
-		
+
 		items_sidebar = new HashMap<string, Widgets.SourceList.Item>();
 		Gtk.Menu? menu;
-		
+
 		foreach (var svr in SqlClient.servers.entries) {
 			var s =  new Widgets.SourceList.ExpandableItem(svr.value.host);
 			root.add(s);
@@ -626,7 +625,7 @@ public class MainWindow : Object
 			}			
 			s.add(chn);
 			items_sidebar[svr.value.host] = chn;
-			
+
 			foreach (var c in svr.value.channels) {
 				chn = new Granite.Widgets.SourceList.Item(c.channel);
 				chn.set_data<string>("type", "channel");
@@ -742,10 +741,10 @@ public class MainWindow : Object
 			Thread.usleep(1000);
 		int add, end, go_to, pos;
 		bool opening;
-	    opening = (pannel.position < 10);
+		opening = (pannel.position < 10);
 		end = opening ? 550 : 618;
-			add = 1;
-			go_to = 180;
+		add = 1;
+		go_to = 180;
 		for (int i = pannel.position; i < end; i+= add) {
 			if (opening) {
 				pos = (int) Relay.ease_out_elastic(i, 0.0F, go_to, end);
@@ -754,7 +753,7 @@ public class MainWindow : Object
 			} else {
 				pos = (int) Relay.ease_in_bounce(end - i, 0.0F, go_to, end);
 			}
-			
+
 			pannel.set_position(pos);
 			Thread.usleep(3600);
 		}

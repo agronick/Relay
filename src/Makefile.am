@@ -8,7 +8,7 @@ ui_DATA = ui/relay.ui ui/server_window.ui ui/relay.png
 
 assetsdir = $(pkgdatadir)/assets
 assets_DATA = ui/relay.png \
-	assets/server_icon.png \
+	assets/server_icon.svg \
     assets/paste.png
 
 appicondir = $(datadir)/icons/hicolor/scalable/apps
