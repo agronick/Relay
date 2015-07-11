@@ -83,6 +83,8 @@ public class MainWindow : Object
 			builder.connect_signals (this);
 
 			toolbar = new HeaderBar (); 
+			if (Relay.on_kde)
+				toolbar.decoration_layout = "";
 			tabs = new Granite.Widgets.DynamicNotebook();
 			tabs.add_button_tooltip = _("Connect to a server");
 			tabs.add_button_visible = false;
