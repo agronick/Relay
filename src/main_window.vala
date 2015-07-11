@@ -93,11 +93,7 @@ public class MainWindow : Object
 			tabs.show_icons = true;
 
 			window = builder.get_object ("window") as Gtk.Window;
-			window.set_realized(false);
-			window.set_titlebar(toolbar);
-			window.set_realized(true);
 			window.destroy.connect(relay_close_program);
-			application.add_window(window);
 			var nb_wrapper = builder.get_object("notebook_wrapper") as Box;
 			nb_wrapper.pack_start(tabs, true, true, 0); 
 			tabs.show_all();
@@ -206,7 +202,7 @@ public class MainWindow : Object
 
 			toolbar.show_close_button = true;
 			window.show_all();
-			
+			window.set_titlebar(toolbar);
 			toolbar.show_all();
 
 			/*
