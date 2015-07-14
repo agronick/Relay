@@ -163,7 +163,8 @@ public class Connection : Object
 			case IRC.RPL_WELCOME:
 				do_autoconnect();
 				run_on_connect_cmds();
-				server_tab.tab.working = false;
+				if (channel_autoconnect.size == 0)
+					server_tab.tab.working = false;
 				break;
 			case IRC.RPL_NAMREPLY:
 				var tab = add_channel_tab(message.parameters[2]);

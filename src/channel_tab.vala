@@ -124,9 +124,10 @@ public class ChannelTab : GLib.Object {
 		if (index != -1)
 			users[index] = fix_user_name(new_name);
 		if (connection.server.nickname == old_name || connection.server.nickname == new_name)
-			connection.server.nickname = fix_user_name(new_name);
+			connection.server.nickname = new_name;
 
-		add_with_tag(old_name + _(" is now known as ") + new_name + "\n", full_width_tag);
+		if (MainWindow.settings.get_bool("show_join") || new_name == connection.server.nickname)
+			add_with_tag(old_name + _(" is now known as ") + new_name + "\n", full_width_tag);
 		idle_use_names_changed();
 	}
 
@@ -137,7 +138,8 @@ public class ChannelTab : GLib.Object {
 			idle_use_names_changed();
 			space();
 			string colon = (msg.strip().length > 0) ? ": " + msg : "";
-			add_with_tag(name + _(" has left") + colon + "\n", full_width_tag);
+			if (MainWindow.settings.get_bool("show_join"))
+				add_with_tag(name + _(" has left") + colon + "\n", full_width_tag);
 		}
 	}
 
@@ -146,7 +148,8 @@ public class ChannelTab : GLib.Object {
 		string uname = add_user(name);
 		idle_use_names_changed();
 		space();
-		add_with_tag(uname + _(" has joined: ") + channel_name + "\n", full_width_tag);
+		if (MainWindow.settings.get_bool("show_join"))
+			add_with_tag(uname + _(" has joined: ") + channel_name + "\n", full_width_tag);
 	}
 
 	public string add_user(string user) {
@@ -177,7 +180,21 @@ public class ChannelTab : GLib.Object {
 	public void set_output(TextView _output) {
 		output = _output;
 		output.buffer.changed.connect(do_autoscroll);
+
+		user_other_tag = output.buffer.create_tag("user_other");
+		user_self_tag = output.buffer.create_tag("user_self");
+		std_message_tag = output.buffer.create_tag("std_message");
+		full_width_tag = output.buffer.create_tag("full_width");
+		error_tag = output.buffer.create_tag("error");
+		link_tag = output.buffer.create_tag("link");
+		name_hilight_tag = output.buffer.create_tag("name_hilight");
+		timestamp_tag = output.buffer.create_tag("timestamp");
+		spacing_tag = output.buffer.create_tag("spacing");
+		other_name_hilight_tag =  output.buffer.create_tag("other_name");
+		
 		update_tag_table();
+
+
 	}
 
 	public TextView get_output () {
@@ -355,31 +372,20 @@ public class ChannelTab : GLib.Object {
 	}
 
 
-	private void update_tag_table () { 
-		user_other_tag = output.buffer.create_tag("user_other");
-		user_self_tag = output.buffer.create_tag("user_self");
-		std_message_tag = output.buffer.create_tag("std_message");
-		full_width_tag = output.buffer.create_tag("full_width");
-		error_tag = output.buffer.create_tag("error");
-		link_tag = output.buffer.create_tag("link");
-		name_hilight_tag = output.buffer.create_tag("name_hilight");
-		timestamp_tag = output.buffer.create_tag("timestamp");
-		spacing_tag = output.buffer.create_tag("spacing");
-		other_name_hilight_tag =  output.buffer.create_tag("other_name");
-
+	public void update_tag_table () { 
 		var color = Gdk.RGBA();
-		color.parse(Relay.is_light_theme ? "#1D6A77" : "#4EC9DE");
+		color.parse(MainWindow.settings.get_color("user-other-color"));
 		user_other_tag.foreground_rgba = color;
 		user_other_tag.left_margin = 0;
 		user_other_tag.weight = Pango.Weight.SEMIBOLD;
 		user_other_tag.event.connect(user_name_clicked);
-
-		color.parse(Relay.is_light_theme ? "#3B1C73" : "#AE81FF");
+                    
+		color.parse(MainWindow.settings.get_color("user-self-color"));
 		user_self_tag.foreground_rgba = color;
 		user_self_tag.left_margin = 0;
 		user_self_tag.weight = Pango.Weight.SEMIBOLD;
 
-		color.parse(Relay.is_light_theme ? "#505050" :"#F8F8F2");
+		color.parse(MainWindow.settings.get_color("message-color"));
 		std_message_tag.foreground_rgba = color;
 		std_message_tag.indent = 0;
 
@@ -389,7 +395,7 @@ public class ChannelTab : GLib.Object {
 		error_tag.foreground_rgba = color;
 		error_tag.left_margin = 0;
 
-		color.parse(Relay.is_light_theme ? "#0000FF" : "#3D81C4");
+		color.parse(MainWindow.settings.get_color("link-color"));
 		link_tag.foreground_rgba = color;
 		link_tag.underline_set = true;
 		link_tag.event.connect(link_clicked);
@@ -402,7 +408,7 @@ public class ChannelTab : GLib.Object {
 		other_name_hilight_tag.foreground_rgba = color;
 		other_name_hilight_tag.event.connect(user_name_clicked);
 
-		color.parse(Relay.is_light_theme ? "#181818" : "#D5D5D5");
+		color.parse(MainWindow.settings.get_color("timestamp-color"));
 		timestamp_tag.foreground_rgba = color;
 		timestamp_tag.justification = Justification.RIGHT;
 		timestamp_tag.size_points = 8;

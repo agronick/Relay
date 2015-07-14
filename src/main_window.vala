@@ -35,6 +35,7 @@ public class MainWindow : Object
 	//const string UI_FILE = Config.PACKAGE_DATA_DIR + "/ui/" + "relay.ui";
 	public const string UI_FILE = "ui/relay.ui";
 	public const string UI_FILE_SERVERS = "ui/server_window.ui";
+	public const string UI_FILE_SETTINGS = "ui/settings_window.ui";
 
 
 	public static Gtk.Window window;
@@ -44,7 +45,7 @@ public class MainWindow : Object
 	Button channel_subject;
 	Button channel_users;
 	Icon channel_tab_icon_new_msg;
-	TextView subject_text;
+	Label subject_text;
 	Box users_list;
 	bool update_users_on_close = false;
 	Gtk.Menu user_menu;
@@ -62,13 +63,24 @@ public class MainWindow : Object
 	public static Box paste_box;
 	Icon inactive_channel;
 	Icon active_channel;
+	public static SqlClient sql_client = SqlClient.get_instance();
+	public static Settings settings = new Settings();
+	public static ServerManager server_manager = new ServerManager();
 
 	Gee.HashMap<int, ChannelTab> outputs = new Gee.HashMap<int, ChannelTab> ();
 	Gee.HashMap<string, Connection> clients = new Gee.HashMap<string, Connection> (); 
 	Granite.Widgets.SourceList servers = new Granite.Widgets.SourceList();
 
 	public static int current_tab = -1;
-
+	
+	public static Geometry get_geometry () {
+		var g = Geometry();
+		g.min_height = 500;
+		g.min_width = 500;
+		g.base_width = 1000;
+		g.base_height = 600;
+		return g;
+	}
 
 	public MainWindow (Relay application) {
 		try {
@@ -80,7 +92,11 @@ public class MainWindow : Object
 
 			var builder = new Builder ();
 			builder.add_from_file (Relay.get_asset_file(UI_FILE));
-			builder.connect_signals (this);
+			builder.connect_signals(this);
+
+			var settings_btn = builder.get_object("settings_btn") as Button;
+			settings_btn.button_release_event.connect(settings.show_window);
+			settings.changed_color.connect(tags_refresh);
 
 			toolbar = new HeaderBar (); 
 			if (Relay.on_kde)
@@ -92,6 +108,7 @@ public class MainWindow : Object
 			tabs.show_icons = true;
 
 			window = builder.get_object ("window") as Gtk.Window;
+			window.set_position(WindowPosition.CENTER);
 			Relay.set_color_mode(window.get_style_context().get_color(StateFlags.NORMAL));
 	
 			window.destroy.connect(relay_close_program);
@@ -130,18 +147,14 @@ public class MainWindow : Object
 			channel_subject.image = new Image.from_file(Relay.get_asset_file("assets/help-info-symbolic.svg"));
 			channel_subject.tooltip_text = _("Channel subject");
 			var subject_popover = new Gtk.Popover(channel_subject);
-			//subject_popover.set_property("transitions-enabled", true);
 			channel_subject.clicked.connect(() => {
 				subject_popover.show_all();
 			});
 			channel_subject.set_no_show_all(true);
 			channel_subject.hide();
-			var scrolled = new Gtk.ScrolledWindow(null, null);
-			subject_text = new Gtk.TextView();
-			subject_text.set_wrap_mode(Gtk.WrapMode.WORD);
-			subject_text.buffer.text = "";
-			subject_text.cursor_visible = false;
-			subject_text.editable = false;
+			var scrolled = new ScrolledWindow(null, null);
+			subject_text = new Label("");
+			subject_text.set_line_wrap(true);
 			subject_text.margin = 10;
 			scrolled.set_size_request(320, 110);
 			scrolled.add(subject_text);
@@ -204,7 +217,6 @@ public class MainWindow : Object
 			window.set_titlebar(toolbar);
 			window.show_all();
 
-			toolbar.show_all();
 
 			/*
 			 * Hastebin code
@@ -235,8 +247,6 @@ public class MainWindow : Object
 			tabs.tab_removed.connect(tab_remove);
 			tabs.tab_switched.connect(tab_switch); 
 
-			SqlClient.get_instance();
-
 			refresh_server_list(); 
 
 			load_autoconnect();
@@ -263,6 +273,13 @@ public class MainWindow : Object
 
 			tab_rightclick.show_all();
 
+
+			server_manager.close.connect( () => {
+				refresh_server_list ();
+			});
+			
+			if (settings.get_bool("show_sidebar"))
+				slide_panel();
 		}
 		catch (Error e) {
 			error("Could not load UI: %s\n", e.message);
@@ -343,6 +360,8 @@ public class MainWindow : Object
 			tabs.show_all();
 
 			new_tab.tab_index = index;
+			if (!new_tab.is_server_tab)
+				new_tab.connection.server_tab.tab.working = false;
 
 			if (tabs.n_tabs == 1) {
 				tab_switch (null, new_tab.tab);
@@ -353,6 +372,9 @@ public class MainWindow : Object
 			index++;
 			if (items_sidebar.has_key(new_tab.tab.label))
 				items_sidebar[new_tab.tab.label].icon = active_channel;
+
+			if (settings.get_bool("change_tab"))
+				tabs.current = new_tab.tab;
 
 			rebuild_channel_list_menu();
 			return false;
@@ -714,9 +736,13 @@ public class MainWindow : Object
 
 	int sliding = 0;
 	public bool slide_panel () {
-		if (sliding > 1)
-			return false;
-		new Thread<int>("slider_move", move_slider_t);
+		if (settings.get_bool("show_animations")) {
+			if (sliding > 1)
+				return false;
+			new Thread<int>("slider_move", move_slider_t);
+		} else {
+			pannel.set_position(pannel.position < 10 ? 180 : 0);
+		}
 		return false;
 	}
 
@@ -759,10 +785,23 @@ public class MainWindow : Object
 		if (tab_id != current_tab || message.strip().length == 0) {
 			return;
 		}
-
-		subject_text.buffer.set_text(message);
-		channel_subject.set_no_show_all(false); 
-		channel_subject.show_all(); 
+		var rich_text = new RichText(message);
+		rich_text.parse_links();
+		string new_string = "";
+		int last_pos = 0;
+		string msg = message;
+		for(int i = 0; i < rich_text.link_locations_start.size; i++) {
+			int start = message.length - rich_text.link_locations_start[i];
+			int end = message.length - (rich_text.link_locations_end[i]);
+		    string link = msg.substring(start, end - start);
+		    int space = start - last_pos;
+			string add = msg.substring(last_pos, space) + "<a href=\"" + link + "\">" + link + "</a>";
+			last_pos = end;
+			new_string += add;
+		}
+		new_string += message.substring(last_pos);
+		subject_text.set_markup(new_string);
+		channel_subject.show();
 	}
 
 	public static void fill_input (string message) {
@@ -791,7 +830,6 @@ public class MainWindow : Object
 	}
 
 	private void show_welcome_screen () {
-		var sm = new ServerManager();
 		var title = _("Welcome to Relay");
 		var message =  _("Lets get started");
 		var welcome = new Widgets.Welcome(title, message);
@@ -811,10 +849,7 @@ public class MainWindow : Object
 		welcome.activated.connect( (index) => {
 			switch (index) {
 				case 0:
-					sm.open_window();
-					sm.window.destroy.connect( () => {
-						refresh_server_list ();
-					});
+					server_manager.open_window();
 					return;
 				case 1:
 					new_tab_requested();
@@ -829,13 +864,17 @@ public class MainWindow : Object
 	public void set_up_add_sever (Builder builder) {
 		var add_server_button = builder.get_object("manage_servers") as Button;
 
-		var sm = new ServerManager();
 		add_server_button.button_release_event.connect( (event) => {
-			sm.open_window();
-			sm.window.destroy.connect( () => {
-				refresh_server_list ();
-			});
+			server_manager.open_window();
 			return false;
+		});
+	}
+
+	public void tags_refresh () {
+		outputs.foreach( (tab)=> {
+			var usetab = tab;
+			usetab.value.update_tag_table();
+			return true;
 		});
 	}
 

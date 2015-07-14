@@ -46,17 +46,20 @@ public class ServerManager : Object
 	bool none_selected = false;
 	public char[] CHANNEL_CHAR = {'&', '#', '+', '!'};
 
-
+	public signal void close();
 
 	public bool open_window () {
+        if (window is Widget && window.visible) {
+            window.present();
+            return true;
+        }
 		current_server = null;
 		var builder = new Builder();
 		try{
 			builder.add_from_file(Relay.get_asset_file(MainWindow.UI_FILE_SERVERS));
-		}catch(Error e){
+		} catch (Error e){
 			error("Unable to load UI file " + Relay.get_asset_file(MainWindow.UI_FILE_SERVERS));
 		}
-
 
 		window = builder.get_object ("window") as Gtk.Window;
 		var box = builder.get_object ("port_wrap") as Box;
@@ -116,7 +119,10 @@ public class ServerManager : Object
 		window.show_all ();
 		set_forms_active(false);
 
-
+		window.destroy.connect( ()=> {
+			close();
+		});
+		
 		return false;
 	}
 

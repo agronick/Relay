@@ -24,7 +24,7 @@ public class RichText : GLib.Object {
     string text;
 
     private static Regex? parse_url;
-    private static const string url_string = """(https?|ftp):\/\/[^\s\/$.?#].[^\s]*""";
+    private static const string url_string = """(http|https?|ftp):\/\/[^\s\/$.?#].[^\s]*""";
     public LinkedList<int> link_locations_start;
     public LinkedList<int> link_locations_end;
     public LinkedList<int> name_location_start = new LinkedList<int>();
@@ -37,8 +37,8 @@ public class RichText : GLib.Object {
         text = _text;
 
         try{
-        if (parse_url == null)
-            parse_url = new Regex(url_string, RegexCompileFlags.OPTIMIZE);
+            if (parse_url == null)
+                parse_url = new Regex(url_string, RegexCompileFlags.OPTIMIZE);
         } catch (RegexError e) {}
     }
 
@@ -56,7 +56,7 @@ public class RichText : GLib.Object {
             match_info.fetch_pos(0, out start, out end);
             link_locations_start.add(text.length - (start + last_offset));
             link_locations_end.add(text.length - (end + last_offset));
-            last_offset = end;
+            last_offset += end;
             lookup = lookup.substring(end);
             has_links = true;
         }
