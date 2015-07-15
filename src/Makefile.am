@@ -15,11 +15,12 @@ assets_DATA = ui/relay.png \
     assets/paste.png \
     assets/saved-server.png \
     assets/server-icon.svg \
+    assets/server-icon-light.svg \
     assets/system-users.svg \
     assets/user-idle.svg \
     assets/user-offline.svg \
     assets/list-add-symbolic.svg \
-    assets/list-remove-symbolic.svg
+    assets/list-remove-symbolic.svg 
 
 
 appicondir = $(datadir)/icons/hicolor/scalable/apps
