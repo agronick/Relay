@@ -124,7 +124,7 @@ public class MainWindow : Object
 			server_list_container.pack_start(servers, true, true, 0);
 
 			//Slide out panel button
-			Image icon = new Image.from_file(Relay.get_asset_file("assets/server-icon" + (Relay.on_ubuntu ? "light" : "") + ".svg"));
+			Image icon = new Image.from_file(Relay.get_asset_file("assets/server-icon" + (Relay.on_ubuntu ? "-light" : "") + ".svg"));
 			Button select_channel = new Gtk.Button();
 			select_channel.image = icon;
 
