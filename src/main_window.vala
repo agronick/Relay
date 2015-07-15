@@ -127,9 +127,6 @@ public class MainWindow : Object
 			Image icon = new Image.from_file(Relay.get_asset_file("assets/server-icon.svg"));
 			Button select_channel = new Gtk.Button();
 			select_channel.image = icon;
-			var trans = RGBA();
-			trans.parse("#FFFFFFFF");
-			select_channel.override_background_color(StateFlags.NORMAL, trans);
 
 			select_channel.tooltip_text = _("Open server/channel view");
 			toolbar.pack_start(select_channel);
