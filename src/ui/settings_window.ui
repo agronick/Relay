@@ -274,6 +274,29 @@
                     <property name="top_attach">5</property>
                   </packing>
                 </child>
+                <child>
+                  <object class="GtkLabel" id="label3">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="label" translatable="yes">Show tabs</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">6</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSwitch" id="show_tabs">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="active">True</property>
+                    <property name="state">True</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">6</property>
+                  </packing>
+                </child>
               </object>
             </child>
             <child type="tab">

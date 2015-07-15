@@ -97,6 +97,9 @@ public class MainWindow : Object
 			var settings_btn = builder.get_object("settings_btn") as Button;
 			settings_btn.button_release_event.connect(settings.show_window);
 			settings.changed_color.connect(tags_refresh);
+			settings.show_hide_tabs.connect( (state)=> {
+				tabs.show_tabs = state;
+			});
 
 			toolbar = new HeaderBar (); 
 			if (Relay.on_kde)
@@ -106,6 +109,7 @@ public class MainWindow : Object
 			tabs.add_button_visible = false;
 			tabs.allow_drag = true;
 			tabs.show_icons = true;
+			tabs.show_tabs = settings.get_bool("show_tabs");
 
 			window = builder.get_object ("window") as Gtk.Window;
 			window.set_position(WindowPosition.CENTER);
@@ -374,6 +378,8 @@ public class MainWindow : Object
 				tabs.current = new_tab.tab;
 
 			rebuild_channel_list_menu();
+
+			tabs.show_tabs = settings.get_bool("show_tabs");
 			return false;
 		});
 
@@ -468,8 +474,10 @@ public class MainWindow : Object
 		ChannelTab using_tab = outputs[current_tab];
 
 
-		if (items_sidebar.has_key(using_tab.tab.label))
+		if (items_sidebar.has_key(using_tab.tab.label)) {
 			items_sidebar[using_tab.tab.label].badge = "";
+			using_tab.message_count = 0;
+		}
 
 		if (using_tab.has_subject) 
 			new_subject (current_tab, using_tab.channel_subject.validate(-1) ? using_tab.channel_subject : using_tab.channel_subject.escape(""));
@@ -493,7 +501,22 @@ public class MainWindow : Object
 		}
 	}
 
+	private static bool make_user_working = false;
 	private void make_user_popover (ChannelTab using_tab) {
+		while(make_user_working)
+			Thread.usleep(1000);
+
+		using_tab.users.sort(IRC.compare);
+		
+		Idle.add( ()=> {
+			make_user_working = true;
+			make_user_popover_idle(using_tab);
+			make_user_working = false;
+			return false;
+		});
+	}
+	
+	private void make_user_popover_idle (ChannelTab using_tab) {
 		if (users_popover.is_visible()) {
 			update_users_on_close = true;
 			return;
@@ -508,39 +531,41 @@ public class MainWindow : Object
 		else
 			channel_users.show_all();
 
-		using_tab.users.sort(IRC.compare);
-
 		int PER_BOX = 15;
 		int BOX_WIDTH = 140;
 		int MAX_COLS = 4;
-		var listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
 		int i = 0;
 		int type_change = 0;
-		LinkedList<LinkedList<string>> user_types = new LinkedList<LinkedList<string>>();
+		LinkedList<Gee.List<string>> user_types = new LinkedList<Gee.List<string>>();
 		user_types.add(using_tab.owners);
 		user_types.add(using_tab.ops);
 		user_types.add(using_tab.half_ops);
 		user_types.add(using_tab.users);
 		int total_size = using_tab.users.size + using_tab.owners.size + using_tab.ops.size + using_tab.half_ops.size;
-		foreach(LinkedList<string> type in user_types) {
-			foreach (string user in type) {
-				listbox.pack_start(make_user_eventbox(user, type_change), false, false, 0);
-				i++;
-				if (i % PER_BOX == 0 && total_size >= i) {
-					listbox.width_request = BOX_WIDTH;
-					users_list.pack_start(listbox, true, true, 0);
-					listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+
+		Idle.add( ()=> {
+			var listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+			foreach(Gee.List<string> type in user_types) {
+				foreach (string user in type) {
+					listbox.pack_start(make_user_eventbox(user, type_change), false, false, 0);
+					i++;
+					if (i % PER_BOX == 0 && total_size >= i) {
+						listbox.width_request = BOX_WIDTH;
+						users_list.pack_start(listbox, true, true, 0);
+						listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+					}
 				}
+				type_change++;
 			}
-			type_change++;
-		}
-		listbox.width_request = BOX_WIDTH;
+			listbox.width_request = BOX_WIDTH;
 
-		users_header.set_text(_("Total users: ") + i.to_string());
+			users_header.set_text(_("Total users: ") + i.to_string());
 
-		int cols = (int) Math.ceilf((float)i / (float)PER_BOX); 
-		users_scrolled.min_content_width = (cols > MAX_COLS) ? BOX_WIDTH * MAX_COLS : cols * BOX_WIDTH;
-		users_list.pack_start(listbox, true, true, 0);
+			int cols = (int) Math.ceilf((float)i / (float)PER_BOX); 
+			users_scrolled.min_content_width = (cols > MAX_COLS) ? BOX_WIDTH * MAX_COLS : cols * BOX_WIDTH;
+			users_list.pack_start(listbox, true, true, 0);
+			return false;
+		});
 	}
 
 	private EventBox make_user_eventbox (string user, int type = -1) {
@@ -711,7 +736,7 @@ public class MainWindow : Object
 			//Has existing server but no channel
 			foreach (var con in clients.entries) {
 				if (con.key == server.host) {
-					if (con.value.server_tab.tab.working)
+					if (con.value.server_tab.tab.working && con.value.channel_autoconnect.contains(channel.channel))
 						con.value.channel_autoconnect.add(channel.channel);
 					else
 						con.value.join(channel.channel);
@@ -842,6 +867,7 @@ public class MainWindow : Object
 		toolbar.set_has_subtitle(false);
 		tab.page = welcome;
 		tabs.insert_tab(tab, -1);
+		tabs.show_tabs = settings.get_bool("show_tabs");
 
 		welcome.activated.connect( (index) => {
 			switch (index) {

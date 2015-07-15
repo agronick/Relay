@@ -32,7 +32,7 @@ public class ChannelTab : GLib.Object {
 	public bool has_subject = false;
 	public string channel_subject = "";
 	public bool is_locked = false;
-	public LinkedList<string> users = new LinkedList<string>();
+	public ArrayList<string> users = new ArrayList<string>();
 	public LinkedList<string> ops = new LinkedList<string>();
 	public LinkedList<string> half_ops = new LinkedList<string>();
 	public LinkedList<string> owners = new LinkedList<string>();
@@ -86,6 +86,8 @@ public class ChannelTab : GLib.Object {
 	}
 
 	public void add_block_list (string name) {
+		if (name == null || name.strip().length < 2)
+			return;
 		blocked_users.add(name);
 
 		if (IRC.user_prefixes.index_of_char(name[0]) != -1)
@@ -103,7 +105,7 @@ public class ChannelTab : GLib.Object {
 	public void add_users_message (Message message) {
 		var names = message.message.split(" ");
 		foreach (var name in names) {
-			if (name.length == 0)
+			if (name.strip().length < 2)
 				continue;
 
 			add_user(name);
@@ -128,14 +130,14 @@ public class ChannelTab : GLib.Object {
 
 		if (MainWindow.settings.get_bool("show_join") || new_name == connection.server.nickname)
 			add_with_tag(old_name + _(" is now known as ") + new_name + "\n", full_width_tag);
-		idle_use_names_changed();
+		idle_user_names_changed();
 	}
 
 	public void user_leave_channel(string name, string msg) {
 		if (users.contains(fix_user_name(name))) {
 			last_user = "";
 			users.remove(fix_user_name(name));
-			idle_use_names_changed();
+			idle_user_names_changed();
 			space();
 			string colon = (msg.strip().length > 0) ? ": " + msg : "";
 			if (MainWindow.settings.get_bool("show_join"))
@@ -146,7 +148,7 @@ public class ChannelTab : GLib.Object {
 	public void user_join_channel(string name) {
 		last_user = "";
 		string uname = add_user(name);
-		idle_use_names_changed();
+		idle_user_names_changed();
 		space();
 		if (MainWindow.settings.get_bool("show_join"))
 			add_with_tag(uname + _(" has joined: ") + channel_name + "\n", full_width_tag);
@@ -170,7 +172,7 @@ public class ChannelTab : GLib.Object {
 		return uname;
 	}
 
-	private void idle_use_names_changed(){
+	private void idle_user_names_changed(){
 		Idle.add( ()=> {
 			user_names_changed(tab_index);
 			return false;

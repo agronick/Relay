@@ -24,13 +24,14 @@ using Pango;
 
 public class Settings : GLib.Object {
 
-    const string[] switch_names = {"show_animations", "show_join", "show_sidebar", "open_server", "show_datestamp", "change_tab"};
+    const string[] switch_names = {"show_animations", "show_join", "show_sidebar", "open_server", "show_datestamp", "change_tab", "show_tabs"};
     const string[] color_names = {"user-self-color", "user-other-color", "message-color", "link-color", "timestamp-color"};
     HashMap<string, string> colors_defaults = new HashMap<string, string>();
     GLib.Settings settings;
     Gtk.Window window = null;
 
     public signal void changed_color();
+    public signal void show_hide_tabs(bool show);
     
     construct {
         settings = new GLib.Settings("org.agronick.relay");
@@ -54,6 +55,12 @@ public class Settings : GLib.Object {
             var switches = builder.get_object (name) as Switch;
             settings.bind(name.replace("_", "-"), switches, "active", SettingsBindFlags.DEFAULT);
         }
+
+        var show_tabs = builder.get_object ("show_tabs") as Switch;
+        show_tabs.state_set.connect( (state)=> {
+            show_hide_tabs(state);
+            return true;
+        });
 
         foreach (string type in color_names) {
             var colors = builder.get_object (type) as Entry;
