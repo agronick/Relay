@@ -51,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 using X;
 using GLib;
+using Gee;
 
 public class Relay : Granite.Application {
 
@@ -238,7 +239,16 @@ public class Relay : Granite.Application {
 	    }
     }
 
+    public static void sort_clean (ref LinkedList<string> list) {
+		var copy = new ArrayList<string>();
+		foreach(var item in list)
+			if (item != null || item != "")
+				copy.add(item);
 
+		copy.sort(IRC.compare);
+		list.clear();
+		list.add_all(copy);
+    }
 
 
 }

@@ -32,11 +32,12 @@ public class ChannelTab : GLib.Object {
 	public bool has_subject = false;
 	public string channel_subject = "";
 	public bool is_locked = false;
-	public ArrayList<string> users = new ArrayList<string>();
+	public LinkedList<string> users = new LinkedList<string>();
 	public LinkedList<string> ops = new LinkedList<string>();
 	public LinkedList<string> half_ops = new LinkedList<string>();
 	public LinkedList<string> owners = new LinkedList<string>();
 	public LinkedList<string> blocked_users = new LinkedList<string>();
+	public bool lock_arrays;
 	private TextView output;
 	public int message_count = 0;
 
@@ -88,6 +89,9 @@ public class ChannelTab : GLib.Object {
 	public void add_block_list (string name) {
 		if (name == null || name.strip().length < 2)
 			return;
+
+		while (lock_arrays)
+			Thread.usleep(1000);
 		blocked_users.add(name);
 
 		if (IRC.user_prefixes.index_of_char(name[0]) != -1)
@@ -112,7 +116,9 @@ public class ChannelTab : GLib.Object {
 		}
 	}
 
-	public string fix_user_name (string name) {
+	public string fix_user_name (string? name) {
+		if (name == null)
+			return "";
 		if (IRC.user_prefixes.index_of_char(name[0]) != -1)
 			return name.substring(1);
 		else
@@ -161,6 +167,9 @@ public class ChannelTab : GLib.Object {
 	public string? add_user(string? user) {
 		if (user == null)
 			return null;
+
+		while (lock_arrays)
+			Thread.usleep(1000);
 		
 		bool op = (user[0] == '@');
 		bool halfop = (user[0] == '%');

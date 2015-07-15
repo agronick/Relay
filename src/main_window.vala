@@ -47,7 +47,6 @@ public class MainWindow : Object
 	Icon channel_tab_icon_new_msg;
 	Label subject_text;
 	Box users_list;
-	bool update_users_on_close = false;
 	Gtk.Menu user_menu;
 	Label users_header;
 	Popover users_popover;
@@ -168,15 +167,13 @@ public class MainWindow : Object
 			channel_users.tooltip_text = _("Channel users");
 			channel_users.hide();
 			users_popover = new Gtk.Popover(channel_users);
-			//users_popover.set_property("transitions-enabled", true);
 			channel_users.clicked.connect(() => {
-				users_popover.show_all();
+					refresh_user_popover(outputs.get(current_tab));
+					users_popover.show_all();
 			});
-			users_popover.closed.connect( () => {
-				if (update_users_on_close) {
-					user_names_changed(current_tab);
-					update_users_on_close = false;
-				}
+			users_popover.focus_out_event.connect((event)=> {
+				users_popover.closed();
+				return true;
 			});
 			toolbar.button_press_event.connect( ()=> {
 				toolbar.grab_focus();
@@ -257,7 +254,7 @@ public class MainWindow : Object
 			close_all.activate.connect( ()=> {
 				outputs.entries.foreach( (item)=> {
 					if(item != null)
-						tabs.remove_tab(item.value.tab);
+						item.value.tab.close();
 					return true;
 				});
 			});
@@ -497,41 +494,36 @@ public class MainWindow : Object
 			toolbar.has_subtitle = (using_tab.tab.label != using_tab.connection.server.host);
 
 			input.placeholder_text = using_tab.tab.label;
-			make_user_popover(using_tab);
+
+			if (using_tab.users.size < 1)
+				channel_users.hide();
+			else
+				channel_users.show_all();
 		}
 	}
 
-	private static bool make_user_working = false;
-	private void make_user_popover (ChannelTab using_tab) {
-		while(make_user_working)
-			Thread.usleep(1000);
+	private void user_names_changed (int tab_id) {
+		if (current_tab == tab_id) {
+			if (outputs[current_tab].users.size < 1)
+				channel_users.hide();
+			else
+				channel_users.show_all();
+		}
+	}
 
-		var copy = new ArrayList<string>();
-		foreach(var user in using_tab.users)
-			if (user != null)
-				copy.add(user);
+	private void refresh_user_popover (ChannelTab using_tab) {
 
-		copy.sort(IRC.compare);
-		using_tab.users.clear();
-		using_tab.users.add_all(copy);
+		using_tab.lock_arrays = true;
+		Relay.sort_clean(ref using_tab.owners);
+		Relay.sort_clean(ref using_tab.ops);
+		Relay.sort_clean(ref using_tab.half_ops);
+		Relay.sort_clean(ref using_tab.users);
+		using_tab.lock_arrays = false;
 		
-		Idle.add( ()=> {
-			make_user_working = true;
-			make_user_popover_idle(using_tab);
-			return false;
-		});
+		make_user_popover_idle(using_tab);
 	}
 	
 	private void make_user_popover_idle (ChannelTab using_tab) {
-		if (users_popover.is_visible()) {
-			update_users_on_close = true;
-			return;
-		}
-
-		if (using_tab.users.size < 1)
-			channel_users.hide();
-		else
-			channel_users.show_all();
 
 		int PER_BOX = 15;
 		int BOX_WIDTH = 140;
@@ -556,6 +548,7 @@ public class MainWindow : Object
 				i++;
 				if (i % PER_BOX == 0 && total_size >= i) {
 					listbox.width_request = BOX_WIDTH;
+					listbox.show_all();
 					users_list.pack_start(listbox, true, true, 0);
 					listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
 				}
@@ -563,13 +556,13 @@ public class MainWindow : Object
 			type_change++;
 		}
 		listbox.width_request = BOX_WIDTH;
+		listbox.show_all();
 
 		users_header.set_text(_("Total users: ") + i.to_string());
 
 		int cols = (int) Math.ceilf((float)i / (float)PER_BOX); 
 		users_scrolled.min_content_width = (cols > MAX_COLS) ? BOX_WIDTH * MAX_COLS : cols * BOX_WIDTH;
 		users_list.pack_start(listbox, true, true, 0);
-		make_user_working = false;
 	}
 
 	private EventBox make_user_eventbox (string user, int type = -1) {
@@ -634,7 +627,6 @@ public class MainWindow : Object
 		else
 			using_tab.add_block_list(channel_user_selected);
 		users_popover.set_visible(false);
-		make_user_popover(using_tab);
 		return false;
 	}
 
@@ -753,12 +745,6 @@ public class MainWindow : Object
 			add_server(SqlClient.servers[channel.server_id], channels);
 		}
 	} 
-
-	public void user_names_changed (int tab_id) {
-		if (current_tab == tab_id) {
-			make_user_popover(outputs[tab_id]);
-		}
-	}
 
 	int sliding = 0;
 	public bool slide_panel () {
