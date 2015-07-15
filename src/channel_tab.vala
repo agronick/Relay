@@ -138,10 +138,11 @@ public class ChannelTab : GLib.Object {
 			last_user = "";
 			users.remove(fix_user_name(name));
 			idle_user_names_changed();
-			space();
-			string colon = (msg.strip().length > 0) ? ": " + msg : "";
-			if (MainWindow.settings.get_bool("show_join"))
+			if (MainWindow.settings.get_bool("show_join")) {
+				space();
+				string colon = (msg.strip().length > 0) ? ": " + msg : "";
 				add_with_tag(name + _(" has left") + colon + "\n", full_width_tag);
+			}
 		}
 	}
 
@@ -149,9 +150,10 @@ public class ChannelTab : GLib.Object {
 		last_user = "";
 		string uname = add_user(name);
 		idle_user_names_changed();
-		space();
-		if (MainWindow.settings.get_bool("show_join"))
+		if (MainWindow.settings.get_bool("show_join")) {
+			space();
 			add_with_tag(uname + _(" has joined: ") + channel_name + "\n", full_width_tag);
+		}
 	}
 
 	public string add_user(string user) {
@@ -288,6 +290,9 @@ public class ChannelTab : GLib.Object {
 	}
 
 	private bool make_timestamp() {
+		if (!MainWindow.settings.get_bool("show_datestamp"))
+			return false;
+		
 		timeval.get_current_time();
 		long current = timeval.tv_sec;
 		if (current - last_timestamp > timestamp_seconds) {
