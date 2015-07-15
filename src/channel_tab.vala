@@ -130,14 +130,14 @@ public class ChannelTab : GLib.Object {
 
 		if (MainWindow.settings.get_bool("show_join") || new_name == connection.server.nickname)
 			add_with_tag(old_name + _(" is now known as ") + new_name + "\n", full_width_tag);
-		idle_user_names_changed();
+		user_names_changed(tab_index);
 	}
 
 	public void user_leave_channel(string name, string msg) {
 		if (users.contains(fix_user_name(name))) {
 			last_user = "";
 			users.remove(fix_user_name(name));
-			idle_user_names_changed();
+			user_names_changed(tab_index);
 			if (MainWindow.settings.get_bool("show_join")) {
 				space();
 				string colon = (msg.strip().length > 0) ? ": " + msg : "";
@@ -149,14 +149,19 @@ public class ChannelTab : GLib.Object {
 	public void user_join_channel(string name) {
 		last_user = "";
 		string uname = add_user(name);
-		idle_user_names_changed();
+		if (uname == null)
+			return;
+		user_names_changed(tab_index);
 		if (MainWindow.settings.get_bool("show_join")) {
 			space();
 			add_with_tag(uname + _(" has joined: ") + channel_name + "\n", full_width_tag);
 		}
 	}
 
-	public string add_user(string user) {
+	public string? add_user(string? user) {
+		if (user == null)
+			return null;
+		
 		bool op = (user[0] == '@');
 		bool halfop = (user[0] == '%');
 		bool owner = (user[0] == '~');
@@ -172,13 +177,6 @@ public class ChannelTab : GLib.Object {
 			users.add(uname);
 
 		return uname;
-	}
-
-	private void idle_user_names_changed(){
-		Idle.add( ()=> {
-			user_names_changed(tab_index);
-			return false;
-		});
 	}
 
 	public void set_output(TextView _output) {

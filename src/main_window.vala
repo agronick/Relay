@@ -506,12 +506,18 @@ public class MainWindow : Object
 		while(make_user_working)
 			Thread.usleep(1000);
 
-		using_tab.users.sort(IRC.compare);
+		var copy = new ArrayList<string>();
+		foreach(var user in using_tab.users)
+			if (user != null)
+				copy.add(user);
+
+		copy.sort(IRC.compare);
+		using_tab.users.clear();
+		using_tab.users.add_all(copy);
 		
 		Idle.add( ()=> {
 			make_user_working = true;
 			make_user_popover_idle(using_tab);
-			make_user_working = false;
 			return false;
 		});
 	}
@@ -521,10 +527,6 @@ public class MainWindow : Object
 			update_users_on_close = true;
 			return;
 		}
-
-		//Make users
-		foreach (var box in users_list.get_children())
-			users_list.remove(box);
 
 		if (using_tab.users.size < 1)
 			channel_users.hide();
@@ -543,29 +545,31 @@ public class MainWindow : Object
 		user_types.add(using_tab.users);
 		int total_size = using_tab.users.size + using_tab.owners.size + using_tab.ops.size + using_tab.half_ops.size;
 
-		Idle.add( ()=> {
-			var listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
-			foreach(Gee.List<string> type in user_types) {
-				foreach (string user in type) {
-					listbox.pack_start(make_user_eventbox(user, type_change), false, false, 0);
-					i++;
-					if (i % PER_BOX == 0 && total_size >= i) {
-						listbox.width_request = BOX_WIDTH;
-						users_list.pack_start(listbox, true, true, 0);
-						listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
-					}
+		//Make users
+		foreach (var box in users_list.get_children())
+			users_list.remove(box);
+
+		var listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+		foreach(Gee.List<string> type in user_types) {
+			foreach (string user in type) {
+				listbox.pack_start(make_user_eventbox(user, type_change), false, false, 0);
+				i++;
+				if (i % PER_BOX == 0 && total_size >= i) {
+					listbox.width_request = BOX_WIDTH;
+					users_list.pack_start(listbox, true, true, 0);
+					listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
 				}
-				type_change++;
 			}
-			listbox.width_request = BOX_WIDTH;
+			type_change++;
+		}
+		listbox.width_request = BOX_WIDTH;
 
-			users_header.set_text(_("Total users: ") + i.to_string());
+		users_header.set_text(_("Total users: ") + i.to_string());
 
-			int cols = (int) Math.ceilf((float)i / (float)PER_BOX); 
-			users_scrolled.min_content_width = (cols > MAX_COLS) ? BOX_WIDTH * MAX_COLS : cols * BOX_WIDTH;
-			users_list.pack_start(listbox, true, true, 0);
-			return false;
-		});
+		int cols = (int) Math.ceilf((float)i / (float)PER_BOX); 
+		users_scrolled.min_content_width = (cols > MAX_COLS) ? BOX_WIDTH * MAX_COLS : cols * BOX_WIDTH;
+		users_list.pack_start(listbox, true, true, 0);
+		make_user_working = false;
 	}
 
 	private EventBox make_user_eventbox (string user, int type = -1) {
