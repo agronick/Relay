@@ -4,7 +4,7 @@
 
 
 uidir = $(pkgdatadir)/ui
-ui_DATA = ui/relay.ui ui/server_window.ui ui/relay.png
+ui_DATA = ui/relay.ui ui/server_window.ui ui/relay.png ui/settings_window.ui
 
 assetsdir = $(pkgdatadir)/assets
 assets_DATA = ui/relay.png \
