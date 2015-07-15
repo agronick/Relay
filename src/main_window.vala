@@ -41,7 +41,7 @@ public class MainWindow : Object
 	public static Gtk.Window window;
 	public static Entry input;
 	Granite.Widgets.DynamicNotebook tabs;
-	Paned pannel;
+	Paned panel;
 	Button channel_subject;
 	Button channel_users;
 	Icon channel_tab_icon_new_msg;
@@ -119,7 +119,7 @@ public class MainWindow : Object
 			channel_tab_icon_new_msg = new Pixbuf.from_file(Relay.get_asset_file("assets/mail-unread.svg"));
 
 			//Slide out panel
-			pannel = builder.get_object("pannel") as Paned;
+			panel = builder.get_object("panel") as Paned;
 			var server_list_container = builder.get_object("server_list_container") as Box;
 			server_list_container.pack_start(servers, true, true, 0);
 
@@ -131,7 +131,7 @@ public class MainWindow : Object
 			select_channel.tooltip_text = _("Open server/channel view");
 			toolbar.pack_start(select_channel);
 			select_channel.button_release_event.connect(slide_panel);
-			pannel.position = 1;
+			panel.position = 1;
 
 			input = builder.get_object("input") as Entry;
 			input.activate.connect (() => {
@@ -738,7 +738,7 @@ public class MainWindow : Object
 				return false;
 			new Thread<int>("slider_move", move_slider_t);
 		} else {
-			pannel.set_position(pannel.position < 10 ? 180 : 0);
+			panel.set_position(panel.position < 10 ? 180 : 0);
 		}
 		return false;
 	}
@@ -749,11 +749,11 @@ public class MainWindow : Object
 			Thread.usleep(1000);
 		int add, end, go_to, pos;
 		bool opening;
-		opening = (pannel.position < 10);
+		opening = (panel.position < 10);
 		end = opening ? 550 : 618;
 		add = 1;
 		go_to = 180;
-		for (int i = pannel.position; i < end; i+= add) {
+		for (int i = panel.position; i < end; i+= add) {
 			if (opening) {
 				pos = (int) Relay.ease_out_elastic(i, 0.0F, go_to, end);
 				if (i > 420) 
@@ -762,7 +762,7 @@ public class MainWindow : Object
 				pos = (int) Relay.ease_in_bounce(end - i, 0.0F, go_to, end);
 			}
 
-			pannel.set_position(pos);
+			panel.set_position(pos);
 			Thread.usleep(3600);
 		}
 		sliding--;

@@ -16,7 +16,7 @@
     <property name="icon">relay.png</property>
     <property name="has_resize_grip">True</property>
     <child>
-      <object class="GtkPaned" id="pannel">
+      <object class="GtkPaned" id="panel">
         <property name="visible">True</property>
         <property name="can_focus">True</property>
         <child>
