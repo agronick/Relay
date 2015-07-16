@@ -302,6 +302,7 @@ public class MainWindow : Object
 	private static Widgets.SourceList.Item current_selected_item;
 	private void set_item_selected (Widgets.SourceList.Item? item) {
 		current_selected_item = item;
+		sidebar_item_activated();
 	}
 
 	/* 
@@ -643,7 +644,6 @@ public class MainWindow : Object
 			var chn = new Widgets.SourceList.Item(svr.value.host);
 			chn.set_data<string>("type", "server");
 			chn.set_data<SqlClient.Server>("server", svr.value);
-			chn.activated.connect(sidebar_item_activated);
 			chn.icon = (items_sidebar.has_key(svr.value.host)) ? items_sidebar[svr.value.host].icon : inactive_channel;
 			s.add(chn);
 			new_items_sidebar[svr.value.host] = chn;
