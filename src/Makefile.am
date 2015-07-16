@@ -4,10 +4,10 @@
 
 
 uidir = $(pkgdatadir)/ui
-ui_DATA = ui/relay.ui ui/server_window.ui ui/relay.png ui/settings_window.ui
+ui_DATA = ui/relay.ui ui/server_window.ui ui/relay.svg ui/settings_window.ui
 
 assetsdir = $(pkgdatadir)/assets
-assets_DATA = ui/relay.png \
+assets_DATA = ui/relay.svg \
     assets/connect-server.png \
     assets/help-info-symbolic.svg \
     assets/mail-unread.svg \
@@ -21,10 +21,10 @@ assets_DATA = ui/relay.png \
     assets/user-offline.svg \
     assets/list-add-symbolic.svg \
     assets/list-remove-symbolic.svg \
-    assets/channel-loading.svg 
+    assets/channel-loading.svg
 
 appicondir = $(datadir)/icons/hicolor/scalable/apps
-appicon_DATA = ui/relay.png
+appicon_DATA = ui/relay.svg
 
 desktopdir = $(datadir)/applications
 desktop_DATA = ../data/relay.desktop
@@ -61,7 +61,7 @@ relay_SOURCES = \
     settings.vala
 
 relay_VALAFLAGS =  \
-    -X -DGETTEXT_PACKAGE="relay" --target-glib 2.32  --pkg gee-0.8 --pkg x11 --pkg gtk+-3.0 --pkg glib-2.0 --pkg granite --pkg sqlite3 --save-temps -g 
+    -X -DGETTEXT_PACKAGE="relay" --target-glib 2.32  --pkg gee-0.8 --pkg x11 --pkg gtk+-3.0 --pkg glib-2.0 --pkg granite --pkg sqlite3
 
 relay_LDFLAGS = \
 	 -lm -lX11 -lglib-2.0 -Wl,--as-needed -w
@@ -69,6 +69,15 @@ relay_LDFLAGS = \
 relay_LDADD = -lm -lX11 $(RELAY_LIBS)
 
 EXTRA_DIST = $(ui_DATA) $(assets_DATA)
+
+UPDATE_DESKTOP = sudo update-desktop-database $(desktopdir)
+
+install-data-hook: 
+	$(UPDATE_DESKTOP) || :; \
+    sudo rm $(datadir)/icons/hicolor/scalable/apps/relay.png || :; \
+    sudo rm $(pkgdatadir)/ui/relay.png || :
+uninstall-hook: 
+	$(UPDATE_DESKTOP)
 
 # Remove ui directory on uninstall
 uninstall-local:

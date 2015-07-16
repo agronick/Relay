@@ -131,6 +131,7 @@ public class MainWindow : Object
 			panel.position = 1;
 
 			input = builder.get_object("input") as Entry;
+			input.set_input_hints(InputHints.SPELLCHECK);
 			input.activate.connect (() => {
 				send_text_out(input.get_text ());
 				input.set_text("");
@@ -744,7 +745,7 @@ public class MainWindow : Object
 
 	int sliding = 0;
 	public bool slide_panel () {
-		if (settings.get_bool("show_animations") && !on_start) {
+		if (settings.get_bool("show_animations")) {
 			if (sliding > 1)
 				return false;
 			new Thread<int>("slider_move", move_slider_t);
