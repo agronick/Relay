@@ -60,7 +60,6 @@ public class ChannelTab : GLib.Object {
 	TextTag other_name_hilight_tag;
 
 	public signal void new_subject(int tab_id, string subject);
-	public signal void user_names_changed(int tab_id);
 
 	public void add_text (string msg) {
 		connection.send_output(msg);
@@ -136,14 +135,12 @@ public class ChannelTab : GLib.Object {
 
 		if (MainWindow.settings.get_bool("show_join") || new_name == connection.server.nickname)
 			add_with_tag(old_name + _(" is now known as ") + new_name + "\n", full_width_tag);
-		user_names_changed(tab_index);
 	}
 
 	public void user_leave_channel(string name, string msg) {
 		if (users.contains(fix_user_name(name))) {
 			last_user = "";
 			users.remove(fix_user_name(name));
-			user_names_changed(tab_index);
 			if (MainWindow.settings.get_bool("show_join")) {
 				space();
 				string colon = (msg.strip().length > 0) ? ": " + msg : "";
@@ -157,7 +154,6 @@ public class ChannelTab : GLib.Object {
 		string uname = add_user(name);
 		if (uname == null)
 			return;
-		user_names_changed(tab_index);
 		if (MainWindow.settings.get_bool("show_join")) {
 			space();
 			add_with_tag(uname + _(" has joined: ") + channel_name + "\n", full_width_tag);
@@ -236,7 +232,9 @@ public class ChannelTab : GLib.Object {
 		return "PRIVMSG " + channel_name + " :" + message;
 	}
 
-	public string parse_nick_change (string message) {
+	public string parse_nick_change (string? message) {
+		if (message == null)
+			return "";
 		string[] split = message.split(" ");
 		connection.server.nickname = split[1];
 		return "NICK " + split[1];

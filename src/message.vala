@@ -86,10 +86,14 @@ public class Message : GLib.Object {
 
     public void parse_regex () {
         try{
+			if (message == null)
+				return;
+			
             regex.replace_eval (message, -1, 0, 0, (mi, s) => {
                 prefix = mi.fetch_named ("prefix");
                 command = mi.fetch_named ("command");
-                parameters = mi.fetch_named ("params").split(" ");
+				if (mi.fetch_named ("params") != null)
+            		parameters = mi.fetch_named ("params").split(" ");
                 message = mi.fetch_named ("trail");
 
                 if (message != null)

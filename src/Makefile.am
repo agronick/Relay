@@ -20,8 +20,8 @@ assets_DATA = ui/relay.png \
     assets/user-idle.svg \
     assets/user-offline.svg \
     assets/list-add-symbolic.svg \
-    assets/list-remove-symbolic.svg 
-
+    assets/list-remove-symbolic.svg \
+    assets/channel-loading.svg 
 
 appicondir = $(datadir)/icons/hicolor/scalable/apps
 appicon_DATA = ui/relay.png

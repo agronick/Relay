@@ -39,7 +39,6 @@ public class Connection : Object
 
 	public signal void new_topic(ChannelTab tab, string topic);
 
-
 	public Connection(MainWindow back) {
 		backref = back;
 	}
@@ -192,8 +191,6 @@ public class Connection : Object
 					tab.user_join_channel(message.user_name);
 				return;
 			case IRC.RPL_ENDOFNAMES:
-				ChannelTab tab = find_channel_tab(message.parameters[1]);
-				tab.user_names_changed(tab.tab_index);
 				return;
 				//Errors
 			case IRC.ERR_NICKNAMEINUSE:
@@ -330,6 +327,10 @@ public class Connection : Object
 
 	public void do_exit () {
 		exit = true;
+
+		foreach (string chan in channel_autoconnect)
+			backref.items_sidebar[chan].icon = MainWindow.inactive_channel;
+		
 		send_output("QUIT :" + _("Relay, an IRC client for the modern desktop"));
 		stop();
 	}

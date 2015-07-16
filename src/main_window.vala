@@ -38,6 +38,7 @@ public class MainWindow : Object
 	public const string UI_FILE_SETTINGS = "ui/settings_window.ui";
 
 
+	Relay app;
 	public static Gtk.Window window;
 	public static Entry input;
 	Granite.Widgets.DynamicNotebook tabs;
@@ -53,15 +54,15 @@ public class MainWindow : Object
 	ScrolledWindow users_scrolled;
 	HeaderBar toolbar;
 	string channel_user_selected = "";
-	Relay app;
-	HashMap<string, Widgets.SourceList.Item> items_sidebar;
 	Gtk.Menu tab_rightclick;
 	Gtk.Menu tab_channel_list;
 	DragFile drag_file;
+	public HashMap<string, Widgets.SourceList.Item> items_sidebar = new HashMap<string, Widgets.SourceList.Item>();
 	public static Button paste;
 	public static Box paste_box;
-	Icon inactive_channel;
-	Icon active_channel;
+	public static Icon inactive_channel;
+	public static Icon active_channel;
+	public static Icon loading_channel;
 	public static SqlClient sql_client = SqlClient.get_instance();
 	public static Settings settings = new Settings();
 	public static ServerManager server_manager = new ServerManager();
@@ -71,15 +72,6 @@ public class MainWindow : Object
 	Granite.Widgets.SourceList servers = new Granite.Widgets.SourceList();
 
 	public static int current_tab = -1;
-	
-	public static Geometry get_geometry () {
-		var g = Geometry();
-		g.min_height = 500;
-		g.min_width = 500;
-		g.base_width = 1000;
-		g.base_height = 600;
-		return g;
-	}
 
 	public MainWindow (Relay application) {
 		try {
@@ -87,6 +79,7 @@ public class MainWindow : Object
 
 			inactive_channel = new Pixbuf.from_file(Relay.get_asset_file("assets/user-offline.svg"));
 			active_channel = new Pixbuf.from_file(Relay.get_asset_file("assets/user-idle.svg"));
+			loading_channel = new Pixbuf.from_file(Relay.get_asset_file("assets/channel-loading.svg"));
 			servers.set_tooltip_text(_("Double click an item to connect"));
 
 			var builder = new Builder ();
@@ -252,11 +245,10 @@ public class MainWindow : Object
 			tab_rightclick = new Gtk.Menu();
 			Gtk.MenuItem close_all = new Gtk.MenuItem.with_label(_("Close All"));
 			close_all.activate.connect( ()=> {
-				outputs.entries.foreach( (item)=> {
-					if(item != null)
-						item.value.tab.close();
-					return true;
-				});
+				foreach(var item in outputs) {
+					if(item != null && item.tab != null)
+						tabs.remove_tab(item.tab);
+				}
 			});
 			Gtk.MenuItem new_tab = new Gtk.MenuItem.with_label(_("New Tab"));
 			new_tab.activate.connect(new_tab_requested);
@@ -349,7 +341,6 @@ public class MainWindow : Object
 			new_tab.tab.restore_data = new_tab.tab.label = new_tab.channel_name; 
 			new_tab.tab.page = scrolled;
 			new_tab.new_subject.connect(new_subject);
-			new_tab.user_names_changed.connect(user_names_changed);
 			tabs.insert_tab(new_tab.tab, -1); 
 
 			new_tab.set_output(output);
@@ -644,7 +635,7 @@ public class MainWindow : Object
 		var root = servers.root;
 		root.clear();
 
-		items_sidebar = new HashMap<string, Widgets.SourceList.Item>();
+		var new_items_sidebar = new HashMap<string, Widgets.SourceList.Item>();
 
 		foreach (var svr in SqlClient.servers.entries) {
 			var s =  new Widgets.SourceList.ExpandableItem(svr.value.host);
@@ -652,24 +643,71 @@ public class MainWindow : Object
 			var chn = new Widgets.SourceList.Item(svr.value.host);
 			chn.set_data<string>("type", "server");
 			chn.set_data<SqlClient.Server>("server", svr.value);
-			chn.activated.connect(item_activated);
-			chn.icon = inactive_channel;
+			chn.activated.connect(sidebar_item_activated);
+			chn.icon = (items_sidebar.has_key(svr.value.host)) ? items_sidebar[svr.value.host].icon : inactive_channel;
 			s.add(chn);
-			items_sidebar[svr.value.host] = chn;
+			new_items_sidebar[svr.value.host] = chn;
 
 			foreach (var c in svr.value.channels) {
 				chn = new Granite.Widgets.SourceList.Item(c.channel);
 				chn.set_data<string>("type", "channel");
 				chn.set_data<SqlClient.Channel>("channel", c);
-				chn.activated.connect(item_activated);
-				chn.icon = inactive_channel;
+				chn.activated.connect(sidebar_item_activated);
+				chn.icon = (items_sidebar.has_key(c.channel)) ? items_sidebar[c.channel].icon : inactive_channel;
 				s.add(chn);
-				items_sidebar[c.channel] = chn;
+				new_items_sidebar[c.channel] = chn;
 			}
 		}
+		items_sidebar = new_items_sidebar;
 	}
 
+	/* 
+	 * Called when an an item on the sidebar is double clicked
+	 */
+	private void sidebar_item_activated () {
+		string type = current_selected_item.get_data<string>("type");
+		if (type == "server") {
+			//Has existing server
+			SqlClient.Server server = current_selected_item.get_data<SqlClient.Server>("server");
+			foreach (var tab in outputs.entries) {
+				if (tab.value.is_server_tab && tab.value.channel_name == server.host) {
+					tabs.current = tab.value.tab;
+					return;
+				}
+			}
+			//No existing server
+			add_server(server);
+		} else {
+			//Existing channel tab
+			SqlClient.Channel channel = current_selected_item.get_data<SqlClient.Channel>("channel");
+			items_sidebar[channel.channel].icon = loading_channel;
+			var server = SqlClient.servers[channel.server_id];
+			foreach (var tab in outputs.entries) {
+				if (!tab.value.is_server_tab && 
+				    tab.value.tab.label == channel.channel &&
+				    server.host == tab.value.connection.server.host) {
+					tabs.current = tab.value.tab;
+					return;
+				}
+			} 
+			//Has existing server but no channel
+			foreach (var con in clients.entries) {
+				if (con.key == server.host) {
+					if (con.value.server_tab.tab.working && !con.value.channel_autoconnect.contains(channel.channel)) {
+						con.value.channel_autoconnect.add(channel.channel);
+					} else
+						con.value.join(channel.channel);
+					return;
+				}
+			}
+			//Has no existing server or channel
+			LinkedList<string> channels = new LinkedList<string>();
+			channels.add(channel.channel);
+			add_server(SqlClient.servers[channel.server_id], channels);
+		}
+	} 
 
+	
 	public void add_text (ChannelTab tab, Message message, bool error = false) {
 		if (error) {
 			message.message = _("Error: ") + message.message;
@@ -703,48 +741,6 @@ public class MainWindow : Object
 		add_text(output, message); 
 		return; 
 	}
-
-	private void item_activated () {
-		string type = current_selected_item.get_data<string>("type");
-		if (type == "server") {
-			//Has existing server
-			SqlClient.Server server = current_selected_item.get_data<SqlClient.Server>("server");
-			foreach (var tab in outputs.entries) {
-				if (tab.value.is_server_tab && tab.value.channel_name == server.host) {
-					tabs.current = tab.value.tab;
-					return;
-				}
-			}
-			//No existing server
-			add_server(server);
-		} else {
-			//Existing channel tab
-			SqlClient.Channel channel = current_selected_item.get_data<SqlClient.Channel>("channel");
-			var server = SqlClient.servers[channel.server_id];
-			foreach (var tab in outputs.entries) {
-				if (!tab.value.is_server_tab && 
-				    tab.value.tab.label == channel.channel &&
-				    server.host == tab.value.connection.server.host) {
-					tabs.current = tab.value.tab;
-					return;
-				}
-			} 
-			//Has existing server but no channel
-			foreach (var con in clients.entries) {
-				if (con.key == server.host) {
-					if (con.value.server_tab.tab.working && con.value.channel_autoconnect.contains(channel.channel))
-						con.value.channel_autoconnect.add(channel.channel);
-					else
-						con.value.join(channel.channel);
-					return;
-				}
-			}
-			//Has no existing server or channel
-			LinkedList<string> channels = new LinkedList<string>();
-			channels.add(channel.channel);
-			add_server(SqlClient.servers[channel.server_id], channels);
-		}
-	} 
 
 	int sliding = 0;
 	public bool slide_panel () {
