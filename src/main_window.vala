@@ -744,7 +744,7 @@ public class MainWindow : Object
 
 	int sliding = 0;
 	public bool slide_panel () {
-		if (settings.get_bool("show_animations") && !on_start) {
+		if (settings.get_bool("show_animations")) {
 			if (sliding > 1)
 				return false;
 			new Thread<int>("slider_move", move_slider_t);

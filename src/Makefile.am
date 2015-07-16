@@ -70,7 +70,11 @@ relay_LDADD = -lm -lX11 $(RELAY_LIBS)
 
 EXTRA_DIST = $(ui_DATA) $(assets_DATA)
 
-# Remove ui directory on uninstall
+UPDATE_DESKTOP = sudo update-desktop-database $(desktopdir) || :
+
+install-data-hook: 
+    $(UPDATE_DESKTOP)
+
 uninstall-local:
 	-rm -r $(uidir)
 	-rm -r $(imagedir)
