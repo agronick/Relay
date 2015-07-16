@@ -246,7 +246,7 @@ public class MainWindow : Object
 			Gtk.MenuItem close_all = new Gtk.MenuItem.with_label(_("Close All"));
 			close_all.activate.connect( ()=> {
 				foreach(var item in outputs) {
-					if(item != null && item.tab != null)
+					if(item != null && item.tab != null) 
 						tabs.remove_tab(item.tab);
 				}
 			});
@@ -362,6 +362,13 @@ public class MainWindow : Object
 			index++;
 			if (items_sidebar.has_key(new_tab.tab.label))
 				items_sidebar[new_tab.tab.label].icon = active_channel;
+			else {
+				foreach(var item in items_sidebar.entries)
+					if(new_tab.tab.label.has_suffix(item.value.name)) {
+						item.value.icon = active_channel;
+						new_tab.tab.label = item.value.name;
+					}
+			}
 
 			if (settings.get_bool("change_tab"))
 				tabs.current = new_tab.tab;
@@ -680,7 +687,6 @@ public class MainWindow : Object
 		} else {
 			//Existing channel tab
 			SqlClient.Channel channel = current_selected_item.get_data<SqlClient.Channel>("channel");
-			items_sidebar[channel.channel].icon = loading_channel;
 			var server = SqlClient.servers[channel.server_id];
 			foreach (var tab in outputs.entries) {
 				if (!tab.value.is_server_tab && 
@@ -690,10 +696,12 @@ public class MainWindow : Object
 					return;
 				}
 			} 
+			
 			//Has existing server but no channel
 			foreach (var con in clients.entries) {
 				if (con.key == server.host) {
 					if (con.value.server_tab.tab.working && !con.value.channel_autoconnect.contains(channel.channel)) {
+						items_sidebar[channel.channel].icon = loading_channel;
 						con.value.channel_autoconnect.add(channel.channel);
 					} else
 						con.value.join(channel.channel);
@@ -701,6 +709,7 @@ public class MainWindow : Object
 				}
 			}
 			//Has no existing server or channel
+			items_sidebar[channel.channel].icon = loading_channel;
 			LinkedList<string> channels = new LinkedList<string>();
 			channels.add(channel.channel);
 			add_server(SqlClient.servers[channel.server_id], channels);
