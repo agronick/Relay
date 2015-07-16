@@ -41,28 +41,28 @@ public class MainWindow : Object
 	Relay app;
 	public static Gtk.Window window;
 	public static Entry input;
-	Granite.Widgets.DynamicNotebook tabs;
-	Paned panel;
-	Button channel_subject;
-	Button channel_users;
-	Icon channel_tab_icon_new_msg;
-	Label subject_text;
-	Box users_list;
-	Gtk.Menu user_menu;
-	Label users_header;
-	Popover users_popover;
-	ScrolledWindow users_scrolled;
-	HeaderBar toolbar;
-	string channel_user_selected = "";
-	Gtk.Menu tab_rightclick;
-	Gtk.Menu tab_channel_list;
-	DragFile drag_file;
-	public HashMap<string, Widgets.SourceList.Item> items_sidebar = new HashMap<string, Widgets.SourceList.Item>();
-	public static Button paste;
-	public static Box paste_box;
 	public static Icon inactive_channel;
 	public static Icon active_channel;
 	public static Icon loading_channel;
+	Paned panel;
+	Icon channel_tab_icon_new_msg;
+	Box users_list;
+	Popover users_popover;
+	string channel_user_selected = "";
+	Gtk.Menu user_menu = new Gtk.Menu();
+	Gtk.Menu tab_rightclick = new Gtk.Menu();
+	Gtk.Menu tab_channel_list = new Gtk.Menu();
+	DragFile drag_file = new DragFile();
+	Button channel_users = new Button();
+	Label subject_text = new Label("");
+	Label users_header = new Label("");
+	Button channel_subject = new Button();
+	HeaderBar toolbar = new HeaderBar ();
+	ScrolledWindow users_scrolled = new Gtk.ScrolledWindow (null, null);
+	Granite.Widgets.DynamicNotebook tabs = new Granite.Widgets.DynamicNotebook();
+	public HashMap<string, Widgets.SourceList.Item> items_sidebar = new HashMap<string, Widgets.SourceList.Item>();
+	public static Button paste = new Button();
+	public static Box paste_box = new Box(Gtk.Orientation.HORIZONTAL, 0);
 	public static SqlClient sql_client = SqlClient.get_instance();
 	public static Settings settings = new Settings();
 	public static ServerManager server_manager = new ServerManager();
@@ -76,11 +76,11 @@ public class MainWindow : Object
 	public MainWindow (Relay application) {
 		try {
 			app = application;
+			servers.set_tooltip_text(_("Double click an item to connect"));
 
 			inactive_channel = new Pixbuf.from_file(Relay.get_asset_file("assets/user-offline.svg"));
 			active_channel = new Pixbuf.from_file(Relay.get_asset_file("assets/user-idle.svg"));
 			loading_channel = new Pixbuf.from_file(Relay.get_asset_file("assets/channel-loading.svg"));
-			servers.set_tooltip_text(_("Double click an item to connect"));
 
 			var builder = new Builder ();
 			builder.add_from_file (Relay.get_asset_file(UI_FILE));
@@ -93,10 +93,11 @@ public class MainWindow : Object
 				tabs.show_tabs = state;
 			});
 
-			toolbar = new HeaderBar (); 
 			if (Relay.on_kde)
 				toolbar.decoration_layout = "";
-			tabs = new Granite.Widgets.DynamicNotebook();
+			else if (Relay.on_ubuntu)
+				toolbar.decoration_layout = "maximize,close";
+			
 			tabs.add_button_tooltip = _("Connect to a server");
 			tabs.add_button_visible = false;
 			tabs.allow_drag = true;
@@ -136,7 +137,6 @@ public class MainWindow : Object
 			});
 
 			//Channel subject button
-			channel_subject = new Button();
 			channel_subject.image = new Image.from_file(Relay.get_asset_file("assets/help-info-symbolic.svg"));
 			channel_subject.tooltip_text = _("Channel subject");
 			var subject_popover = new Gtk.Popover(channel_subject);
@@ -146,7 +146,6 @@ public class MainWindow : Object
 			channel_subject.set_no_show_all(true);
 			channel_subject.hide();
 			var scrolled = new ScrolledWindow(null, null);
-			subject_text = new Label("");
 			subject_text.set_line_wrap(true);
 			subject_text.margin = 10;
 			scrolled.set_size_request(320, 110);
@@ -155,7 +154,6 @@ public class MainWindow : Object
 			toolbar.pack_end(channel_subject);
 
 			//Channel users button
-			channel_users = new Button();
 			channel_users.image = new Image.from_file(Relay.get_asset_file("assets/system-users.svg"));
 			channel_users.tooltip_text = _("Channel users");
 			channel_users.hide();
@@ -173,7 +171,6 @@ public class MainWindow : Object
 				return true;
 			});
 
-			users_scrolled = new Gtk.ScrolledWindow (null, null);
 			users_scrolled.vscrollbar_policy = PolicyType.NEVER;
 			users_scrolled.hscrollbar_policy = PolicyType.AUTOMATIC;
 			users_list = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
@@ -182,14 +179,12 @@ public class MainWindow : Object
 			var users_wrap = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
 			var font = new FontDescription();
 			font.set_weight(Pango.Weight.BOLD);
-			users_header = new Label("");
 			users_header.override_font(font);
 			users_header.height_request = 24;
 			users_wrap.pack_start(users_header, true, false, 4);
 			users_wrap.pack_start(users_scrolled);
 			users_popover.add(users_wrap);
 			toolbar.pack_end(channel_users);
-			user_menu = new Gtk.Menu();
 			Gtk.MenuItem private_message = new Gtk.MenuItem.with_label (_("Private Message"));
 			user_menu.add(private_message);
 			Gtk.MenuItem block = new Gtk.MenuItem.with_label (_("Block"));
@@ -212,8 +207,6 @@ public class MainWindow : Object
 			/*
 			 * Hastebin code
 			 */ 
-			paste_box = new Box(Gtk.Orientation.HORIZONTAL, 0);
-			paste = new Button();
 			paste_box.pack_start(paste);
 			paste_box.show_all();
 			paste.focus_on_click = false;
@@ -222,7 +215,6 @@ public class MainWindow : Object
 			paste.set_tooltip_text(_("Drag a files here to upload to Hastebin.com"));
 			paste.activate();
 			toolbar.pack_end(paste_box);
-			drag_file = new DragFile();
 			drag_file.attach_spinner(paste_box);
 			drag_file.attach_button(paste);
 			Gtk.drag_dest_set(paste, 
@@ -242,7 +234,6 @@ public class MainWindow : Object
 
 			load_autoconnect();
 
-			tab_rightclick = new Gtk.Menu();
 			Gtk.MenuItem close_all = new Gtk.MenuItem.with_label(_("Close All"));
 			close_all.activate.connect( ()=> {
 				foreach(var item in outputs) {
@@ -254,7 +245,6 @@ public class MainWindow : Object
 			new_tab.activate.connect(new_tab_requested);
 
 			Gtk.MenuItem channel_list_menu = new Gtk.MenuItem.with_label(_("Switch"));
-			tab_channel_list = new Gtk.Menu();
 			channel_list_menu.set_submenu(tab_channel_list);
 
 			tab_rightclick.add(channel_list_menu);
@@ -268,8 +258,9 @@ public class MainWindow : Object
 				refresh_server_list ();
 			});
 			
-			if (settings.get_bool("show_sidebar"))
+			if (settings.get_bool("show_sidebar")) {
 				slide_panel();
+			}
 		}
 		catch (Error e) {
 			error("Could not load UI: %s\n", e.message);
@@ -753,7 +744,7 @@ public class MainWindow : Object
 
 	int sliding = 0;
 	public bool slide_panel () {
-		if (settings.get_bool("show_animations")) {
+		if (settings.get_bool("show_animations") && !on_start) {
 			if (sliding > 1)
 				return false;
 			new Thread<int>("slider_move", move_slider_t);
