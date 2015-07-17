@@ -4,7 +4,7 @@
 
 
 uidir = $(pkgdatadir)/ui
-ui_DATA = ui/relay.ui ui/server_window.ui ui/relay.png ui/settings_window.ui
+ui_DATA = ui/relay.ui ui/server_window.ui ui/relay.svg ui/settings_window.ui
 
 assetsdir = $(pkgdatadir)/assets
 assets_DATA = ui/relay.png \
@@ -24,7 +24,7 @@ assets_DATA = ui/relay.png \
     assets/channel-loading.svg 
 
 appicondir = $(datadir)/icons/hicolor/scalable/apps
-appicon_DATA = ui/relay.png
+appicon_DATA = ui/relay.svg
 
 desktopdir = $(datadir)/applications
 desktop_DATA = ../data/relay.desktop

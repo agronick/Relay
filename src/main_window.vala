@@ -27,11 +27,6 @@ using Pango;
 
 public class MainWindow : Object
 {
-
-	/*
-	 * Uncomment this line when you are done testing and building a tarball
-	 * or installing
-	 */
 	//const string UI_FILE = Config.PACKAGE_DATA_DIR + "/ui/" + "relay.ui";
 	public const string UI_FILE = "ui/relay.ui";
 	public const string UI_FILE_SERVERS = "ui/server_window.ui";
