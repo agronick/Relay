@@ -73,7 +73,9 @@ EXTRA_DIST = $(ui_DATA) $(assets_DATA)
 UPDATE_DESKTOP = sudo update-desktop-database $(desktopdir) || :
 
 install-data-hook: 
-    $(UPDATE_DESKTOP)
+	$(UPDATE_DESKTOP) || :; \
+    sudo rm $(datadir)/icons/hicolor/scalable/apps/relay.png || :; \
+    sudo rm $(pkgdatadir)/ui/relay.png || :
 
 uninstall-local:
 	-rm -r $(uidir)
