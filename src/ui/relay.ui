@@ -13,7 +13,7 @@
     <property name="title" translatable="yes">Relay</property>
     <property name="default_width">1111</property>
     <property name="default_height">600</property>
-    <property name="icon">relay.png</property>
+    <property name="icon">relay.svg</property>
     <property name="has_resize_grip">True</property>
     <child>
       <object class="GtkPaned" id="panel">
