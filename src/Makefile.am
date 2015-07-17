@@ -75,7 +75,8 @@ UPDATE_DESKTOP = sudo update-desktop-database $(desktopdir) || :
 install-data-hook: 
 	$(UPDATE_DESKTOP) || :; \
     sudo rm $(datadir)/icons/hicolor/scalable/apps/relay.png || :; \
-    sudo rm $(pkgdatadir)/ui/relay.png || :
+    sudo rm $(pkgdatadir)/ui/relay.png || :; \
+    sudo gtk-update-icon-cache -f -t $(datadir)/icons/hicolor || :
 
 uninstall-local:
 	-rm -r $(uidir)
