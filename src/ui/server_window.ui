@@ -9,10 +9,11 @@
     <property name="resizable">False</property>
     <property name="window_position">center-on-parent</property>
     <property name="destroy_with_parent">True</property>
-    <property name="icon_name">network-server</property>
+    <property name="icon">relay.svg</property>
     <property name="type_hint">dialog</property>
     <property name="skip_taskbar_hint">True</property>
     <property name="skip_pager_hint">True</property>
+    <property name="deletable">False</property>
     <child>
       <object class="GtkPaned" id="paned1">
         <property name="visible">True</property>

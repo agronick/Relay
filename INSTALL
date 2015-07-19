@@ -27,5 +27,5 @@ cd build
 make
 sudo make install
 
-You can test the program by running
-src/relay
+If you want to use the program without installing you must install the settings gsettings xml file in /data/org.agronick.relay.gschema.xml
+Running make install does this automatically. 
