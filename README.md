@@ -1,4 +1,4 @@
-# ![logo](http://bit.ly/1JIDVio  "Relay")  Relay 
+# ![logo](https://raw.githubusercontent.com/agronick/Relay/master/src/ui/relay.svg "Relay")  Relay 
 *Created by Kyle Agronick <agronick@gmail.com>*
 
 Relay is an IRC client that attemps to be small, quick, easy to use, elegant, and functional. 
