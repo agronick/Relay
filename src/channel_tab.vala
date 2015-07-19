@@ -42,6 +42,7 @@ public class ChannelTab : GLib.Object {
 	public int message_count = 0;
 	private LinkedList<Message> pending_msg = new LinkedList<Message>();
 	private LinkedList<Message> pending_err = new LinkedList<Message>();
+	public string channel_url = "";
 
 	public static TimeVal timeval = TimeVal();
 	public static int timestamp_seconds = 180;
@@ -79,10 +80,10 @@ public class ChannelTab : GLib.Object {
 	}
 
 	public void set_topic (string subject, bool append = false) {
+		channel_subject = append ? channel_subject + subject + "\n": subject;
 		has_subject = true;
-		channel_subject = append ? channel_subject + subject + "\n" : subject;
 		Idle.add( () => { 
-			new_subject (tab_index, subject);
+			new_subject(tab_index, channel_subject);
 			return false;
 		});
 	}

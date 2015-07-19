@@ -130,19 +130,23 @@ public class Connection : Object
 			case "PONG":
 				info(msg);
 				return;
-			case IRC.RPL_TOPIC:
-				ChannelTab tab = find_channel_tab(message.parameters[1]);
-				if (tab != null)
-					tab.set_topic(message.get_msg_txt());
-				return;
 			case IRC.PRIVATE_MESSAGE: 
 				ChannelTab tab = add_channel_tab(message.parameters[0]);
-				debug("LOOK " + message.parameters[0].strip() + "' '" + server.nickname);
 				if (tab == server_tab && message.parameters[0] == server.nickname) {
 					tab = add_channel_tab(message.user_name, true);
 				}
 				if (tab != null)
 					backref.add_text(tab, message);
+				return;
+			case IRC.RPL_TOPIC:
+				ChannelTab tab = find_channel_tab(message.parameters[1]);
+				if (tab != null && tab != server_tab)
+					tab.set_topic(message.get_msg_txt());
+				return;
+			case IRC.RPL_CHANNEL_URL:
+				ChannelTab tab = find_channel_tab(message.parameters[1]);
+				if (tab != null && tab != server_tab)
+					tab.channel_url =  message.message;
 				return;
 			case IRC.RPL_LUSERCLIENT:
 			case "NOTICE":
@@ -204,6 +208,11 @@ public class Connection : Object
 					error_msg = _("The name you chose is in use.");
 				error_msg = server.host + "\n" + error_msg;
 				name_in_use(error_msg);
+				return;
+			case IRC.ERR_LINKCHANNEL:
+				//Channel forwarding
+				if (message.parameters.length >= 2 && MainWindow.items_sidebar.has_key(message.parameters[1]))
+					MainWindow.items_sidebar[message.parameters[1]].icon = MainWindow.inactive_channel;
 				return;
 			case IRC.ERR_NOSUCHNICK:
 			case IRC.ERR_NOSUCHCHANNEL:

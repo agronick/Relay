@@ -42,6 +42,7 @@ public class IRC{
 	public const string RPL_LIST = "322";
 	public const string RPL_LISTEND = "323";
 	public const string RPL_CHANNELMODEIS = "324";
+	public const string RPL_CHANNEL_URL  = "328";
 	public const string RPL_AUTHEDAS = "330";
 	public const string RPL_NOTOPIC = "331";
 	public const string RPL_TOPIC = "332";
@@ -82,8 +83,9 @@ public class IRC{
 	public const string ERR_NICKNAMEINUSE = "433";
 	public const string ERR_USERNOTINCHANNEL = "441";
 	public const string ERR_NOTONCHANNEL = "442";
-	public const string ERR_NOTREGISTERED = "451"; //
-	public const string ERR_NEEDMOREPARAMS = "461"; //
+	public const string ERR_NOTREGISTERED = "451";
+	public const string ERR_NEEDMOREPARAMS = "461";
+	public const string ERR_LINKCHANNEL = "470";
 	public const string ERR_UNKNOWNMODE = "472";
 	public const string ERR_ALREADYONCHANNEL = "479";
 	public const string ERR_CHANOPRIVSNEEDED = "482";

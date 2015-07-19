@@ -55,7 +55,7 @@ public class MainWindow : Object
 	HeaderBar toolbar = new HeaderBar ();
 	ScrolledWindow users_scrolled = new Gtk.ScrolledWindow (null, null);
 	Granite.Widgets.DynamicNotebook tabs = new Granite.Widgets.DynamicNotebook();
-	public HashMap<string, Widgets.SourceList.Item> items_sidebar = new HashMap<string, Widgets.SourceList.Item>();
+	public static HashMap<string, Widgets.SourceList.Item> items_sidebar = new HashMap<string, Widgets.SourceList.Item>();
 	public static Button paste = new Button();
 	public static Box paste_box = new Box(Gtk.Orientation.HORIZONTAL, 0);
 	public static SqlClient sql_client = SqlClient.get_instance();
@@ -345,8 +345,6 @@ public class MainWindow : Object
 				tab_switch (null, new_tab.tab);
 			}
 
-			new_tab.tab.icon = null;
-
 			index++;
 			if (items_sidebar.has_key(new_tab.tab.label))
 				items_sidebar[new_tab.tab.label].icon = active_channel;
@@ -464,7 +462,7 @@ public class MainWindow : Object
 		}
 
 		if (using_tab.has_subject) 
-			new_subject (current_tab, using_tab.channel_subject.validate(-1) ? using_tab.channel_subject : using_tab.channel_subject.escape(""));
+			new_subject(current_tab, using_tab.channel_subject.validate(-1) ? using_tab.channel_subject : using_tab.channel_subject.escape(""));
 		else
 			channel_subject.hide();
 
@@ -777,7 +775,7 @@ public class MainWindow : Object
 	public int lookup_channel_id (Widgets.Tab tab) {
 		foreach (var output in outputs.entries) { 
 			if (output.value.tab == tab) {
-				return output.key;
+				return output.value.tab_index;
 			}
 		}
 		return -1;
@@ -787,6 +785,7 @@ public class MainWindow : Object
 		if (tab_id != current_tab || message.strip().length == 0) {
 			return;
 		}
+		/*
 		var rich_text = new RichText(message);
 		rich_text.parse_links();
 		string new_string = "";
@@ -802,7 +801,9 @@ public class MainWindow : Object
 			new_string += add;
 		}
 		new_string += message.substring(last_pos);
-		subject_text.set_markup(new_string);
+		*/
+		string url = (outputs[tab_id].channel_url != "") ? "\n\n" + outputs[tab_id].channel_url : "";
+		subject_text.set_text(message + url);
 		channel_subject.show();
 	}
 
@@ -837,7 +838,7 @@ public class MainWindow : Object
 		var welcome = new Widgets.Welcome(title, message);
 		welcome.append_with_image(new Image.from_file(Relay.get_asset_file("assets/manage-servers.png")), _("Manage"), _("Manage the servers you use"));
 		welcome.append_with_image(new Image.from_file(Relay.get_asset_file("assets/connect-server.png")), _("Connect"), _("Connect to a single server"));
-		welcome.append_with_image(new Image.from_file(Relay.get_asset_file("assets/saved-server.png")), _("Saved"), _("Connect to a saved server"));
+		welcome.append_with_image(new Image.from_file(Relay.get_asset_file("assets/saved-server.png")), _("Saved"), _(settings.get_bool("show_sidebar") ? _("Your sidepanel is already open") : _("Connect to a saved server")));
 
 		var tab = new Widgets.Tab();
 		tab.icon = null;
