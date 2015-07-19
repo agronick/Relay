@@ -40,6 +40,8 @@ public class ChannelTab : GLib.Object {
 	public bool lock_arrays;
 	private TextView output;
 	public int message_count = 0;
+	private LinkedList<Message> pending_msg = new LinkedList<Message>();
+	private LinkedList<Message> pending_err = new LinkedList<Message>();
 
 	public static TimeVal timeval = TimeVal();
 	public static int timestamp_seconds = 180;
@@ -124,12 +126,25 @@ public class ChannelTab : GLib.Object {
 			return name;
 	}
 
+	public LinkedList<Gee.List<string>> get_all_user_lists() {
+		LinkedList<Gee.List<string>> user_types = new LinkedList<Gee.List<string>>();
+		user_types.add(owners);
+		user_types.add(ops);
+		user_types.add(half_ops);
+		user_types.add(users);
+		return user_types;
+	}
+
 	public void user_name_change(string _old_name, string _new_name) {
 		string old_name = fix_user_name(_old_name);
 		string new_name = fix_user_name(_new_name);
-		int index = users.index_of(old_name);
-		if (index != -1)
-			users[index] = fix_user_name(new_name);
+
+		foreach (var list in get_all_user_lists()) {
+			int index = list.index_of(old_name);
+			if (index != -1)
+				list[index] = fix_user_name(new_name);
+		}
+		
 		if (connection.server.nickname == old_name || connection.server.nickname == new_name)
 			connection.server.nickname = new_name;
 
@@ -201,7 +216,15 @@ public class ChannelTab : GLib.Object {
 		
 		update_tag_table();
 
+		var _pending_msg = pending_msg;
+		var _pending_err = pending_err;
+		pending_msg = null;
+		pending_err = null;
+		foreach (var msg in _pending_msg)
+			display_message(msg);
 
+		foreach (var msg in _pending_err)
+			display_error(msg);
 	}
 
 	public TextView get_output () {
@@ -248,7 +271,12 @@ public class ChannelTab : GLib.Object {
 		return message.substring(1); 
 	}
 
-	public void display_message (Message message) {   
+	public void display_message (Message message) {
+		if (pending_msg != null) {
+			pending_msg.add(message);
+			return;
+		}
+		
 		message.message = message.get_msg_txt();
 		message.message += "\n";
 
@@ -268,6 +296,10 @@ public class ChannelTab : GLib.Object {
 	}
 
 	public void display_error (Message message) {
+		if (pending_err != null) {
+			pending_err.add(message);
+			return;
+		}
 		tab.working = false;
 		message.message += "\n";
 		add_with_tag(message.message, error_tag);

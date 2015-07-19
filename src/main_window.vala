@@ -194,7 +194,8 @@ public class MainWindow : Object
 
 			toolbar.set_title(app.program_name);
 
-			toolbar.show_close_button = true;
+			if (!Relay.on_kde)
+				toolbar.show_close_button = true;
 			window.set_titlebar(toolbar);
 			window.show_all();
 
@@ -256,6 +257,7 @@ public class MainWindow : Object
 			if (settings.get_bool("show_sidebar")) {
 				slide_panel();
 			}
+
 		}
 		catch (Error e) {
 			error("Could not load UI: %s\n", e.message);
@@ -515,11 +517,7 @@ public class MainWindow : Object
 		int MAX_COLS = 4;
 		int i = 0;
 		int type_change = 0;
-		LinkedList<Gee.List<string>> user_types = new LinkedList<Gee.List<string>>();
-		user_types.add(using_tab.owners);
-		user_types.add(using_tab.ops);
-		user_types.add(using_tab.half_ops);
-		user_types.add(using_tab.users);
+		LinkedList<Gee.List<string>> user_types = using_tab.get_all_user_lists();
 		int total_size = using_tab.users.size + using_tab.owners.size + using_tab.ops.size + using_tab.half_ops.size;
 
 		//Make users
@@ -709,6 +707,7 @@ public class MainWindow : Object
 			tab.display_error(message);
 		} else
 			tab.display_message(message);
+		
 		Idle.add( ()=> {
 			if (current_tab != tab.tab_index) {
 				tab.message_count++;

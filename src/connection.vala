@@ -96,10 +96,10 @@ public class Connection : Object
 		return 1;
 	}
 
-	public ChannelTab? add_channel_tab (string? name) {
+	public ChannelTab? add_channel_tab (string? name, bool primsg = false) {
 		if (name == null || name.strip() == "")
 			return null;
-		if (name == server.username || name == server.nickname)
+		if (name == server.username || (name == server.nickname && !primsg) || name == "IRC")
 			return server_tab;
 		if (channel_tabs.has_key(name))
 			return channel_tabs[name];
@@ -137,6 +137,10 @@ public class Connection : Object
 				return;
 			case IRC.PRIVATE_MESSAGE: 
 				ChannelTab tab = add_channel_tab(message.parameters[0]);
+				debug("LOOK " + message.parameters[0].strip() + "' '" + server.nickname);
+				if (tab == server_tab && message.parameters[0] == server.nickname) {
+					tab = add_channel_tab(message.user_name, true);
+				}
 				if (tab != null)
 					backref.add_text(tab, message);
 				return;
