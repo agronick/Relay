@@ -68,8 +68,8 @@ public class SqlClient : Object
 
 	public void refresh () {
 		servers.clear();
-		db.exec("SELECT * from servers", refresh_callback);
-		db.exec("SELECT * from channels", refresh_callback_channel);
+		db.exec("SELECT * from servers ORDER BY servers.host", refresh_callback);
+		db.exec("SELECT * from channels ORDER BY channels.channel", refresh_callback_channel);
 	}
 
 	public Server? get_server (string name) {

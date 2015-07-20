@@ -36,6 +36,7 @@ public class Connection : Object
 	public HashMap<string, ChannelTab> channel_tabs = new HashMap<string, ChannelTab>();
 	public LinkedList<string> channel_autoconnect = new LinkedList<string>();
 	public bool error_state = false;
+	public bool autoconnect_ran = false;
 
 	public signal void new_topic(ChannelTab tab, string topic);
 
@@ -255,9 +256,19 @@ public class Connection : Object
 	}
 
 	public void do_autoconnect () {
+		autoconnect_ran = true;
 		foreach (var chan in channel_autoconnect) {
 			join(chan);
 		}
+		Gdk.threads_add_timeout_seconds(25, ()=> {
+			foreach (var chan in channel_autoconnect) {
+				if (MainWindow.items_sidebar.has_key(chan) && 
+				MainWindow.items_sidebar[chan].icon == MainWindow.loading_channel) {
+					MainWindow.items_sidebar[chan].icon = MainWindow.inactive_channel;
+			   }
+			}
+			return false;
+		});
 	}
 
 	public void run_on_connect_cmds() {

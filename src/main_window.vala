@@ -682,7 +682,7 @@ public class MainWindow : Object
 			//Has existing server but no channel
 			foreach (var con in clients.entries) {
 				if (con.key == server.host) {
-					if (con.value.server_tab.tab.working && !con.value.channel_autoconnect.contains(channel.channel)) {
+					if (!con.value.autoconnect_ran && !con.value.channel_autoconnect.contains(channel.channel)) {
 						items_sidebar[channel.channel].icon = loading_channel;
 						con.value.channel_autoconnect.add(channel.channel);
 					} else
@@ -698,7 +698,6 @@ public class MainWindow : Object
 		}
 	} 
 
-	
 	public void add_text (ChannelTab tab, Message message, bool error = false) {
 		if (error) {
 			message.message = _("Error: ") + message.message;
