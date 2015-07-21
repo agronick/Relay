@@ -68,7 +68,9 @@ public class ServerManager : Object
 		cancel = builder.get_object ("cancel") as Button;
 		add_channel = builder.get_object ("add_channel") as Button;
 		new_channel = builder.get_object ("channel_name") as Entry;
-		channels = builder.get_object ("channel") as ListBox;
+		var channels_wrapper = builder.get_object ("channel_wrapper") as ScrolledWindow;
+		channels = new ListBox();
+		channels_wrapper.add(channels);
 		servers = builder.get_object ("servers") as ListBox;
 		host = builder.get_object ("host") as Entry;
 		real = builder.get_object ("real") as Entry;
@@ -95,7 +97,6 @@ public class ServerManager : Object
 		server_btns.pack_end(add_server, false, false, 0);
 		server_btns.pack_end(remove_server, false, false, 0);
 
-		channels.set_size_request(100,100);
 		channels.set_selection_mode(SelectionMode.BROWSE);
 		servers.set_size_request(175,50);
 
