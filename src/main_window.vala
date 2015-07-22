@@ -71,7 +71,6 @@ public class MainWindow : Object
 	public MainWindow (Relay application) {
 		try {
 			app = application;
-			servers.set_tooltip_text(_("Double click an item to connect"));
 
 			inactive_channel = new Pixbuf.from_file(Relay.get_asset_file("assets/user-offline.svg"));
 			active_channel = new Pixbuf.from_file(Relay.get_asset_file("assets/user-idle.svg"));
@@ -608,13 +607,37 @@ public class MainWindow : Object
 	}
 
 	public void add_server (SqlClient.Server server, LinkedList<string>? connect_channels = null) {
-		var connection = new Connection(this);
+		var connection = new Connection();
 		clients.set(server.host, connection); 
+		connection.new_tab.connect(add_tab);
+		connection.new_message.connect(add_text);
+		connection.change_channel_state.connect(sidebar_state);
 
 		if (connect_channels != null)
 			connection.channel_autoconnect = connect_channels;
 
 		connection.connect_to_server(server);
+	}
+
+	private void sidebar_state (string name, string state) {
+		if (!items_sidebar.has_key(name))
+			return;
+
+		Icon pixbuf = inactive_channel;
+		switch (state) {
+			case "active":
+				pixbuf = active_channel;
+				break;
+			case "loading":
+				pixbuf = loading_channel;
+				break;
+			case "stuck":
+				if (items_sidebar[name].icon != loading_channel)
+					return;
+				pixbuf = inactive_channel;
+				break;
+		}
+		items_sidebar[name].icon = pixbuf;
 	}
 
 	public void refresh_server_list () {

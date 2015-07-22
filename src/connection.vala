@@ -36,13 +36,11 @@ public class Connection : Object
 	public bool error_state = false;
 	public bool autoconnect_ran = false;
 	public SqlClient.Server server;
-	private weak MainWindow backref;
 
 	public signal void new_topic(ChannelTab tab, string topic);
-
-	public Connection(MainWindow back) {
-		backref = back;
-	}
+	public signal void new_tab(ChannelTab tab, string name);
+	public signal void new_message(ChannelTab tab, Message message, bool is_error = false);
+	public signal void change_channel_state(string chan_name, string state);
 
 	public bool connect_to_server (SqlClient.Server _server) {
 		server = _server;
@@ -109,7 +107,7 @@ public class Connection : Object
 		if (channel_tabs.has_key(name))
 			return channel_tabs[name];
 		var newTab = new ChannelTab(this);
-		backref.add_tab(newTab, name); 
+		new_tab(newTab, name); 
 		channel_tabs[name] = newTab;
 		return newTab;
 	}
@@ -142,7 +140,7 @@ public class Connection : Object
 					tab = add_channel_tab(message.user_name, true);
 				}
 				if (tab != null)
-					backref.add_text(tab, message);
+					new_message(tab, message);
 				return;
 			case IRC.RPL_TOPIC:
 				ChannelTab tab = find_channel_tab(message.parameters[1]);
@@ -171,7 +169,7 @@ public class Connection : Object
 			case IRC.RPL_CREATED:
 			case IRC.RPL_LUSERME:
 				server_tab.set_topic(message.get_msg_txt(), true);
-				backref.add_text(server_tab, message);
+				new_message(server_tab, message);
 				return;
 			case IRC.RPL_WELCOME:
 				do_autoconnect();
@@ -235,7 +233,7 @@ public class Connection : Object
 			case IRC.ERR_ALREADYONCHANNEL:
 			case IRC.ERR_CHANOPRIVSNEEDED:
 			case IRC.ERR_NONONREG:
-				backref.add_text(find_channel_tab(message.parameters[0]), message, true);
+				new_message(find_channel_tab(message.parameters[0]), message, true);
 				return;
 			default:
 				if (message.command == null)
@@ -246,7 +244,7 @@ public class Connection : Object
 					    (mode <= 533 && mode >= 400) || 
 						(mode >= 712 && mode <= 715) || 
 						(mode >= 972)) {
-						backref.add_text(server_tab, message, true);
+						new_message(server_tab, message, true);
 						return;
 					}
 				}
@@ -256,8 +254,7 @@ public class Connection : Object
 	}
 
 	public void turn_off_icon (string channel) {
-		if (MainWindow.items_sidebar.has_key(channel))
-			MainWindow.items_sidebar[channel].icon = MainWindow.inactive_channel;
+		change_channel_state(channel, "inactive");
 	}
 
 	public void do_register () {
@@ -274,10 +271,7 @@ public class Connection : Object
 		}
 		Gdk.threads_add_timeout_seconds(25, ()=> {
 			foreach (var chan in channel_autoconnect) {
-				if (MainWindow.items_sidebar.has_key(chan) && 
-				MainWindow.items_sidebar[chan].icon == MainWindow.loading_channel) {
-					MainWindow.items_sidebar[chan].icon = MainWindow.inactive_channel;
-			   }
+					change_channel_state(chan, "stuck");
 			}
 			return false;
 		});
@@ -365,7 +359,7 @@ public class Connection : Object
 		exit = true;
 
 		foreach (string chan in channel_autoconnect)
-			backref.items_sidebar[chan].icon = MainWindow.inactive_channel;
+			turn_off_icon(chan);
 		
 		send_output("QUIT :" + _("Relay, an IRC client for the modern desktop"));
 		stop();
