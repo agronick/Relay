@@ -90,6 +90,8 @@ public class Connection : Object
 			error_state = true;
 			Relay.show_error_window(e.message);
 			server_tab.tab.close();
+			foreach (string tab in channel_autoconnect)
+				turn_off_icon(tab);
 			warning("Could not connect" + e.message);
 			return 0;
 		}
@@ -97,19 +99,22 @@ public class Connection : Object
 		return 1;
 	}
 
-	public ChannelTab? add_channel_tab (string? name, bool primsg = false) {
-		if (name == null || name.strip() == "")
+	public ChannelTab? add_channel_tab (string? _name, bool primsg = false) {
+		debug("NAME " + _name);
+		string? name = _name;
+		if (name == null || name.strip() == "" || server == null)
 			return null;
 		if (name == server.username || (name == server.nickname && !primsg) || name == "IRC")
 			return server_tab;
 		if (channel_tabs.has_key(name))
 			return channel_tabs[name];
-		var newTab = new ChannelTab(this, name);
-		backref.add_tab(newTab); 
+		var newTab = new ChannelTab(this);
+		backref.add_tab(newTab, name); 
 		channel_tabs[name] = newTab;
 		return newTab;
 	}
 
+	//Same as add_channel_tab but won't create if not found
 	private ChannelTab find_channel_tab (string name) {
 		if (channel_tabs.has_key(name))
 			return channel_tabs[name];
@@ -157,8 +162,8 @@ public class Connection : Object
 			case IRC.RPL_LUSEROP:
 			case IRC.RPL_LUSERUNKNOWN:
 			case IRC.RPL_LUSERCHANNELS:
-				case IRC.RPL_UMODEIS: //maybe atab
-				case IRC.RPL_SERVLIST:
+			case IRC.RPL_UMODEIS: //maybe atab
+			case IRC.RPL_SERVLIST:
 			case IRC.RPL_ENDOFSTATS:
 			case IRC.RPL_STATSLINKINFO:
 				server_tab.display_message(message);
@@ -182,9 +187,8 @@ public class Connection : Object
 				break;
 			case IRC.QUIT_MSG:
 			case IRC.PART_MSG:
-				debug(message.user_name + " has left");
 				foreach(var t in channel_tabs.entries) {
-					if (t != null && message.user_name != null && message.user_name.length > 0)
+					if (!t.value.is_server_tab && t != null && message.user_name != null && message.user_name.length > 0)
 						t.value.user_leave_channel(message.user_name, message.get_msg_txt());
 				}
 				return;
@@ -195,8 +199,10 @@ public class Connection : Object
 				}
 				return;
 			case IRC.JOIN_MSG:
-				var tab = add_channel_tab(message.get_msg_txt()); 
-				if (tab != null && message.user_name != null && message.user_name.length > 0)
+				var tab = find_channel_tab(message.get_msg_txt());
+				if (tab == server_tab)
+					tab = find_channel_tab(message.parameters[0]);
+				if (tab != server_tab && tab != null && message.user_name != null && message.user_name.length > 0)
 					tab.user_join_channel(message.user_name);
 				return;
 			case IRC.RPL_ENDOFNAMES:
@@ -212,8 +218,9 @@ public class Connection : Object
 				return;
 			case IRC.ERR_LINKCHANNEL:
 				//Channel forwarding
-				if (message.parameters.length >= 2 && MainWindow.items_sidebar.has_key(message.parameters[1]))
-					MainWindow.items_sidebar[message.parameters[1]].icon = MainWindow.inactive_channel;
+				if (message.parameters.length < 2)
+					return;
+				turn_off_icon(message.parameters[1]);
 				return;
 			case IRC.ERR_NOSUCHNICK:
 			case IRC.ERR_NOSUCHCHANNEL:
@@ -246,6 +253,11 @@ public class Connection : Object
 				debug("Unhandled message: " + msg);
 				return;
 		} 
+	}
+
+	public void turn_off_icon (string channel) {
+		if (MainWindow.items_sidebar.has_key(channel))
+			MainWindow.items_sidebar[channel].icon = MainWindow.inactive_channel;
 	}
 
 	public void do_register () {

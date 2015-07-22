@@ -26,7 +26,10 @@ using Gdk;
 public class ChannelTab : GLib.Object {
 	public int tab_index { get; set; }
 	public Connection connection { get; set; }
-	public string channel_name { get; set; }
+	public string channel_name { 
+				get{return tab.label;}  
+				set{tab.label = value;}
+	}
 	public Granite.Widgets.Tab tab;
 	public bool is_server_tab = false;
 	public bool has_subject = false;
@@ -43,6 +46,7 @@ public class ChannelTab : GLib.Object {
 	private LinkedList<Message> pending_msg = new LinkedList<Message>();
 	private LinkedList<Message> pending_err = new LinkedList<Message>();
 	public string channel_url = "";
+	public bool needs_spacer = false;
 
 	public static TimeVal timeval = TimeVal();
 	public static int timestamp_seconds = 180;
@@ -61,6 +65,7 @@ public class ChannelTab : GLib.Object {
 	TextTag timestamp_tag;
 	TextTag spacing_tag;
 	TextTag other_name_hilight_tag;
+	TextTag spacer_line_tag;
 
 	public signal void new_subject(int tab_id, string subject);
 
@@ -68,10 +73,8 @@ public class ChannelTab : GLib.Object {
 		connection.send_output(msg);
 	}
 
-	public ChannelTab (Connection? param_server = null, string param_channel_name = "", int param_tab_index = -1) {
+	public ChannelTab (Connection param_server) {
 		connection = param_server;
-		channel_name = param_channel_name;
-		tab_index = param_tab_index;
 	}  
 
 	public void set_tab (Widgets.Tab t, int index) { 
@@ -214,6 +217,7 @@ public class ChannelTab : GLib.Object {
 		timestamp_tag = output.buffer.create_tag("timestamp");
 		spacing_tag = output.buffer.create_tag("spacing");
 		other_name_hilight_tag =  output.buffer.create_tag("other_name");
+		spacer_line_tag =  output.buffer.create_tag("spacer_line");
 		
 		update_tag_table();
 
@@ -306,8 +310,10 @@ public class ChannelTab : GLib.Object {
 		add_with_tag(message.message, error_tag);
 	}
 
-	public void space() {
+	public string space() {
+		string txt = " \n";
 		add_with_tag(" \n", spacing_tag);
+		return txt;
 	}
 
 	public void handle_private_message (Message message) {
@@ -363,6 +369,7 @@ public class ChannelTab : GLib.Object {
 		   retry_count > 4 ||
 		   (text.strip() == "" && tag != spacing_tag))
 			return;
+
 
 		var rich_text = new RichText(text);
 		if (tag == full_width_tag || tag == std_message_tag) {
@@ -462,6 +469,33 @@ public class ChannelTab : GLib.Object {
 		timestamp_tag.pixels_below_lines = 3;
 
 		spacing_tag.size_points = 2;
+
+		spacer_line_tag.justification = Justification.FILL;
+		spacer_line_tag.underline = Pango.Underline.SINGLE;
+		spacer_line_tag.left_margin = 15;
+		spacer_line_tag.right_margin = 15;
+		spacer_line_tag.foreground_rgba = output.get_style_context().get_background_color(StateFlags.NORMAL);
+		color.parse(Relay.is_light_theme? "#C3C3C3" : "#505254");
+		spacer_line_tag.paragraph_background_rgba = color;
+		spacer_line_tag.size_points = 0.5;
+	}
+
+	private int[] last_spacer_range = new int[2];
+	public void add_spacer_line () {
+		TextIter start;
+		TextIter end;
+		if (last_spacer_range[1] != 0) {
+			output.get_buffer().get_iter_at_offset(out start, last_spacer_range[0]);
+			output.get_buffer().get_iter_at_offset(out end, last_spacer_range[1]);
+			output.buffer.delete(ref start, ref end);
+		}
+		
+		output.buffer.get_end_iter(out start);
+		space();
+		add_with_tag("-  \n", spacer_line_tag);
+		space();
+		last_spacer_range[0] = start.get_offset();
+		last_spacer_range[1] = last_spacer_range[0] + 8; //8 = space() * 2 + spacer_line_tag
 	}
 
 	public bool user_name_clicked (GLib.Object event_object, Gdk.Event event, TextIter end) {
@@ -509,6 +543,12 @@ public class ChannelTab : GLib.Object {
 		string[] slice = split[2:split.length];
 		string msg = "PRIVMSG " + split[1] + " :" + string.joinv(" ", slice);
 		return msg;
+	}
+
+	public int get_char_count() {
+		if (output == null)
+			return 0;
+		return output.buffer.get_char_count();
 	}
 }
 

@@ -22,6 +22,9 @@
     <key name="show-tabs" type="b">
       <default>true</default>
     </key>
+    <key name="show-line" type="b">
+      <default>true</default>
+    </key>
 
     <key name="user-self-color" type="s">
       <default>"default"</default>

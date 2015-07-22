@@ -24,7 +24,7 @@ using Pango;
 
 public class Settings : GLib.Object {
 
-    const string[] switch_names = {"show_animations", "show_join", "show_sidebar", "open_server", "show_datestamp", "change_tab", "show_tabs"};
+    const string[] switch_names = {"show_animations", "show_join", "show_sidebar", "open_server", "show_datestamp", "change_tab", "show_tabs", "show_line"};
     const string[] color_names = {"user-self-color", "user-other-color", "message-color", "link-color", "timestamp-color"};
     HashMap<string, string> colors_defaults = new HashMap<string, string>();
     GLib.Settings settings;
@@ -107,7 +107,7 @@ public class Settings : GLib.Object {
             colors.override_font(bold);
         }
 
-        var close = builder.get_object ("close") as Button;
+        var close = builder.get_object("close") as Button;
         close.button_release_event.connect( (event)=> {
             window.close();
             return true;

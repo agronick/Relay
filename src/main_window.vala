@@ -39,8 +39,8 @@ public class MainWindow : Object
 	public static Icon inactive_channel;
 	public static Icon active_channel;
 	public static Icon loading_channel;
+	public static Icon channel_tab_icon_new_msg;
 	Paned panel;
-	Icon channel_tab_icon_new_msg;
 	Box users_list;
 	Popover users_popover;
 	string channel_user_selected = "";
@@ -257,7 +257,6 @@ public class MainWindow : Object
 			if (settings.get_bool("show_sidebar")) {
 				slide_panel();
 			}
-
 		}
 		catch (Error e) {
 			error("Could not load UI: %s\n", e.message);
@@ -298,9 +297,10 @@ public class MainWindow : Object
 	 *  channel or server is opened
 	 */
 	public static int index = 0;
-	public void add_tab (ChannelTab new_tab) {
+	public void add_tab (ChannelTab new_tab, string name) {
 		Idle.add( () => { 
 			new_tab.tab = new Widgets.Tab();
+			new_tab.tab.label = name;
 			new_tab.tab.menu = tab_rightclick;
 			new_tab.tab.ellipsize_mode = EllipsizeMode.NONE;
 
@@ -327,7 +327,6 @@ public class MainWindow : Object
 			ptabs.set_tab(0, Pango.TabAlign.LEFT, IRC.USER_WIDTH);
 			output.tabs = ptabs;
 
-			new_tab.tab.restore_data = new_tab.tab.label = new_tab.channel_name; 
 			new_tab.tab.page = scrolled;
 			new_tab.new_subject.connect(new_subject);
 			tabs.insert_tab(new_tab.tab, -1); 
@@ -348,13 +347,6 @@ public class MainWindow : Object
 			index++;
 			if (items_sidebar.has_key(new_tab.tab.label))
 				items_sidebar[new_tab.tab.label].icon = active_channel;
-			else {
-				foreach(var item in items_sidebar.entries)
-					if(new_tab.tab.label.has_suffix(item.value.name)) {
-						item.value.icon = active_channel;
-						new_tab.tab.label = item.value.name;
-					}
-			}
 
 			if (settings.get_bool("change_tab"))
 				tabs.current = new_tab.tab;
@@ -366,9 +358,8 @@ public class MainWindow : Object
 		});
 
 
-		if (new_tab.channel_name != new_tab.connection.server.host) {
-			new_tab.connection.send_output("TOPIC " + new_tab.channel_name);
-		}
+		if (name != new_tab.connection.server.host)
+			new_tab.connection.send_output("TOPIC " + name);
 	}
 
 	public void new_tab_requested () {
@@ -435,6 +426,10 @@ public class MainWindow : Object
 	}
 
 	private void tab_switch (Granite.Widgets.Tab? old_tab, Granite.Widgets.Tab new_tab) {
+		if (old_tab != null && old_tab.label != _("Welcome")) {
+			var last_tab = lookup_channel_id(old_tab);
+			outputs[last_tab].needs_spacer = true;
+		}
 		if (new_tab.label == _("Welcome")) {
 			channel_subject.hide();
 			channel_users.hide();
@@ -445,7 +440,7 @@ public class MainWindow : Object
 			paste.hide();
 			return;
 		}
-
+		
 		input.show();
 
 		new_tab.icon = null;
@@ -454,6 +449,7 @@ public class MainWindow : Object
 		if (!outputs.has_key(current_tab))
 			return;
 		ChannelTab using_tab = outputs[current_tab];
+		using_tab.needs_spacer = false;
 
 
 		if (items_sidebar.has_key(using_tab.tab.label)) {
@@ -699,6 +695,12 @@ public class MainWindow : Object
 	} 
 
 	public void add_text (ChannelTab tab, Message message, bool error = false) {
+		if (tab.needs_spacer) {
+			if (tab.get_char_count() > 3 && settings.get_bool("show_line"))
+				tab.add_spacer_line();
+			tab.needs_spacer = false;
+		}
+		
 		if (error) {
 			message.message = _("Error: ") + message.message;
 			tab.display_error(message);
@@ -710,14 +712,16 @@ public class MainWindow : Object
 				tab.message_count++;
 				if (items_sidebar.has_key(tab.tab.label) && !tab.is_server_tab)
 					items_sidebar[tab.tab.label].badge = tab.message_count.to_string();
+				
 				tab.tab.icon = channel_tab_icon_new_msg;
 			}
+				
 			return false;
 		});
 	}
 
 	public void send_text_out (string text) {
-		if (current_tab == -1 || !outputs.has_key(current_tab))
+		if (current_tab == -1 || !outputs.has_key(current_tab) || text == "")
 			return;
 		var output = outputs[current_tab]; 
 		output.send_text_out(text);
