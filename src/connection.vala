@@ -26,17 +26,17 @@ public class Connection : Object
 {
 
 	public static const uint16 DEFAULT_PORT = 6667;
-	public DataInputStream input_stream;
-	public DataOutputStream output_stream;
-	public SqlClient.Server server;
-	public bool exit = false;
-	public bool encrypted = false;
-	private weak MainWindow backref;
+	private DataInputStream input_stream;
+	private DataOutputStream output_stream;
 	public ChannelTab server_tab;
 	public HashMap<string, ChannelTab> channel_tabs = new HashMap<string, ChannelTab>();
 	public LinkedList<string> channel_autoconnect = new LinkedList<string>();
+	public bool exit = false;
+	public bool encrypted = false;
 	public bool error_state = false;
 	public bool autoconnect_ran = false;
+	public SqlClient.Server server;
+	private weak MainWindow backref;
 
 	public signal void new_topic(ChannelTab tab, string topic);
 
