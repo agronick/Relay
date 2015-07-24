@@ -41,19 +41,22 @@ public class MainWindow : Object
 	public static Icon loading_channel;
 	public static Icon channel_tab_icon_new_msg;
 	Paned panel;
-	Box users_list;
-	Popover users_popover;
-	string channel_user_selected = "";
-	Gtk.Menu user_menu = new Gtk.Menu();
 	Gtk.Menu tab_rightclick = new Gtk.Menu();
 	Gtk.Menu tab_channel_list = new Gtk.Menu();
 	DragFile drag_file = new DragFile();
 	Button channel_users = new Button();
 	Label subject_text = new Label("");
-	Label users_header = new Label("");
 	Button channel_subject = new Button();
 	HeaderBar toolbar = new HeaderBar ();
+
+	//User popover
+	Popover users_popover;
+	Label users_header = new Label("");
+	Box users_list = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
 	ScrolledWindow users_scrolled = new Gtk.ScrolledWindow (null, null);
+	Gtk.Menu user_menu = new Gtk.Menu();
+	string channel_user_selected = "";
+	
 	Granite.Widgets.DynamicNotebook tabs = new Granite.Widgets.DynamicNotebook();
 	public static HashMap<string, Widgets.SourceList.Item> items_sidebar = new HashMap<string, Widgets.SourceList.Item>();
 	public static Button paste = new Button();
@@ -152,12 +155,14 @@ public class MainWindow : Object
 			channel_users.tooltip_text = _("Channel users");
 			channel_users.hide();
 			users_popover = new Gtk.Popover(channel_users);
+			var users_search = new SearchEntry();
 			channel_users.clicked.connect(() => {
 					make_user_popover_idle(outputs.get(current_tab));
 					users_popover.show_all();
 			});
 			users_popover.focus_out_event.connect((event)=> {
 				users_popover.closed();
+				users_search.set_text("");
 				return true;
 			});
 			toolbar.button_press_event.connect( ()=> {
@@ -167,15 +172,18 @@ public class MainWindow : Object
 
 			users_scrolled.vscrollbar_policy = PolicyType.NEVER;
 			users_scrolled.hscrollbar_policy = PolicyType.AUTOMATIC;
-			users_list = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 0);
 			users_scrolled.add(users_list);
 
 			var users_wrap = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
 			var font = new FontDescription();
 			font.set_weight(Pango.Weight.BOLD);
+			users_search.search_changed.connect( ()=> {
+				make_user_popover_idle(outputs.get(current_tab), users_search.get_text());
+			});
 			users_header.override_font(font);
 			users_header.height_request = 24;
 			users_wrap.pack_start(users_header, true, false, 4);
+			users_wrap.pack_start(users_search, true, false , 4);
 			users_wrap.pack_start(users_scrolled);
 			users_popover.add(users_wrap);
 			toolbar.pack_end(channel_users);
@@ -214,7 +222,8 @@ public class MainWindow : Object
 			drag_file.attach_button(paste);
 			Gtk.drag_dest_set(paste, 
 			                  Gtk.DestDefaults.ALL,
-			                  DragFile.TARGETS, Gdk.DragAction.LINK);
+			                  DragFile.TARGETS, 
+			                  Gdk.DragAction.LINK);
 			drag_file.file_uploaded.connect(file_uploaded);
 			paste.drag_data_received.connect(drag_file.drop_file);
 			paste.enter_notify_event.connect((event) => {
@@ -491,16 +500,32 @@ public class MainWindow : Object
 		}
 	}
 	
-	private void make_user_popover_idle (ChannelTab? using_tab) {
+	private void make_user_popover_idle (ChannelTab? using_tab, string _search_str = "") {
 		if (using_tab == null)
 			return;
+
+		string search_str = _search_str.down();
 
 		int PER_BOX = 15;
 		int BOX_WIDTH = 140;
 		int MAX_COLS = 4;
 		int i = 0;
 		int type_change = 0;
-		LinkedList<Gee.List<string>> user_types = using_tab.get_all_user_lists();
+		LinkedList<LinkedList<string>> user_types;
+		if (search_str != "") {
+			LinkedList<LinkedList<string>> _user_types = using_tab.get_all_user_lists();
+			user_types = new LinkedList<LinkedList<string>>();
+			foreach (var _list in _user_types) {
+				var list = new LinkedList<string>();
+				foreach (string usr in _list)
+					if (usr.down().contains(search_str))
+						list.add(usr);
+				user_types.add(list);
+			}
+		}else{
+			user_types = using_tab.get_all_user_lists();
+		}
+		
 		int total_size = using_tab.users.size + using_tab.owners.size + using_tab.ops.size + using_tab.half_ops.size;
 
 		//Make users
