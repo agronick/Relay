@@ -91,14 +91,6 @@ public class IRC{
 	public const string ERR_CHANOPRIVSNEEDED = "482";
 	public const string ERR_NONONREG = "486";
 
-
-
-	public static int compare(string a, string b) {
-		var a1 = a[0].tolower().to_string() + a;
-		var b1 = b[0].tolower().to_string() + b;
-		return GLib.strcmp(a1, b1);                                                                                                                                                                                                                                                                                                                                                       
-	}
-
 	public static string remove_user_prefix (string name) {
 		if (user_prefixes.index_of_char(name[0]) != -1)
 			return name.substring(1);

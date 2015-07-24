@@ -204,6 +204,8 @@ public class Connection : Object
 					tab.user_join_channel(message.user_name);
 				return;
 			case IRC.RPL_ENDOFNAMES:
+				var tab = find_channel_tab(message.parameters[1]);
+				tab.sort_names();
 				return;
 				//Errors
 			case IRC.ERR_NICKNAMEINUSE:

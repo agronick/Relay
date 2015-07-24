@@ -153,7 +153,7 @@ public class MainWindow : Object
 			channel_users.hide();
 			users_popover = new Gtk.Popover(channel_users);
 			channel_users.clicked.connect(() => {
-					refresh_user_popover(outputs.get(current_tab));
+					make_user_popover_idle(outputs.get(current_tab));
 					users_popover.show_all();
 			});
 			users_popover.focus_out_event.connect((event)=> {
@@ -490,20 +490,10 @@ public class MainWindow : Object
 				channel_users.show_all();
 		}
 	}
-
-	private void refresh_user_popover (ChannelTab using_tab) {
-
-		using_tab.lock_arrays = true;
-		Relay.sort_clean(ref using_tab.owners);
-		Relay.sort_clean(ref using_tab.ops);
-		Relay.sort_clean(ref using_tab.half_ops);
-		Relay.sort_clean(ref using_tab.users);
-		using_tab.lock_arrays = false;
-		
-		make_user_popover_idle(using_tab);
-	}
 	
-	private void make_user_popover_idle (ChannelTab using_tab) {
+	private void make_user_popover_idle (ChannelTab? using_tab) {
+		if (using_tab == null)
+			return;
 
 		int PER_BOX = 15;
 		int BOX_WIDTH = 140;

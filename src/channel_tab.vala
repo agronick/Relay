@@ -40,7 +40,6 @@ public class ChannelTab : GLib.Object {
 	public LinkedList<string> half_ops = new LinkedList<string>();
 	public LinkedList<string> owners = new LinkedList<string>();
 	public LinkedList<string> blocked_users = new LinkedList<string>();
-	public bool lock_arrays;
 	private TextView output;
 	public int message_count = 0;
 	private LinkedList<Message> pending_msg = new LinkedList<Message>();
@@ -95,8 +94,6 @@ public class ChannelTab : GLib.Object {
 		if (name == null || name.strip().length < 2)
 			return;
 
-		while (lock_arrays)
-			Thread.usleep(1000);
 		blocked_users.add(name);
 
 		if (IRC.user_prefixes.index_of_char(name[0]) != -1)
@@ -117,7 +114,7 @@ public class ChannelTab : GLib.Object {
 			if (name.strip().length < 2)
 				continue;
 
-			add_user(name);
+			add_user(name, false);
 		}
 	}
 
@@ -130,8 +127,8 @@ public class ChannelTab : GLib.Object {
 			return name;
 	}
 
-	public LinkedList<Gee.List<string>> get_all_user_lists() {
-		LinkedList<Gee.List<string>> user_types = new LinkedList<Gee.List<string>>();
+	public LinkedList<LinkedList<string>> get_all_user_lists() {
+		LinkedList<LinkedList<string>> user_types = new LinkedList<LinkedList<string>>();
 		user_types.add(owners);
 		user_types.add(ops);
 		user_types.add(half_ops);
@@ -143,10 +140,12 @@ public class ChannelTab : GLib.Object {
 		string old_name = fix_user_name(_old_name);
 		string new_name = fix_user_name(_new_name);
 
-		foreach (var list in get_all_user_lists()) {
+		foreach (LinkedList<string> list in get_all_user_lists()) {
 			int index = list.index_of(old_name);
-			if (index != -1)
-				list[index] = fix_user_name(new_name);
+			if (index != -1) {
+				list.remove(old_name);
+				add_name_ordered(ref list, new_name, true);
+			}
 		}
 		
 		if (connection.server.nickname == old_name || connection.server.nickname == new_name)
@@ -156,21 +155,25 @@ public class ChannelTab : GLib.Object {
 			add_with_tag(old_name + _(" is now known as ") + new_name + "\n", full_width_tag);
 	}
 
-	public void user_leave_channel(string name, string msg) {
-		if (users.contains(fix_user_name(name))) {
+	public void user_leave_channel(string _name, string msg) {
+		string name = fix_user_name(_name);
+		if (users.contains(name)) {
 			last_user = "";
-			users.remove(fix_user_name(name));
 			if (MainWindow.settings.get_bool("show_join")) {
 				space();
 				string colon = (msg.strip().length > 0) ? ": " + msg : "";
 				add_with_tag(name + _(" has left") + colon + "\n", full_width_tag);
 			}
 		}
+		if (!users.remove(name))
+			if (!ops.remove(name))
+				if (!half_ops.remove(name))
+					owners.remove(name);
 	}
 
 	public void user_join_channel(string name) {
 		last_user = "";
-		string uname = add_user(name);
+		string uname = add_user(name, true);
 		if (uname == null)
 			return;
 		if (MainWindow.settings.get_bool("show_join")) {
@@ -179,12 +182,9 @@ public class ChannelTab : GLib.Object {
 		}
 	}
 
-	public string? add_user(string? user) {
+	public string? add_user(string? user, bool sorted = true) {
 		if (user == null)
 			return null;
-
-		while (lock_arrays)
-			Thread.usleep(1000);
 		
 		bool op = (user[0] == '@');
 		bool halfop = (user[0] == '%');
@@ -192,15 +192,40 @@ public class ChannelTab : GLib.Object {
 		string uname = fix_user_name(user);
 
 		if (op && !ops.contains(uname))
-			ops.add(uname);
+			add_name_ordered(ref ops, uname, sorted);
 		else if (halfop && !half_ops.contains(uname))
-			half_ops.add(uname);
+			add_name_ordered(ref half_ops, uname, sorted);
 		else if (owner && !owners.contains(uname))
-			owners.add(uname);
+			add_name_ordered(ref owners, uname, sorted);
 		else if (!users.contains(uname))
-			users.add(uname);
+			add_name_ordered(ref users, uname, sorted);
 
 		return uname;
+	}
+
+	public void sort_names () {
+		Relay.sort_clean(ref owners);
+		Relay.sort_clean(ref ops);
+		Relay.sort_clean(ref half_ops);
+		Relay.sort_clean(ref users);
+	}
+
+	public void add_name_ordered (ref LinkedList<string> list, string name, bool ordered) {
+		if (!ordered) {
+			list.add(name);
+			return;
+		}
+
+		int i = 0;
+		foreach (var item in list) {
+			int compare = Relay.compare(name, item);
+			if (compare < 1) {
+				list.insert(i, name);
+				return;
+			}
+			i++;
+		}
+		list.insert(i, name);
 	}
 
 	public void set_output(TextView _output) {
@@ -361,7 +386,7 @@ public class ChannelTab : GLib.Object {
 				return false;
 			});
 		}
-	}       
+	}   
 
 	private void add_with_tag (string? text, TextTag? tag, int retry_count = 0) {
 		if (text == null || 
