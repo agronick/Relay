@@ -513,14 +513,18 @@ public class MainWindow : Object
 	}
 	
 	private void make_user_popover_idle (ChannelTab? using_tab, string _search_str = "") {
-		invoke_count++;
-		int current_invoke_cnt = invoke_count;
-		Thread.usleep(600000);
-		if (current_invoke_cnt != invoke_count)
-			return;
+		if (_search_str == "") {
+			invoke_count++;
+		} else {
+			invoke_count++;
+			int current_invoke_cnt = invoke_count;
+			Thread.usleep(500000);
+			if (current_invoke_cnt != invoke_count)
+				return;
 		
-		if (using_tab == null)
-			return;
+			if (using_tab == null)
+				return;
+		}
 
 		string search_str = _search_str.down();
 
