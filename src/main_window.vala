@@ -226,10 +226,6 @@ public class MainWindow : Object
 			                  Gdk.DragAction.LINK);
 			drag_file.file_uploaded.connect(file_uploaded);
 			paste.drag_data_received.connect(drag_file.drop_file);
-			paste.enter_notify_event.connect((event) => {
-				paste.activate();
-				return true;
-			});
 
 			tabs.tab_removed.connect(tab_remove);
 			tabs.tab_switched.connect(tab_switch); 
@@ -326,6 +322,31 @@ public class MainWindow : Object
 			output.set_left_margin(IRC.USER_WIDTH);
 			output.set_indent(IRC.USER_WIDTH * -1);
 			output.override_font(FontDescription.from_string("Inconsolata 9"));
+
+
+			
+			output.populate_popup.connect( (menu)=> {
+				debug("POPULATE POPUP");
+				SeparatorMenuItem seperator = new SeparatorMenuItem();
+				Gtk.MenuItem save_selection = new Gtk.MenuItem.with_label (_("Save Selection"));
+				Gtk.MenuItem save_conversation = new Gtk.MenuItem.with_label (_("Save Conversation"));
+				menu.add(seperator);
+				menu.add(save_selection);
+				menu.add(save_conversation);
+				menu.show_all();
+				if (!output.buffer.has_selection)
+					save_selection.set_sensitive(false);
+				save_selection.activate.connect( ()=> {
+					TextIter start;
+					TextIter end;
+					output.buffer.get_selection_bounds(out start, out end);
+					save_output_to_file(output.buffer.get_text(start, end, false));
+				});
+				save_conversation.activate.connect( ()=> {
+					save_output_to_file(output.buffer.text);
+				});
+			});
+			
 			ScrolledWindow scrolled = new Gtk.ScrolledWindow (null, null);
 			if (!Relay.on_ubuntu)
 				scrolled.margin = 3;
@@ -958,6 +979,31 @@ public class MainWindow : Object
 			usetab.value.update_tag_table();
 			return true;
 		});
+	}
+
+	private void save_output_to_file (string text) {
+			Gtk.FileChooserDialog chooser = new Gtk.FileChooserDialog (
+					_("Save the conversation"), window, Gtk.FileChooserAction.SAVE,
+					"_Cancel",
+					Gtk.ResponseType.CANCEL,
+					"_Save",
+					Gtk.ResponseType.ACCEPT,
+			        null);
+			chooser.do_overwrite_confirmation = true;
+			chooser.set_filename(outputs[current_tab].channel_name);
+			chooser.set_current_folder(Environment.get_home_dir());
+			int resp = chooser.run();
+			if  (resp == Gtk.ResponseType.ACCEPT) {
+				try{
+					debug("URI IS :" + chooser.get_filename());
+					FileUtils.set_contents(chooser.get_filename(), text);
+				} catch (FileError e) {
+					Relay.show_error_window(e.message);
+				}
+				chooser.close ();
+			}else {
+				chooser.close ();
+			}
 	}
 
 	public void relay_close_program () { 
