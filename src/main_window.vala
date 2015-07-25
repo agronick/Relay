@@ -56,6 +56,7 @@ public class MainWindow : Object
 	ScrolledWindow users_scrolled = new Gtk.ScrolledWindow (null, null);
 	Gtk.Menu user_menu = new Gtk.Menu();
 	string channel_user_selected = "";
+	SearchEntry users_search = new SearchEntry();
 	
 	Granite.Widgets.DynamicNotebook tabs = new Granite.Widgets.DynamicNotebook();
 	public static HashMap<string, Widgets.SourceList.Item> items_sidebar = new HashMap<string, Widgets.SourceList.Item>();
@@ -155,10 +156,9 @@ public class MainWindow : Object
 			channel_users.tooltip_text = _("Channel users");
 			channel_users.hide();
 			users_popover = new Gtk.Popover(channel_users);
-			var users_search = new SearchEntry();
 			channel_users.clicked.connect(() => {
-					make_user_popover_idle(outputs.get(current_tab));
-					users_popover.show_all();
+					users_search.set_text("");
+					make_user_popover("", true);
 			});
 			users_popover.focus_out_event.connect((event)=> {
 				users_popover.closed();
@@ -178,7 +178,7 @@ public class MainWindow : Object
 			var font = new FontDescription();
 			font.set_weight(Pango.Weight.BOLD);
 			users_search.search_changed.connect( ()=> {
-				make_user_popover_idle(outputs.get(current_tab), users_search.get_text());
+				make_user_popover(users_search.get_text());
 			});
 			users_header.override_font(font);
 			users_header.height_request = 24;
@@ -499,8 +499,26 @@ public class MainWindow : Object
 				channel_users.show_all();
 		}
 	}
+
+	private int invoke_count = 0;
+	private void make_user_popover (string search_str = "", bool need_show = false) {
+		users_header.set_text(_("Loading..."));
+		if (need_show)
+			users_popover.show_all();
+		users_list.hide();
+		new Thread<int> ("User popover", ()=> {
+			make_user_popover_idle(outputs.get(current_tab), search_str);
+			return 0;
+		});
+	}
 	
 	private void make_user_popover_idle (ChannelTab? using_tab, string _search_str = "") {
+		invoke_count++;
+		int current_invoke_cnt = invoke_count;
+		Thread.usleep(600000);
+		if (current_invoke_cnt != invoke_count)
+			return;
+		
 		if (using_tab == null)
 			return;
 
@@ -509,7 +527,6 @@ public class MainWindow : Object
 		int PER_BOX = 15;
 		int BOX_WIDTH = 140;
 		int MAX_COLS = 4;
-		int i = 0;
 		int type_change = 0;
 		LinkedList<LinkedList<string>> user_types;
 		if (search_str != "") {
@@ -529,31 +546,47 @@ public class MainWindow : Object
 		int total_size = using_tab.users.size + using_tab.owners.size + using_tab.ops.size + using_tab.half_ops.size;
 
 		//Make users
-		foreach (var box in users_list.get_children())
-			users_list.remove(box);
-
-		var listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+		LinkedList<EventBox> list_boxes = new LinkedList<EventBox>();
 		foreach(Gee.List<string> type in user_types) {
 			foreach (string user in type) {
-				listbox.pack_start(make_user_eventbox(user, type_change), false, false, 0);
-				i++;
-				if (i % PER_BOX == 0 && total_size >= i) {
-					listbox.width_request = BOX_WIDTH;
-					listbox.show_all();
-					users_list.pack_start(listbox, true, true, 0);
-					listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
-				}
+				list_boxes.add(make_user_eventbox(user, type_change));
 			}
 			type_change++;
 		}
+
+		LinkedList<Box> lb_wrappers = new LinkedList<Box>();
+		var listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
 		listbox.width_request = BOX_WIDTH;
-		listbox.show_all();
+		
+		int i = 0;
+		foreach (var box in list_boxes) {
+			i++;
+			listbox.pack_start(box, false, false, 0);
+			if (i % PER_BOX == 0 && total_size >= i) {
+				listbox.width_request = BOX_WIDTH;
+				lb_wrappers.add(listbox);
+				listbox = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+			}
+		}
+		lb_wrappers.add(listbox);
 
-		users_header.set_text(_("Total users: ") + i.to_string());
+		Idle.add( ()=>{
+			foreach (var box in users_list.get_children())
+				users_list.remove(box);
+			
+			
+			foreach (var wrapper in lb_wrappers) {
+				users_list.pack_start(wrapper, true, true, 0);
+			}
+			
+			users_list.show_all();
 
-		int cols = (int) Math.ceilf((float)i / (float)PER_BOX); 
-		users_scrolled.min_content_width = (cols > MAX_COLS) ? BOX_WIDTH * MAX_COLS : cols * BOX_WIDTH;
-		users_list.pack_start(listbox, true, true, 0);
+			users_header.set_text(_("Total users: ") + i.to_string());
+
+			int cols = (int) Math.ceilf((float)i / (float)PER_BOX); 
+			users_scrolled.min_content_width = (cols > MAX_COLS) ? BOX_WIDTH * MAX_COLS : cols * BOX_WIDTH;
+			return false;
+		});
 	}
 
 	private EventBox make_user_eventbox (string user, int type = -1) {
