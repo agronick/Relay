@@ -93,8 +93,6 @@ public class MainWindow : Object
 
 			if (Relay.on_kde)
 				toolbar.decoration_layout = "";
-			else if (Relay.on_ubuntu)
-				toolbar.decoration_layout = "maximize,close";
 			
 			tabs.add_button_tooltip = _("Connect to a server");
 			tabs.add_button_visible = false;
@@ -512,16 +510,6 @@ public class MainWindow : Object
 		}
 	}
 
-	private void user_names_changed (int tab_id) {
-		if (current_tab == tab_id) {
-			if (outputs[current_tab].users.size < 1)
-				channel_users.hide();
-			else
-				channel_users.show_all();
-		}
-	}
-
-	private int invoke_count = 0;
 	private void make_user_popover (string search_str = "", bool need_show = false) {
 		users_header.set_text(_("Loading..."));
 		if (need_show)
@@ -533,6 +521,7 @@ public class MainWindow : Object
 		});
 	}
 	
+	private int invoke_count = 0;
 	private void make_user_popover_idle (ChannelTab? using_tab, string _search_str = "") {
 		if (_search_str == "") {
 			invoke_count++;
