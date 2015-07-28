@@ -779,8 +779,10 @@ public class MainWindow : Object
 		}
 	} 
 
-	public void add_text (ChannelTab tab, Message message, bool error = false) {
-		if (tab.needs_spacer) {
+	public void add_text (ChannelTab? tab, Message message, bool error = false) {
+		if (tab == null)
+			return;
+		else if (tab.needs_spacer) {
 			if (tab.get_char_count() > 3 && settings.get_bool("show_line"))
 				tab.add_spacer_line();
 			tab.needs_spacer = false;

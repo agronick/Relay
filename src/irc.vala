@@ -1,7 +1,7 @@
 /* -*- Mode: vala; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*-  */
 /*
  * irc.vala
- * Copyright (C) 2015 Kyle Agronick <stack@kyle-ele>
+ * Copyright (C) 2015 Kyle Agronick <agronick@gmail.com>
 	 *
  * KyRC is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -22,7 +22,7 @@ public class IRC{
 	public const int USER_LENGTH = 18;
 	public const int USER_WIDTH = 126;
 	public const string user_prefixes = "~&@%+";
-	public const string spacers = " :/\\{}[];$#@!)(*&^\n\t\r";
+	public const string spacers = " ,:/\\{}[];$#@!)(*&^\n\t\r";
 
 	//Replies
 	public const string RPL_WELCOME = "001";

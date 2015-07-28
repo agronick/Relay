@@ -39,7 +39,7 @@ public class Connection : Object
 
 	public signal void new_topic(ChannelTab tab, string topic);
 	public signal void new_tab(ChannelTab tab, string name);
-	public signal void new_message(ChannelTab tab, Message message, bool is_error = false);
+	public signal void new_message(ChannelTab? tab, Message message, bool is_error = false);
 	public signal void change_channel_state(string chan_name, string state);
 
 	public bool connect_to_server (SqlClient.Server _server) {
@@ -113,8 +113,10 @@ public class Connection : Object
 	}
 
 	//Same as add_channel_tab but won't create if not found
-	private ChannelTab find_channel_tab (string name) {
-		if (channel_tabs.has_key(name))
+	private ChannelTab? find_channel_tab (string? name) {
+		if (name == null)
+			return null;
+		else if (channel_tabs.has_key(name))
 			return channel_tabs[name];
 
 		return server_tab;
@@ -205,7 +207,8 @@ public class Connection : Object
 				return;
 			case IRC.RPL_ENDOFNAMES:
 				var tab = find_channel_tab(message.parameters[1]);
-				tab.sort_names();
+				if (tab != null)
+					tab.sort_names();
 				return;
 				//Errors
 			case IRC.ERR_NICKNAMEINUSE:
@@ -255,10 +258,6 @@ public class Connection : Object
 		} 
 	}
 
-	public void turn_off_icon (string channel) {
-		change_channel_state(channel, "inactive");
-	}
-
 	public void do_register () {
 		send_output("PASS  " + ((server.password.length > 0) ? server.password : "-p"));
 		send_output("NICK " + server.nickname);
@@ -277,6 +276,10 @@ public class Connection : Object
 			}
 			return false;
 		});
+	}
+
+	public void turn_off_icon (string channel) {
+		change_channel_state(channel, "inactive");
 	}
 
 	public void run_on_connect_cmds() {
