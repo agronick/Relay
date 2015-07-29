@@ -17,8 +17,10 @@ Please consult the `INSTALL` and `COPYING` files for more information.
 If you would rather not install from source you can use the following
 commands on a platform that uses apt-get:
 
-    `sudo apt-add-repository "ppa:agronick/relay"
+`    sudo apt-add-repository "ppa:agronick/relay"
+
     sudo apt-get update
+
     sudo apt-get install relay`
     
 
