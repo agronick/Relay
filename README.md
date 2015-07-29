@@ -27,7 +27,7 @@ commands on a platform that uses apt-get:
 The project's oficial website is https://poisonpacket.wordpress.com/relay/
 
 * **Bugs**  
-Please report bugs at https://launchpad.net/relay
+Please report bugs at https://github.com/agronick/Relay
 
 * **Translations**  
 To contribute translations please visit http://translations.launchpad.net/relay

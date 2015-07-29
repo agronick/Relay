@@ -104,6 +104,7 @@ public class MainWindow : Object
 			window = builder.get_object ("window") as Gtk.Window;
 			window.set_position(WindowPosition.CENTER);
 			Relay.set_color_mode(window.get_style_context().get_color(StateFlags.NORMAL));
+			settings.set_colors_defaults();
 	
 			window.destroy.connect(relay_close_program);
 			application.add_window(window);
