@@ -16,11 +16,12 @@ New changes are being made all the time! Make sure to update often with `git pul
 Please consult the `INSTALL` and `COPYING` files for more information.
 If you would rather not install from source you can use the following
 commands on a platform that uses apt-get:
-`
+
+```
     sudo apt-add-repository "ppa:agronick/relay"
-    sudo apt-get update
+    sudo apt-get update`
     sudo apt-get install relay
-`    
+```    
 
 * **Website**  
 The project's oficial website is https://poisonpacket.wordpress.com/relay/
