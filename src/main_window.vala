@@ -99,6 +99,7 @@ public class MainWindow : Object
 			tabs.allow_drag = true;
 			tabs.show_icons = true;
 			tabs.show_tabs = settings.get_bool("show_tabs");
+			tabs.new_tab_requested.connect(new_tab_requested);
 
 			window = builder.get_object ("window") as Gtk.Window;
 			window.set_position(WindowPosition.CENTER);
@@ -455,7 +456,8 @@ public class MainWindow : Object
 	private void tab_switch (Granite.Widgets.Tab? old_tab, Granite.Widgets.Tab new_tab) {
 		if (old_tab != null && old_tab.label != _("Welcome")) {
 			var last_tab = lookup_channel_id(old_tab);
-			outputs[last_tab].needs_spacer = true;
+			if (outputs.has_key(last_tab))
+				outputs[last_tab].needs_spacer = true;
 		}
 		if (new_tab.label == _("Welcome")) {
 			channel_subject.hide();
