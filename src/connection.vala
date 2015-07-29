@@ -98,7 +98,6 @@ public class Connection : Object
 	}
 
 	public ChannelTab? add_channel_tab (string? _name, bool primsg = false) {
-		debug("NAME " + _name);
 		string? name = _name;
 		if (name == null || name.strip() == "" || server == null)
 			return null;
