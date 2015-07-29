@@ -60,7 +60,7 @@ public class Connection : Object
 			Resolver resolver = Resolver.get_default ();
 			GLib.List<InetAddress> addresses = resolver.lookup_by_name(server.host, null);
 			InetAddress address = addresses.nth_data (0);
-			SocketConnection conn = client.connect (new InetSocketAddress (address, DEFAULT_PORT));
+			SocketConnection conn = client.connect (new InetSocketAddress (address, (uint16) server.port));
 			input_stream = new DataInputStream (conn.input_stream);
 			output_stream = new DataOutputStream (conn.output_stream);
 
