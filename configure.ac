@@ -26,6 +26,7 @@ PKG_CHECK_MODULES(RELAY, granite
 sqlite3
 gee-0.8
 glib-2.0
+unity
 [gtk+-3.0 ])
 
 

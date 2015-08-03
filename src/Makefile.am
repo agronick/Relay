@@ -2,7 +2,6 @@
 
 ## Created by Anjuta
 
-
 uidir = $(pkgdatadir)/ui
 ui_DATA = ui/relay.ui ui/server_window.ui ui/relay.svg ui/settings_window.ui
 
@@ -61,12 +60,12 @@ relay_SOURCES = \
     settings.vala
 
 relay_VALAFLAGS =  \
-    -X -DGETTEXT_PACKAGE="relay" --target-glib 2.32  --pkg gee-0.8 --pkg x11 --pkg gtk+-3.0 --pkg glib-2.0 --pkg granite --pkg sqlite3
+    -X -DGETTEXT_PACKAGE="relay" --target-glib 2.32 --pkg unity --pkg gee-0.8 --pkg x11 --pkg gtk+-3.0 --pkg glib-2.0 --pkg granite --pkg sqlite3 -g --save-temps
 
 relay_LDFLAGS = \
-	 -lm -lX11 -lglib-2.0 -Wl,--as-needed -w
+	 -lm -lX11 -lglib-2.0
 
-relay_LDADD = -lm -lX11 $(RELAY_LIBS)
+relay_LDADD = $(RELAY_LIBS)
 
 EXTRA_DIST = $(ui_DATA) $(assets_DATA)
 

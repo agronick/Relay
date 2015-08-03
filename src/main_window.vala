@@ -24,6 +24,7 @@ using Gdk;
 using Gee;
 using Granite;
 using Pango;
+using Unity;
 
 public class MainWindow : Object
 {
@@ -65,6 +66,7 @@ public class MainWindow : Object
 	public static SqlClient sql_client = SqlClient.get_instance();
 	public static Settings settings = new Settings();
 	public static ServerManager server_manager = new ServerManager();
+	public static Unity.LauncherEntry launcher = Unity.LauncherEntry.get_for_desktop_id(Config.PACKAGE_NAME + ".desktop");
 
 	Gee.HashMap<int, ChannelTab> outputs = new Gee.HashMap<int, ChannelTab> ();
 	Gee.HashMap<string, Connection> clients = new Gee.HashMap<string, Connection> (); 
@@ -206,7 +208,6 @@ public class MainWindow : Object
 			window.set_titlebar(toolbar);
 			window.show_all();
 
-
 			/*
 			 * Hastebin code
 			 */ 
@@ -326,7 +327,6 @@ public class MainWindow : Object
 
 			
 			output.populate_popup.connect( (menu)=> {
-				debug("POPULATE POPUP");
 				SeparatorMenuItem seperator = new SeparatorMenuItem();
 				Gtk.MenuItem save_selection = new Gtk.MenuItem.with_label (_("Save Selection"));
 				Gtk.MenuItem save_conversation = new Gtk.MenuItem.with_label (_("Save Conversation"));
@@ -394,8 +394,8 @@ public class MainWindow : Object
 	public void new_tab_requested () {
 		var dialog = new Dialog.with_buttons(_("New Connection"), window,
 		                                     DialogFlags.DESTROY_WITH_PARENT,
-		                                     "Connect", Gtk.ResponseType.ACCEPT,
-		                                     "Cancel", Gtk.ResponseType.CANCEL);
+		                                     _("Connect"), Gtk.ResponseType.ACCEPT,
+		                                     "_Cancel", Gtk.ResponseType.CANCEL);
 		Gtk.Box content = dialog.get_content_area() as Gtk.Box;
 		content.pack_start(new Label(_("Server address")), false, false, 5);
 		var server_name = new Entry();
@@ -481,10 +481,11 @@ public class MainWindow : Object
 		ChannelTab using_tab = outputs[current_tab];
 		using_tab.needs_spacer = false;
 
-
 		if (items_sidebar.has_key(using_tab.tab.label)) {
 			items_sidebar[using_tab.tab.label].badge = "";
+			refresh_icon(using_tab.message_count * -1);
 			using_tab.message_count = 0;
+			servers.selected = items_sidebar[using_tab.tab.label];
 		}
 
 		if (using_tab.has_subject) 
@@ -796,18 +797,29 @@ public class MainWindow : Object
 			tab.display_error(message);
 		} else
 			tab.display_message(message);
-		
-		Idle.add( ()=> {
-			if (current_tab != tab.tab_index) {
-				tab.message_count++;
-				if (items_sidebar.has_key(tab.tab.label) && !tab.is_server_tab)
-					items_sidebar[tab.tab.label].badge = tab.message_count.to_string();
+
+
+		if (current_tab != tab.tab_index && !tab.is_server_tab) {		
+			tab.message_count++;
+			
+			Idle.add( ()=> {
+					if (items_sidebar.has_key(tab.tab.label))
+						items_sidebar[tab.tab.label].badge = tab.message_count.to_string();
 				
-				tab.tab.icon = channel_tab_icon_new_msg;
-			}
+					tab.tab.icon = channel_tab_icon_new_msg;
 				
-			return false;
-		});
+				return false;
+			});
+
+			refresh_icon(1);
+		}
+	}
+
+	public void refresh_icon (int add) {
+		launcher.count += add;
+		launcher.count_visible = (launcher.count > 0);
+		launcher.urgent = true;
+		launcher.urgent = false;
 	}
 
 	public void send_text_out (string text) {

@@ -37,7 +37,6 @@ public class Connection : Object
 	public bool autoconnect_ran = false;
 	public SqlClient.Server server;
 
-	public signal void new_topic(ChannelTab tab, string topic);
 	public signal void new_tab(ChannelTab tab, string name);
 	public signal void new_message(ChannelTab? tab, Message message, bool is_error = false);
 	public signal void change_channel_state(string chan_name, string state);
