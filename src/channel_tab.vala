@@ -335,9 +335,11 @@ public class ChannelTab : GLib.Object {
 		add_with_tag(message.message, error_tag);
 	}
 
-	public string space() {
+	public string space(int count = 1) {
 		string txt = " \n";
-		add_with_tag(" \n", spacing_tag);
+		for (int i = 0; i < count - 1; i++)
+			txt += txt;
+		add_with_tag(txt, spacing_tag);
 		return txt;
 	}
 
@@ -493,8 +495,7 @@ public class ChannelTab : GLib.Object {
 		timestamp_tag.pixels_above_lines = 7;
 		timestamp_tag.pixels_below_lines = 3;
 
-		spacing_tag.size_points = 2;
-
+		spacing_tag.size_points = 1;
 		spacer_line_tag.justification = Justification.FILL;
 		spacer_line_tag.underline = Pango.Underline.SINGLE;
 		spacer_line_tag.left_margin = 15;
@@ -516,11 +517,11 @@ public class ChannelTab : GLib.Object {
 		}
 		
 		output.buffer.get_end_iter(out start);
-		space();
+		space(3);
 		add_with_tag("-  \n", spacer_line_tag);
-		space();
+		space(2);
 		last_spacer_range[0] = start.get_offset();
-		last_spacer_range[1] = last_spacer_range[0] + 8; //8 = space() * 2 + spacer_line_tag
+		last_spacer_range[1] = last_spacer_range[0] + 17; //8 = space() * 3 + spacer_line_tag
 	}
 
 	public bool user_name_clicked (GLib.Object event_object, Gdk.Event event, TextIter end) {
