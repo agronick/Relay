@@ -127,7 +127,7 @@ public class Relay : Granite.Application {
 
         var e_theme = File.new_for_path("/usr/share/themes/elementary/");
         if (e_theme.query_exists())
-            Gtk.Settings.get_default().gtk_theme_name = "Elementary";
+            Gtk.Settings.get_default().gtk_theme_name = "elementary";
         else if (on_ubuntu)
             Gtk.Settings.get_default().gtk_theme_name = "Adwaita";
         else if (on_kde)
