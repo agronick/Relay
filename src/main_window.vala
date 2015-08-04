@@ -41,6 +41,7 @@ public class MainWindow : Object
 	public static Icon active_channel;
 	public static Icon loading_channel;
 	public static Icon channel_tab_icon_new_msg;
+	public static bool network_state = true;
 	Paned panel;
 	Gtk.Menu tab_rightclick = new Gtk.Menu();
 	Gtk.Menu tab_channel_list = new Gtk.Menu();
@@ -269,6 +270,21 @@ public class MainWindow : Object
 			error("Could not load UI: %s\n", e.message);
 		}
 
+		var network_monitor = NetworkMonitor.get_default();
+		network_monitor.network_changed.connect( (on)=> {
+			if (!on) {
+				if (!network_state)
+					return;
+				network_state = false;
+				outputs.foreach( (output)=> {
+					var msg = new Message();
+					msg.message = _("You have lost network connectivity.");
+					add_text(output.value, msg, true);
+					return true;
+				});
+			} else
+				network_state = true;
+		});
 	}
 
 	public void rebuild_channel_list_menu() {
@@ -803,17 +819,18 @@ public class MainWindow : Object
 
 		if (current_tab != tab.tab_index && !tab.is_server_tab) {		
 			tab.message_count++;
-			
+
 			Idle.add( ()=> {
-					if (items_sidebar.has_key(tab.tab.label))
-						items_sidebar[tab.tab.label].badge = tab.message_count.to_string();
-				
-					tab.tab.icon = channel_tab_icon_new_msg;
-				
+				if (items_sidebar.has_key(tab.tab.label))
+					items_sidebar[tab.tab.label].badge = tab.message_count.to_string();
+
+				tab.tab.icon = channel_tab_icon_new_msg;
+
+				refresh_icon(1);
+
 				return false;
 			});
 
-			refresh_icon(1);
 		}
 	}
 

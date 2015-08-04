@@ -32,7 +32,6 @@ public class Connection : Object
 	public HashMap<string, ChannelTab> channel_tabs = new HashMap<string, ChannelTab>();
 	public LinkedList<string> channel_autoconnect = new LinkedList<string>();
 	public bool exit = false;
-	public bool encrypted = false;
 	public bool error_state = false;
 	public bool autoconnect_ran = false;
 	public SqlClient.Server server;
@@ -53,12 +52,15 @@ public class Connection : Object
 
 	private int do_connect () {
 		try{
-			SocketClient client = new SocketClient ();
-			client.tls = encrypted;
-			// Resolve hostname to IP address:
 			Resolver resolver = Resolver.get_default ();
 			GLib.List<InetAddress> addresses = resolver.lookup_by_name(server.host, null);
 			InetAddress address = addresses.nth_data (0);
+
+ 
+			SocketClient client = new SocketClient ();
+			client.set_tls(server.encryption);
+			client.set_tls_validation_flags(TlsCertificateFlags.UNKNOWN_CA);
+			// Resolve hostname to IP address:
 			SocketConnection conn = client.connect (new InetSocketAddress (address, (uint16) server.port));
 			input_stream = new DataInputStream (conn.input_stream);
 			output_stream = new DataOutputStream (conn.output_stream);
@@ -77,19 +79,24 @@ public class Connection : Object
 				size_t size;
 				try{
 					line = input_stream.read_line(out size);
-					handle_input(line);
 					debug("Raw input " + line);
+					handle_input(line);
 				}catch(IOError e) {
-					warning("IO error while reading");
+					error_state = true;
+					warning("IO error while reading " + e.message);
 				}
 			}while (line != null && !exit);
-		} catch (GLib.Error e) {
+		} catch (GLib.Error err) {
+			var e = (owned) err;
+			warning("Could not connect " + e.message);
 			error_state = true;
-			Relay.show_error_window(e.message);
-			server_tab.tab.close();
-			foreach (string tab in channel_autoconnect)
-				turn_off_icon(tab);
-			warning("Could not connect" + e.message);
+			Idle.add( ()=> {
+				Relay.show_error_window(e.message);
+				server_tab.tab.close();
+				foreach (string tab in channel_autoconnect)
+					turn_off_icon(tab);
+				return false;
+			});
 			return 0;
 		}
 
