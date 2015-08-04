@@ -74,6 +74,7 @@
                 <property name="visible">True</property>
                 <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">The domain name or IP address that you want to connect to.</property>
                 <property name="label" translatable="yes">Host</property>
               </object>
               <packing>
@@ -98,6 +99,7 @@
                 <property name="visible">True</property>
                 <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">If you use encryption make sure you are using a port that supports encryption.</property>
                 <property name="label" translatable="yes">Port</property>
               </object>
               <packing>
@@ -110,6 +112,7 @@
                 <property name="visible">True</property>
                 <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">The name that will be displayed to other users.</property>
                 <property name="label" translatable="yes">Nickname</property>
               </object>
               <packing>
@@ -122,6 +125,7 @@
                 <property name="visible">True</property>
                 <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">Your actual name.</property>
                 <property name="label" translatable="yes">Realname</property>
               </object>
               <packing>
@@ -134,6 +138,7 @@
                 <property name="visible">True</property>
                 <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">The user name that you want to authenticate with. Leave blank if none.</property>
                 <property name="label" translatable="yes">Username</property>
               </object>
               <packing>
@@ -146,6 +151,7 @@
                 <property name="visible">True</property>
                 <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">The password you want to authenticate with.</property>
                 <property name="label" translatable="yes">Password</property>
               </object>
               <packing>
@@ -207,6 +213,7 @@
                 <property name="visible">True</property>
                 <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">Check this if you want to connect using TLS.</property>
                 <property name="label" translatable="yes">Use encryption</property>
               </object>
               <packing>
@@ -219,6 +226,7 @@
                 <property name="visible">True</property>
                 <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">The channels you want to display on your channel list. Select autoconnect if you want to connect to the channel when Relay starts.</property>
                 <property name="label" translatable="yes">Channels</property>
               </object>
               <packing>
@@ -418,6 +426,7 @@
                 <property name="visible">True</property>
                 <property name="sensitive">False</property>
                 <property name="can_focus">False</property>
+                <property name="tooltip_text" translatable="yes">Commands you want to send to the server after connecting.</property>
                 <property name="label" translatable="yes">Send on connect</property>
               </object>
               <packing>

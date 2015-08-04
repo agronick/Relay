@@ -63,6 +63,7 @@
                   <object class="GtkLabel" id="label4">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="tooltip_text" translatable="yes">Show animations when sliding the left panel.</property>
                     <property name="halign">center</property>
                     <property name="margin_top">2</property>
                     <property name="label" translatable="yes">Show animations</property>
@@ -105,6 +106,7 @@
                   <object class="GtkLabel" id="label5">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="tooltip_text" translatable="yes">Show messages with other users join or leave the channel.</property>
                     <property name="label" translatable="yes">Show joining and exiting messages</property>
                   </object>
                   <packing>
@@ -140,6 +142,7 @@
                   <object class="GtkLabel" id="label6">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="tooltip_text" translatable="yes">Have the left sidebar open on start.</property>
                     <property name="label" translatable="yes">Show channel sidebar on start</property>
                   </object>
                   <packing>
@@ -210,6 +213,7 @@
                   <object class="GtkLabel" id="label11">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="tooltip_text" translatable="yes">Print datestamp every five minutes.</property>
                     <property name="label" translatable="yes">Show datestamp</property>
                   </object>
                   <packing>
@@ -245,7 +249,8 @@
                   <object class="GtkLabel" id="label2">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Switch to new tab when opeing</property>
+                    <property name="tooltip_text" translatable="yes">Switch to a new tav when it opens.</property>
+                    <property name="label" translatable="yes">Switch to new tab when opening</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -280,6 +285,7 @@
                   <object class="GtkLabel" id="label3">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="tooltip_text" translatable="yes">Show the top tabs or navigate using the left panel.</property>
                     <property name="label" translatable="yes">Show tabs</property>
                   </object>
                   <packing>
@@ -303,7 +309,8 @@
                   <object class="GtkLabel" id="label14">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="label" translatable="yes">Show line above new messages</property>
+                    <property name="tooltip_text" translatable="yes">Show a line where you left off.</property>
+                    <property name="label" translatable="yes">Show line below last read message</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
