@@ -95,6 +95,8 @@ public class MainWindow : Object
 
 			if (Relay.on_kde)
 				toolbar.decoration_layout = "";
+			else if (Relay.on_ubuntu)
+				toolbar.decoration_layout = "close,maximize";
 			
 			tabs.add_button_tooltip = _("Connect to a server");
 			tabs.add_button_visible = false;
@@ -121,7 +123,7 @@ public class MainWindow : Object
 			server_list_container.pack_start(servers, true, true, 0);
 
 			//Slide out panel button
-			Image icon = new Image.from_file(Relay.get_asset_file("assets/server-icon" + (Relay.on_ubuntu ? "-light" : "") + ".svg"));
+			Image icon = new Image.from_file(Relay.get_asset_file("assets/server-icon" + (Relay.is_light_theme ? "-light" : "") + ".svg"));
 			Button select_channel = new Gtk.Button();
 			select_channel.image = icon;
 

@@ -123,7 +123,7 @@ public class Relay : Granite.Application {
 
         has_activated = true;
         
-		check_elementary();
+		check_env();
 
         var e_theme = File.new_for_path("/usr/share/themes/elementary/");
         if (e_theme.query_exists())
@@ -176,7 +176,7 @@ public class Relay : Granite.Application {
         GLib.stdout.printf(prefix + message + suffix + "\n");
     }
 
-	private void check_elementary () {
+	private void check_env () {
 		string output;
 		output = GLib.Environment.get_variable("XDG_CURRENT_DESKTOP");
 
