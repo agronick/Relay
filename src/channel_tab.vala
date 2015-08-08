@@ -439,8 +439,10 @@ public class ChannelTab : GLib.Object {
 					start = end;
 					start.set_offset(start.get_offset() - rich_text.name_location_start[i]);
 					end.set_offset(end.get_offset() - rich_text.name_location_end[i]);
+					TextTag utag = (rich_text.names[i] == connection.server.nickname) ? name_hilight_tag : other_name_hilight_tag;
+					utag.set_data<string>("uname", output.buffer.get_text(start, end, false));
 					output.buffer.apply_tag(
-					             (rich_text.names[i] == connection.server.nickname) ? name_hilight_tag : other_name_hilight_tag, 
+					             utag, 
 					             start, end);
 				}
 			}
@@ -526,12 +528,13 @@ public class ChannelTab : GLib.Object {
 
 	public bool user_name_clicked (GLib.Object event_object, Gdk.Event event, TextIter end) {
 		if (event.type == EventType.BUTTON_RELEASE) {
-			TextView tv = (TextView) event_object;
-			TextIter start = end;
+			
+			string name = get_tag_selection((TextView) event_object, ref end);
 
-			get_tag_selection(tv, ref start, ref end);
+			if (name == "")
+				return false;
 
-			string name = start.get_text(end)  + ": ";			
+			name += ": ";	
 
 			if (MainWindow.current_tab == tab_index)
 				MainWindow.fill_input(name);
@@ -544,24 +547,39 @@ public class ChannelTab : GLib.Object {
 			TextView tv = (TextView) event_object;
 			TextIter start = end;
 
-			get_tag_selection(tv, ref start, ref end, true);
+			string link = get_tag_selection(tv, ref end);
 
-			string link = start.get_text(end);
+			if (link == "")
+				return false;
+			
 			Granite.Services.System.open_uri(link);
 		}
 		return false;
 	}
 
-	public void get_tag_selection(TextView tv, ref TextIter start, ref TextIter end, bool is_link = false) {
-			string selectors = is_link ? " \n\t\r" : IRC.spacers;
+	public string get_tag_selection(TextView tv, ref TextIter end) {
 		
-			while (selectors.index_of_char(end.get_char()) == -1)
-				tv.buffer.get_iter_at_offset(out end, end.get_offset() + 1);
+			TextIter start = end;
+			SList<weak TextTag> tags = end.get_tags();
+			TextTag utag = null;
+			foreach (var tag in tags) {
+				debug(tag.name);
+				if (tag.name == "link" || 
+				    tag.name == "other_name" || 
+				    tag.name == "user_other")
+					utag = tag;
+			}
 
-			while (selectors.index_of_char(start.get_char()) == -1)
-				tv.buffer.get_iter_at_offset(out start, start.get_offset() - 1);
-		
-			tv.buffer.get_iter_at_offset(out start, start.get_offset() + 1);
+			if (utag == null)
+				return "";
+
+			while (!end.ends_tag(utag))
+				end.forward_char();
+
+			while (!start.begins_tag(utag))
+				start.backward_char();
+
+			return tv.buffer.get_text(start, end, false).strip();
 	}
 
 	private string parse_message_cmd(string message) {

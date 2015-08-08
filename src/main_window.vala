@@ -133,7 +133,9 @@ public class MainWindow : Object
 			select_channel.button_release_event.connect(slide_panel);
 			panel.position = 1;
 
-			input = builder.get_object("input") as Entry;
+			Box entry_wrapper = builder.get_object("entry_wrapper") as Box;
+			input = new MainEntry();
+			entry_wrapper.pack_start(input, true, true, 0);
 			input.activate.connect (() => {
 				send_text_out(input.get_text ());
 				input.set_text("");
@@ -1020,7 +1022,6 @@ public class MainWindow : Object
 			int resp = chooser.run();
 			if  (resp == Gtk.ResponseType.ACCEPT) {
 				try{
-					debug("URI IS :" + chooser.get_filename());
 					FileUtils.set_contents(chooser.get_filename(), text);
 				} catch (FileError e) {
 					Relay.show_error_window(e.message);

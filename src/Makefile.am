@@ -57,7 +57,8 @@ relay_SOURCES = \
     rich_text.vala \
     drag_file.vala \
     org.github.agronick.relay \
-    settings.vala
+    settings.vala \
+    main_entry.vala
 
 relay_VALAFLAGS =  \
     -X -DGETTEXT_PACKAGE="relay" --target-glib 2.32 --pkg unity --pkg gee-0.8 --pkg x11 --pkg gtk+-3.0 --pkg glib-2.0 --pkg granite --pkg sqlite3 -g --save-temps
