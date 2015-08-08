@@ -61,7 +61,7 @@ relay_SOURCES = \
     main_entry.vala
 
 relay_VALAFLAGS =  \
-    -X -DGETTEXT_PACKAGE="relay" --target-glib 2.32 --pkg unity --pkg gee-0.8 --pkg x11 --pkg gtk+-3.0 --pkg glib-2.0 --pkg granite --pkg sqlite3 -g --save-temps
+    -X -DGETTEXT_PACKAGE="relay" --target-glib 2.32 --pkg unity --pkg gee-0.8 --pkg x11 --pkg gtk+-3.0 --pkg glib-2.0 --pkg granite --pkg sqlite3
 
 relay_LDFLAGS = \
 	 -lm -lX11 -lglib-2.0
