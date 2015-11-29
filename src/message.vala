@@ -39,8 +39,7 @@ public class Message : GLib.Object {
     public Message (string _message = "") {
         if (regex == null) {
             try {
-                regex = new Regex(regex_string, RegexCompileFlags.OPTIMIZE );
-                fix_message = new Regex(replace_string, RegexCompileFlags.OPTIMIZE );
+                regex = new Regex(regex_string, RegexCompileFlags.OPTIMIZE ); 
             } catch (RegexError e){
                 error("There was a regex error that should never happen");
             }
@@ -48,8 +47,7 @@ public class Message : GLib.Object {
         if (_message.length == 0)
             return;
 		try{
-			message = _message.validate() ? _message : _message.escape("\b\f\n\r\t\'");
-    		message = fix_message.replace_literal(message, message.length, 0, "");
+			message = _message.validate() ? _message : _message.escape("\b\f\n\r\t\'"); 
 		}catch(RegexError e) {
 			message = _message;
 		}
