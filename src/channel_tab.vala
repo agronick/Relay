@@ -510,20 +510,25 @@ public class ChannelTab : GLib.Object {
 
 	private int[] last_spacer_range = new int[2];
 	public void add_spacer_line () {
-		TextIter start;
-		TextIter end;
-		if (last_spacer_range[1] != 0) {
-			output.get_buffer().get_iter_at_offset(out start, last_spacer_range[0]);
-			output.get_buffer().get_iter_at_offset(out end, last_spacer_range[1]);
-			output.buffer.delete(ref start, ref end);
-		}
+		Idle.add( () => {
+			TextIter start;
+			TextIter end;
+
+			if (last_spacer_range[1] != 0) {
+				output.get_buffer().get_iter_at_offset(out start, last_spacer_range[0]);
+				output.get_buffer().get_iter_at_offset(out end, last_spacer_range[1]);
+				output.buffer.delete(ref start, ref end);
+			}
 		
-		output.buffer.get_end_iter(out start);
-		space(3);
-		add_with_tag("-  \n", spacer_line_tag);
-		space(2);
-		last_spacer_range[0] = start.get_offset();
-		last_spacer_range[1] = last_spacer_range[0] + 17; //8 = space() * 3 + spacer_line_tag
+			output.buffer.get_end_iter(out start);
+			space(3);
+			add_with_tag("-  \n", spacer_line_tag);
+			space(2);
+			last_spacer_range[0] = start.get_offset();
+			last_spacer_range[1] = last_spacer_range[0] + 17; //8 = space() * 3 + spacer_line_tag
+
+			return false;
+		});
 	}
 
 	public bool user_name_clicked (GLib.Object event_object, Gdk.Event event, TextIter end) {
