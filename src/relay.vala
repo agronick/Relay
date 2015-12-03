@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License along
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
 
- * easing functions terms of use
+
 TERMS OF USE - EASING EQUATIONS
 pen source under  the http://www.opensource.org/licenses/bsd-license.php BSD License. <br>
 
@@ -52,6 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 using X;
 using GLib;
 using Gee;
+using Gtk;
 
 public class Relay : Granite.Application {
 
@@ -63,6 +64,7 @@ public class Relay : Granite.Application {
         public static bool on_kde = false;
         public static bool is_light_theme = false;
         public static string path;
+        public static bool no_theme;
 
     
         construct {
@@ -91,20 +93,33 @@ public class Relay : Granite.Application {
             about_translators = "translator-credits";
             about_license_type = Gtk.License.GPL_3_0;
 
-            set_options();
+            set_options(); 
 
             Intl.setlocale(LocaleCategory.MESSAGES, "");
             Intl.textdomain(Config.GETTEXT_PACKAGE); 
             Intl.bind_textdomain_codeset(Config.GETTEXT_PACKAGE, "utf-8"); 
             Intl.bindtextdomain(Config.GETTEXT_PACKAGE, "./locale");
             
-        }
-
-
-    /* Method definitions */
+    }
+    
+    public static const GLib.OptionEntry[] app_options = {
+        { "no-theme", 't', 0, OptionArg.NONE, out no_theme, "Disable switching to a different theme", null },
+        { null }
+    };
+ 
     public static void main (string[] args) {
 
         path = args[0];
+
+        var context = new OptionContext ();
+        context.add_main_entries (app_options, "relay");
+        context.add_group (Gtk.get_option_group (true));
+
+        try {
+            context.parse (ref args);
+        } catch (Error e) {
+            warning (e.message);
+        }
         
         X.init_threads ();
         
@@ -125,13 +140,17 @@ public class Relay : Granite.Application {
         
 		check_env();
 
-        var e_theme = File.new_for_path("/usr/share/themes/elementary/");
-        if (e_theme.query_exists())
-            Gtk.Settings.get_default().gtk_theme_name = "elementary";
-        else if (on_ubuntu)
-            Gtk.Settings.get_default().gtk_theme_name = "Adwaita";
-        else if (on_kde)
-            Gtk.Settings.get_default().gtk_theme_name = "oxygen-gtk";
+        if (!no_theme) {
+            var e_theme = File.new_for_path("/usr/share/themes/elementary/");
+            if (e_theme.query_exists())
+                Gtk.Settings.get_default().gtk_theme_name = "elementary";
+            else if (on_ubuntu)
+                Gtk.Settings.get_default().gtk_theme_name = "Adwaita";
+            else if (on_kde)
+                Gtk.Settings.get_default().gtk_theme_name = "oxygen-gtk";
+        } else {
+            debug("Not attempting to switch theme.");
+        }
 
         Gtk.Settings.get_default().gtk_application_prefer_dark_theme = true;
         
