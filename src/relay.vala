@@ -112,8 +112,7 @@ public class Relay : Granite.Application {
         path = args[0];
 
         var context = new OptionContext ();
-        context.add_main_entries (app_options, "relay");
-        context.add_group (Gtk.get_option_group (true));
+        context.add_main_entries (Relay.app_options, "relay"); 
 
         try {
             context.parse (ref args);
