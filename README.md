@@ -19,7 +19,7 @@ commands on a platform that uses apt-get:
 
 ```
     sudo apt-add-repository "ppa:agronick/relay"
-    sudo apt-get update`
+    sudo apt-get update
     sudo apt-get install relay
 ```    
 
