@@ -31,4 +31,5 @@ This project is licensed under the [GPL-2.0](LICENSE) license.
 
 ## Contributors
 [Erazem Kokot](https://erazem.eu) - Current maintainer
+
 [Kyle Agronick](https://poisonpacket.wordpress.com/) - Original author
