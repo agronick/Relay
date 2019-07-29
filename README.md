@@ -1,39 +1,34 @@
-# ![logo](https://cdn.rawgit.com/agronick/Relay/master/src/ui/relay.svg)  Relay 
-*Created by Kyle Agronick <agronick@gmail.com>*
+# Messagry
 
-This was a fun little project I made a few years ago. I don't have the time right now to maintain it. If anyone wants to take it over I'd be happy to give them access.
+This is a fork of the [Relay](https://github.com/agronick/Relay) project,
+which is not maintained anymore.
 
-Relay is an IRC client that attemps to be small, quick, easy to use, elegant, and functional. 
-The Github and Launchpad repos are mirrored. You can find up-to-date information about Relay on Launchpad and Github.
-
-If Relay displays with a light interface please open up an issue and let me know what displays when you type
-`echo $XDG_CURRENT_DESKTOP`. I will need to add some code to detect and load a suitable dark theme preloaded
-in your distro.
+Messagry is an IRC client that attemps to be small, quick, easy to use, elegant, and functional.
 
 ![screenshot](http://bit.ly/1M6dYGZ)
 
-* **Installation and Licensing**  
-Please consult the `INSTALL` and `COPYING` files for more information.
-If you would rather not install from source you can use the following
-commands on a platform that uses apt-get:
+## Installation
+
+### Building from source
+
+Install the following dependencies (on Ubuntu-based distros):
+
+`libtool-bin libtool libgtk-3-dev libgee-0.8-dev libsqlite3-dev libgranite-dev valac-0.26 libx11-dev libglib2.0-dev automake libunity-dev`
+
+Now execute the following commands:
 
 ```
-    sudo apt-add-repository "ppa:agronick/relay"
-    sudo apt-get update
-    sudo apt-get install relay
-```    
+mkdir build
+cd build
+../autogen.sh
+make
+sudo make install
+```
 
-* **Website**  
-The project's oficial website is https://poisonpacket.wordpress.com/relay/
+## License
 
-* **Bugs**  
-Please report bugs at https://github.com/agronick/Relay
+This project is licensed under the [GPL-2.0](LICENSE) license.
 
-* **Translations**  
-To contribute translations please visit http://translations.launchpad.net/relay
-
-* **Donations**  
-If you want to support the project, please consider a donation at https://poisonpacket.wordpress.com/relay/
-
-* **Further documentation**  
-For more documentation visit https://poisonpacket.wordpress.com/relay/
+## Contributors
+[Erazem Kokot](https://erazem.eu) - Current maintainer
+[Kyle Agronick](https://poisonpacket.wordpress.com/) - Original author

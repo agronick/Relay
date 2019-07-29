@@ -1,0 +1,9 @@
+# Changelog
+
+## v1.0 - 29/07/2019
+
+* Initial re-release
+* Rename Relay to Messagry
+* Update README
+* Remove COPYING (duplicate of LICENSE), AUTHORS (added to README), NEWS and INSTALL (added to README)
+* Rename ChangeLog to CHANGELOG
